@@ -1,56 +1,42 @@
-# Betting v2 — Balances, limits & live board
 
-## Pravidla (co uživatel dostane)
+## Cíl
+Každý přihlášený uživatel si může nahrát vlastní profilový obrázek. Avatar se zobrazuje na profilu, v hlavičce a u každé zprávy v public chatu.
 
-- **Balance:** každý profil startuje s **$1000**. Zobrazený v headeru u nicku.
-- **Sázka:** min $1, **max $50**, jen na `a` / `b`. Částka se **hned strhne** z balance.
-- **1 sázka na zápas / uživatel** — když už vsadil, formulář se zamkne (může jen vidět).
-- **Nelze sázet** když: balance = 0, zápas už skončil, nebo už jsi vsadil.
-- **Uzavření (locked):** sázky se „uzamknou" jakmile jsou **≥ 2 různí sázkaři** na zápase. Do té doby lze sázku ještě **stáhnout** (refund). Po locku už ne.
-- **Vyhodnocení při ukončení zápasu:**
-  - Pokud méně než 2 sázkaři → **všem refund** (sázka nebyla uzavřena).
-  - Jinak výherci si rozdělí celkový pool **proporčně podle své sázky**. Prohraní dostanou 0.
-- **Info board (nová stránka `/bets` + widget v Lobby):** ukazuje **live locked bety** — běžící zápasy se ≥2 sázkaři, jejich pool, kdo sází na kterou stranu, aktuální skóre.
+## Co přibude
 
-## Databáze (migrace)
+**1. Storage bucket `avatars` (veřejný pro čtení)**
+- Nový public bucket `avatars` (přes storage tool, ne SQL).
+- RLS na `storage.objects`:
+  - kdokoli může číst soubory z bucketu `avatars` (aby avatar viděli i další uživatelé v chatu),
+  - uživatel může nahrávat/mazat/aktualizovat pouze soubory ve své vlastní složce `{user_id}/…` (kontrola přes `auth.uid()::text = (storage.foldername(name))[1]`).
 
-1. `profiles.balance numeric(10,2) not null default 1000` — backfill 1000 pro existující.
-2. `profiles.balance_locked boolean` není potřeba — stržení řešíme okamžitě.
-3. Trigger `handle_new_user` doplnit: nastavit balance 1000 (default to udělá, ale explicitně).
-4. **RPC funkce (SECURITY DEFINER, atomické):**
-   - `place_bet(match_id, pick, amount, note)` — validace: auth user, match neskončil, user ještě nesázel, amount 1–50, balance ≥ amount, match není locked pro tohoto pickera. Odečte balance, appendne bet do `matches.bets` jsonb, vrátí novou balanci. Pokud po vložení jsou ≥ 2 unique bettors → nastaví `matches.bets_locked_at = now()` (nový sloupec).
-   - `withdraw_bet(match_id)` — jen když **není locked** a match neskončil; vrátí částku, odstraní bet z jsonb.
-   - `settle_match(match_id)` — volá se když owner/admin nastaví `ended_at`. Pokud < 2 sázkaři → refund všem. Jinak spočítá vítěznou stranu (score, tie-break sety), rozdělí pool proporčně, updatuje balance výherců, označí bety `status: "won" | "lost" | "refunded"` v jsonb.
-5. Sloupec `matches.bets_locked_at timestamptz`.
-6. Aktualizovat `Bet` typ o `status?: "open" | "won" | "lost" | "refunded"` a `payout?: number`.
+**2. Migrace: sloupec `avatar_url` v `profiles`**
+- Přidání `avatar_url TEXT NULL` do tabulky `profiles`.
+- Stávající RLS na `profiles` už dovoluje uživateli update vlastního řádku (kromě balance), takže žádná nová politika není potřeba. Nový sloupec se aktualizuje přes normální `update`.
+- Denormalizovaný `avatar_url` ve staré `chat_messages` **nezavádím** — avatar budu joinovat z `profiles` podle `user_id`, takže se automaticky změní i u historických zpráv, když si uživatel obrázek přenahraje.
 
-## Frontend
+**3. Profil (`src/routes/profile.tsx`) – uploader**
+- Nová sekce „Avatar" s náhledem, tlačítkem *Upload* a *Remove*.
+- Client-side validace: pouze `image/png`, `image/jpeg`, `image/webp`, max ~2 MB.
+- Cesta v bucketu: `avatars/{user.id}/avatar-{timestamp}.{ext}` (timestamp v názvu obejde CDN cache po výměně).
+- Po uploadu se získá `publicUrl` a uloží se do `profiles.avatar_url`; starý soubor uživatele se smaže (best-effort).
 
-- **`src/lib/auth.tsx`** — načíst `balance` z profiles, vystavit `refreshBalance()`. Realtime subscribe na vlastní profile row (nebo refetch po každé akci).
-- **Header (`__root.tsx`)** — vedle nicku ukázat `💰 $XXX` s neon stylem.
-- **`BetsPanel` v `match.tsx`** — přepsat:
-  - Zobrazit **pool**, seznam sázek s pickem, částkou, statusem a **jmény sázkařů**.
-  - Ukázat badge **LOCKED** (≥2 bettors) nebo **OPEN (needs N more)**.
-  - Formulář: amount slider/input 1–50, pick a/b, note. Disabled když už user vsadil / balance 0 / match skončil.
-  - Tlačítko **Withdraw** dokud není locked.
-  - Volá RPC `place_bet` / `withdraw_bet`.
-- **Nová route `src/routes/bets.tsx` — Live Bet Board** (+ nav link 💸):
-  - Sekce **🔒 Locked & Live** — běžící zápasy s locked bety, seřazené podle poolu. Karta: sport, týmy, live skóre, pool, split A vs B (počet sázkařů + částka na stranu), progress bar poměru.
-  - Sekce **⏳ Open (needs bettors)** — zápasy s 1 sázkou co ještě čekají.
-  - Sekce **✅ Recently settled** — posledních 10 vyhodnocených s výherci a payoutem.
-  - Stejný cyber styling (grid-bg, neon-border, scanline) jako Scoreboard.
-- **Lobby** — malý widget „🔴 Live bets" s top 3 pooly odkazující na `/bets`.
-- **Profile** — přidat kartu **Balance** ($XXX) a rozšířit betting history o `payout` a `status`.
-- **Match settle:** když se v `match.tsx` označí `endedAt` (Finish match), zavolat `settle_match` RPC. Admin unconfirm/delete → případně také refund (řeší RPC).
+**4. Chat (`src/routes/chat.tsx`) – zobrazení avatarů**
+- Initial load: k `chat_messages` doplním `profiles!inner(avatar_url, nickname)` embed přes Supabase select (přes existující FK `chat_messages.user_id → auth.users` join na `profiles` funguje přes `profiles!user_id`; použiji explicit hint).
+- Pro realtime `INSERT` payloady (které nesou jen řádek `chat_messages`, bez joinu) budu držet malý in-memory `Map<user_id, avatar_url>` naplněný z initial fetch a doplňovaný lazy dotazem, když přijde zpráva od dosud neznámého uživatele.
+- Vedle jména se v bublině zobrazí kulatý avatar (fallback = iniciála přezdívky v neonovém kroužku, styl sladěný se stávajícím cyber vzhledem).
 
-## Edge cases
+**5. Header (`src/routes/__root.tsx`) – malý avatar u přihlášeného uživatele**
+- V `AuthNav` (kde je nickname/balance) přidat 24 px avatar vedle nicknamu; fallback iniciála. Bez avataru nic nerozbije.
 
-- Zápas smazán adminem s locked bety → RPC `refund_all_bets` volané před delete (nebo trigger `before delete on matches`).
-- Owner nemůže sázet na svůj vlastní zápas? **Rozhodnutí:** povoleno (drží konzistenci s existujícím chováním), lze snadno zakázat později.
-- Balance == 0 → hráč vidí hlášku „Insolvent — no more bets" a nemůže otevřít formulář.
+## Poznámky k bezpečnosti
+- Bucket je *public read* jen pro obrázky avatarů — nic citlivého se tam nedostane.
+- Zápis je striktně scoped na `{auth.uid()}/…`, cizí uživatel nemůže přepsat cizí avatar.
+- Neukládám avatar do `chat_messages`, takže neexistuje cesta, jak by uživatel „podstrčil" chat zprávě cizí obrázek.
 
-## Otevřené otázky (defaultně jdu s tímto řešením, řekni pokud jinak)
+## Co zůstává beze změny
+- `AuthProvider`, existující RLS na `profiles`/`chat_messages`, seedy, jiné route.
+- Betting, teams, rankings nejsou dotčeny.
 
-- **Proporční split výher** vs. „winner takes all rovným dílem". Jdu s **proporčním**.
-- **Refund při < 2 sázkařích** vs. „stále výherce bere všechno". Jdu s **refundem** dle tvé věty.
-- **Vlastník smí sázet na svůj zápas** — necháno povolené.
+## Otevřené otázky
+Žádné — postupuji podle výše uvedeného. Pokud chceš jiný limit velikosti nebo povolit GIFy, řekni před schválením.
