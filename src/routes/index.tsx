@@ -146,16 +146,22 @@ function Lobby() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {SPORT_LIST.map((s) => {
             const active = hoveredSport === s.id;
+            const handleClick = () => {
+              const coarse = typeof window !== "undefined" && window.matchMedia?.("(hover: none)").matches;
+              if (coarse && hoveredSport !== s.id) {
+                setHoveredSport(s.id);
+                return;
+              }
+              start(s.id);
+            };
             return (
               <button
                 key={s.id}
-                onClick={() => start(s.id)}
+                onClick={handleClick}
                 onMouseEnter={() => setHoveredSport(s.id)}
                 onMouseLeave={() => setHoveredSport((prev) => (prev === s.id ? null : prev))}
                 onFocus={() => setHoveredSport(s.id)}
                 onBlur={() => setHoveredSport((prev) => (prev === s.id ? null : prev))}
-                onTouchStart={() => setHoveredSport(s.id)}
-                onTouchEnd={() => setTimeout(() => setHoveredSport((prev) => (prev === s.id ? null : prev)), 1200)}
                 className={`group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border p-5 text-left backdrop-blur transition hover:shadow-[0_0_0_1px_var(--color-primary),0_0_30px_-8px_var(--color-primary)] ${
                   active ? "border-primary bg-background/30" : "border-primary/25 bg-background/60 hover:border-primary"
                 }`}
@@ -165,7 +171,7 @@ function Lobby() {
                 <span className={`relative text-4xl transition ${active ? "drop-shadow-[0_0_12px_hsl(45_100%_60%/0.9)] scale-110" : ""}`}>{s.emoji}</span>
                 <span className={`relative font-display text-xl tracking-wider transition ${active ? "neon-text text-primary" : ""}`}>{s.name}</span>
                 <span className="relative mt-auto text-xs uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary">
-                  {user ? "Start match →" : "Sign in →"}
+                  {active ? (user ? "Tap again to start →" : "Tap again to sign in →") : (user ? "Start match →" : "Sign in →")}
                 </span>
               </button>
             );
