@@ -79,6 +79,39 @@
     0 0 20px color-mix(in oklab, var(--color-primary) 30%, transparent);
 }
 
+@keyframes avatar-pulse {
+  0%, 100% { box-shadow: 0 0 20px -4px var(--color-primary), 0 0 40px -10px var(--color-primary); transform: scale(1); }
+  50% { box-shadow: 0 0 32px 2px var(--color-primary), 0 0 70px -6px var(--color-primary); transform: scale(1.04); }
+}
+@keyframes avatar-spin-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes avatar-glitch {
+  0%, 100% { transform: translate(0,0); filter: hue-rotate(0deg); }
+  20% { transform: translate(-2px, 1px); filter: hue-rotate(25deg); }
+  40% { transform: translate(2px, -1px); filter: hue-rotate(-25deg); }
+  60% { transform: translate(-1px, -2px); filter: hue-rotate(15deg); }
+  80% { transform: translate(1px, 2px); filter: hue-rotate(-15deg); }
+}
+@keyframes avatar-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+@keyframes avatar-hue {
+  from { filter: hue-rotate(0deg) saturate(1.2); }
+  to { filter: hue-rotate(360deg) saturate(1.2); }
+}
+@keyframes avatar-ring-dash {
+  to { stroke-dashoffset: -200; }
+}
+
+.avatar-fx-pulse { animation: avatar-pulse 2.4s ease-in-out infinite; }
+.avatar-fx-spin  { animation: avatar-spin-ring 6s linear infinite; }
+.avatar-fx-glitch { animation: avatar-glitch 1.6s steps(6) infinite; }
+.avatar-fx-float { animation: avatar-float 3.2s ease-in-out infinite; }
+.avatar-fx-hue { animation: avatar-hue 5s linear infinite; }
+
 @keyframes scanline {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }

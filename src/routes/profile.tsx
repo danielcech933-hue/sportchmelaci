@@ -117,6 +117,11 @@ function Profile() {
     );
   }
 
+  const heroFx = useMemo(() => {
+    const fx = ["avatar-fx-pulse", "avatar-fx-spin", "avatar-fx-glitch", "avatar-fx-float", "avatar-fx-hue"];
+    return fx[Math.floor(Math.random() * fx.length)];
+  }, [user?.id]);
+
   return (
     <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
@@ -128,10 +133,17 @@ function Profile() {
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
             Player profile
           </div>
-          <h1 className="mt-2 truncate font-display text-3xl tracking-wider neon-text sm:text-7xl">
-            <span className="text-primary">{nickname ?? "PLAYER"}</span>
-          </h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Matches & betting history</p>
+          <div className="mt-2 flex items-center gap-4 sm:gap-6">
+            <div className={`shrink-0 rounded-full ${heroFx}`}>
+              <Avatar path={avatarPath} nickname={nickname} size={96} />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-3xl tracking-wider neon-text sm:text-7xl">
+                <span className="text-primary">{nickname ?? "PLAYER"}</span>
+              </h1>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Matches & betting history</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -288,8 +300,8 @@ function AvatarSection({
       setError("Only PNG, JPEG or WebP.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Max size 2 MB.");
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Max size 20 MB.");
       return;
     }
     setBusy(true);
@@ -343,7 +355,7 @@ function AvatarSection({
         <Avatar path={avatarPath} nickname={nickname} size={72} />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">// Avatar</p>
-          <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG or WebP · max 2 MB. Visible on your profile and in chat.</p>
+          <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG or WebP · max 20 MB. Visible on your profile and in chat.</p>
           {error && <p className="mt-1 text-xs text-danger">{error}</p>}
         </div>
         <div className="flex items-center gap-2">
