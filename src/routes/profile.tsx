@@ -16,7 +16,21 @@ export const Route = createFileRoute("/profile")({
   component: Profile,
 });
 
-type BetRow = Bet & { matchId: string; match: Match };
+type BetStatus = "won" | "lost" | "open";
+type BetRow = Bet & { matchId: string; match: Match; status: BetStatus };
+
+function winnerSideOf(m: Match): "a" | "b" | null {
+  if (!m.endedAt) return null;
+  const cfg = SPORTS[m.sport];
+  if (cfg.hasSets && m.sets.length > 0) {
+    const a = m.sets.filter((s) => s.a > s.b).length;
+    const b = m.sets.filter((s) => s.b > s.a).length;
+    if (a === b) return null;
+    return a > b ? "a" : "b";
+  }
+  if (m.scoreA === m.scoreB) return null;
+  return m.scoreA > m.scoreB ? "a" : "b";
+}
 
 function Profile() {
   const { user, nickname, loading: authLoading } = useAuth();
@@ -40,9 +54,11 @@ function Profile() {
     if (!nickname) return [];
     const rows: BetRow[] = [];
     for (const m of matches) {
+      const w = winnerSideOf(m);
       for (const b of m.bets ?? []) {
         if (b.bettor?.toLowerCase() === nickname.toLowerCase()) {
-          rows.push({ ...b, matchId: m.id, match: m });
+          const status: BetStatus = w ? (b.pick === w ? "won" : "lost") : "open";
+          rows.push({ ...b, matchId: m.id, match: m, status });
         }
       }
     }
@@ -50,17 +66,6 @@ function Profile() {
   }, [matches, nickname]);
 
   const stats = useMemo(() => {
-    let wins = 0, losses = 0;
-    for (const m of myMatches) {
-      if (!m.endedAt) continue;
-      const cfg = SPORTS[m.sport];
-      const setsA = m.sets.filter((s) => s.a > s.b).length;
-      const setsB = m.sets.filter((s) => s.b > s.a).length;
-      const aWon = cfg.hasSets && m.sets.length > 0 ? setsA > setsB : m.scoreA > m.scoreB;
-      const bWon = cfg.hasSets && m.sets.length > 0 ? setsB > setsA : m.scoreB > m.scoreA;
-      if (aWon || bWon) { /* counted below */ }
-      // Owner "wins" if their side... we don't track which side is theirs; skip W/L
-    }
     let betWon = 0, betLost = 0, betOpen = 0, moneyNet = 0;
     for (const b of myBets) {
       if (b.status === "won") { betWon++; if (b.amount) moneyNet += b.amount; }
@@ -158,16 +163,16 @@ function Profile() {
           </div>
         ) : (
           <ul className="mt-4 grid gap-3">
-            {myBets.map((b, i) => {
+            {myBets.map((b) => {
               const m = b.match;
               const cfg = SPORTS[m.sport];
-              const pickTeam = b.pick === "a" ? m.teamA : b.pick === "b" ? m.teamB : "Draw";
+              const pickTeam = b.pick === "a" ? m.teamA : m.teamB;
               const tone =
                 b.status === "won" ? "text-accent" :
                 b.status === "lost" ? "text-destructive" :
                 "text-muted-foreground";
               return (
-                <li key={`${b.matchId}-${i}`} className="panel p-4">
+                <li key={b.id} className="panel p-4">
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -182,7 +187,7 @@ function Profile() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs uppercase tracking-widest ${tone}`}>{b.status ?? "open"}</span>
+                      <span className={`text-xs uppercase tracking-widest ${tone}`}>{b.status}</span>
                       <Link
                         to="/match"
                         search={{ id: m.id }}
