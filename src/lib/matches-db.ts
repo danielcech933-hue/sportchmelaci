@@ -121,7 +121,7 @@ export async function removeBetFromMatch(matchId: string, betId: string): Promis
     .maybeSingle();
   if (fetchErr) throw fetchErr;
   if (!data) return;
-  const bets = ((data.bets as Bet[]) ?? []).filter((b) => b.id !== betId);
+  const bets = (((data.bets as unknown) as Bet[]) ?? []).filter((b) => b.id !== betId);
   const { error } = await supabase.from("matches").update({ bets: bets as unknown as never }).eq("id", matchId);
   if (error) throw error;
 }
