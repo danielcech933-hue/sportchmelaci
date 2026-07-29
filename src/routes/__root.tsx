@@ -113,27 +113,117 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen">
-          <header className="border-b border-border/60">
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4">
-              <Link to="/" className="flex shrink-0 items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full bg-primary shadow-[0_0_12px] shadow-primary" />
-                <span className="font-display text-xl tracking-widest sm:text-2xl">COURTSIDE</span>
-              </Link>
-              <nav className="-mx-3 order-3 flex w-full items-center gap-1 overflow-x-auto px-3 text-sm sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
-                <Link to="/" activeOptions={{ exact: true }} className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Lobby</Link>
-                <Link to="/schedule" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Schedule</Link>
-                <Link to="/teams" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Teams</Link>
-                <Link to="/rankings" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Scoreboard 🏆</Link>
-                <Link to="/history" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">History</Link>
-                <ProfileNavLink />
-              </nav>
-              <div className="shrink-0"><AuthNav /></div>
-            </div>
-          </header>
+          <SiteHeader />
           <Outlet />
         </div>
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+type NavItem = {
+  to: string;
+  label: string;
+  icon: ComponentType<{ className?: string; size?: number }>;
+  exact?: boolean;
+  admin?: boolean;
+  authOnly?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { to: "/", label: "Lobby", icon: Home, exact: true },
+  { to: "/schedule", label: "Schedule", icon: CalendarDays },
+  { to: "/teams", label: "Teams", icon: Users },
+  { to: "/rankings", label: "Scoreboard", icon: Trophy },
+  { to: "/history", label: "History", icon: HistoryIcon },
+  { to: "/profile", label: "Profile", icon: UserRound, authOnly: true },
+  { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
+];
+
+function matchesRoute(pathname: string, item: NavItem): boolean {
+  if (item.exact) return pathname === item.to;
+  return pathname === item.to || pathname.startsWith(item.to + "/");
+}
+
+function SiteHeader() {
+  const { user, isAdmin, loading } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const visible = NAV_ITEMS.filter((n) => {
+    if (n.admin) return !!user && isAdmin;
+    if (n.authOnly) return !!user;
+    return true;
+  });
+
+  const current =
+    visible.find((n) => matchesRoute(pathname, n)) ??
+    (pathname.startsWith("/match")
+      ? { label: "Live match", icon: Radio, to: "/match", exact: false } as NavItem
+      : pathname.startsWith("/auth")
+      ? { label: "Sign in", icon: UserRound, to: "/auth", exact: false } as NavItem
+      : null);
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-primary/25 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+      <div className="relative mx-auto max-w-6xl px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-md border border-primary/40 bg-primary/10">
+              <Trophy className="h-3.5 w-3.5 text-primary" />
+              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
+            </span>
+            <span className="font-display text-lg tracking-widest neon-text sm:text-2xl">COURTSIDE</span>
+          </Link>
+
+          {current && (
+            <div className="hidden min-w-0 items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 md:flex">
+              <current.icon className="h-3.5 w-3.5 text-primary" />
+              <span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">
+                {current.label}
+              </span>
+            </div>
+          )}
+
+          <div className="shrink-0"><AuthNav /></div>
+        </div>
+
+        {current && (
+          <div className="mt-2 flex items-center gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1 md:hidden">
+            <current.icon className="h-3.5 w-3.5 text-primary" />
+            <span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">
+              // {current.label}
+            </span>
+          </div>
+        )}
+
+        {!loading && (
+          <nav className="-mx-3 mt-2 flex items-center gap-1 overflow-x-auto px-3 text-sm sm:mx-0 sm:gap-1.5 sm:px-0">
+            {visible.map((item) => {
+              const active = matchesRoute(pathname, item);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  activeOptions={item.exact ? { exact: true } : undefined}
+                  className={`group inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition sm:px-3 ${
+                    active
+                      ? "border-primary/60 bg-primary/10 text-foreground shadow-[0_0_18px_-8px_var(--color-primary)]"
+                      : `border-transparent text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground ${item.admin ? "text-accent" : ""}`
+                  }`}
+                >
+                  <Icon className={`h-3.5 w-3.5 ${active ? "text-primary" : "opacity-80 group-hover:text-primary"}`} />
+                  <span className="text-xs font-medium uppercase tracking-[0.15em] sm:text-[13px]">
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+      </div>
+    </header>
   );
 }
 
@@ -142,30 +232,24 @@ function AuthNav() {
   if (loading) return null;
   if (!user) {
     return (
-      <Link to="/auth" className="ml-2 rounded-md bg-primary px-3 py-2 text-primary-foreground">Sign in</Link>
+      <Link to="/auth" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[0_0_16px_-4px_hsl(45_100%_60%/0.7)] sm:text-sm">
+        Sign in
+      </Link>
     );
   }
   return (
-    <div className="ml-2 flex items-center gap-2">
-      <span className="hidden text-xs text-muted-foreground sm:inline">
-        {nickname ? <>as <span className="text-primary">{nickname}</span></> : null}
-      </span>
-      <button onClick={() => signOut()} className="rounded-md border border-border px-3 py-2 text-muted-foreground hover:text-foreground">
+    <div className="flex items-center gap-2">
+      {nickname && (
+        <span className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:inline">
+          as <span className="text-primary neon-text">{nickname}</span>
+        </span>
+      )}
+      <button
+        onClick={() => signOut()}
+        className="rounded-md border border-primary/25 px-2.5 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:text-sm"
+      >
         Sign out
       </button>
     </div>
-  );
-}
-
-function ProfileNavLink() {
-  const { user, isAdmin, loading } = useAuth();
-  if (loading || !user) return null;
-  return (
-    <>
-      <Link to="/profile" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Profile</Link>
-      {isAdmin && (
-        <Link to="/admin" className="shrink-0 rounded-md px-2.5 py-2 text-accent hover:text-foreground [&.active]:text-foreground sm:px-3">Admin</Link>
-      )}
-    </>
   );
 }
