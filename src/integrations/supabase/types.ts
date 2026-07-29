@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_nickname: string | null
+          created_at: string
+          details: Json
+          entity_id: string | null
+          entity_type: string
+          id: string
+          match_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_nickname?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          match_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_nickname?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          match_id?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -226,6 +262,16 @@ export type Database = {
       }
       settle_match: { Args: { _match_id: string }; Returns: undefined }
       withdraw_bet: { Args: { _match_id: string }; Returns: Json }
+      write_audit: {
+        Args: {
+          _action: string
+          _details: Json
+          _entity_id: string
+          _entity_type: string
+          _match_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
