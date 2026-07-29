@@ -5,6 +5,18 @@ import { fetchAllMatches, createMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import heroImg from "@/assets/lobby-hero.jpg";
 import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
+import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
+import volleyballLegendsAsset from "@/assets/volleyball-legends.png.asset.json";
+import footballLegendsAsset from "@/assets/football-legends.png.asset.json";
+import padelLegendsAsset from "@/assets/padel-legends.png.asset.json";
+
+const SPORT_BG: Record<string, string> = {
+  tennis: tennisLegendsAsset.url,
+  volleyball: volleyballLegendsAsset.url,
+  nohejball: nohejbalLegendsAsset.url,
+  football: footballLegendsAsset.url,
+  padel: padelLegendsAsset.url,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
