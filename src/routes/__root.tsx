@@ -111,6 +111,7 @@ function RootComponent() {
               <nav className="flex items-center gap-1 text-sm">
                 <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Lobby</Link>
                 <Link to="/history" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">History</Link>
+                <ProfileNavLink />
                 <AuthNav />
               </nav>
             </div>
@@ -139,5 +140,13 @@ function AuthNav() {
         Sign out
       </button>
     </div>
+  );
+}
+
+function ProfileNavLink() {
+  const { user, loading } = useAuth();
+  if (loading || !user) return null;
+  return (
+    <Link to="/profile" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Profile</Link>
   );
 }
