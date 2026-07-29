@@ -1,12 +1,14 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORT_LIST, SPORTS, loadMatches, newMatch, upsertMatch, type Match } from "@/lib/matches";
+import { SPORT_LIST, SPORTS, type Match } from "@/lib/matches";
+import { fetchAllMatches, createMatch } from "@/lib/matches-db";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Courtside — Pick a Sport" },
-      { name: "description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
+      { name: "description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel. Save every match under your nickname." },
       { property: "og:title", content: "Courtside — Pick a Sport" },
       { property: "og:description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
     ],
@@ -16,16 +18,24 @@ export const Route = createFileRoute("/")({
 
 function Lobby() {
   const navigate = useNavigate();
+  const { user, nickname, loading } = useAuth();
   const [recent, setRecent] = useState<Match[]>([]);
 
   useEffect(() => {
-    setRecent(loadMatches().slice(0, 3));
-  }, []);
+    if (!user) { setRecent([]); return; }
+    fetchAllMatches().then((all) => setRecent(all.slice(0, 6))).catch(() => setRecent([]));
+  }, [user]);
 
-  function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
-    const m = newMatch(sportId);
-    upsertMatch(m);
-    navigate({ to: "/match", search: { id: m.id } });
+  async function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
+    if (!user) { navigate({ to: "/auth" }); return; }
+    const cfg = SPORTS[sportId];
+    const id = await createMatch({
+      ownerId: user.id,
+      sport: sportId,
+      teamA: cfg.defaultTeams[0],
+      teamB: cfg.defaultTeams[1],
+    });
+    navigate({ to: "/match", search: { id } });
   }
 
   return (
@@ -34,8 +44,16 @@ function Lobby() {
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">Ready · Set · Play</p>
         <h1 className="mt-2 font-display text-5xl md:text-6xl">Your live scoreboard.</h1>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          Pick a sport and start scoring. Every match is saved to your history — right here on this device.
+          Pick a sport and start scoring. Every match is saved under your nickname so friends can see who won.
         </p>
+        {!loading && !user && (
+          <Link to="/auth" className="mt-5 inline-block rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+            Sign in to start a match →
+          </Link>
+        )}
+        {user && nickname && (
+          <p className="mt-4 text-sm text-muted-foreground">Playing as <span className="font-mono text-primary">{nickname}</span>.</p>
+        )}
       </section>
 
       <section>
@@ -49,7 +67,9 @@ function Lobby() {
             >
               <span className="text-4xl">{s.emoji}</span>
               <span className="font-display text-xl tracking-wider">{s.name}</span>
-              <span className="mt-auto text-xs text-muted-foreground group-hover:text-primary">Start match →</span>
+              <span className="mt-auto text-xs text-muted-foreground group-hover:text-primary">
+                {user ? "Start match →" : "Sign in to start →"}
+              </span>
             </button>
           ))}
         </div>
@@ -74,7 +94,7 @@ function Lobby() {
                   <Link to="/match" search={{ id: m.id }} className="panel block p-4 hover:border-primary">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{cfg.emoji} {cfg.name}</span>
-                      <span>{new Date(m.startedAt).toLocaleDateString()}</span>
+                      <span>by <span className="text-primary">{m.ownerNickname}</span></span>
                     </div>
                     <div className="mt-3 flex items-center justify-between">
                       <span className="truncate pr-2">{m.teamA}</span>

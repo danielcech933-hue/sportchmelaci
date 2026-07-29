@@ -1,52 +1,85 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORTS, loadMatches, deleteMatch, type Match } from "@/lib/matches";
+import { SPORTS, type Match } from "@/lib/matches";
+import { fetchAllMatches, removeMatch } from "@/lib/matches-db";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
       { title: "Match History — Courtside" },
-      { name: "description", content: "All the matches you've scored, saved on this device." },
+      { name: "description", content: "Every scored match, saved under each player's nickname." },
       { property: "og:title", content: "Match History — Courtside" },
-      { property: "og:description", content: "All the matches you've scored." },
+      { property: "og:description", content: "All matches, by every player." },
     ],
   }),
   component: History,
 });
 
 function History() {
+  const { user } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
+  const [mineOnly, setMineOnly] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { setMatches(loadMatches()); }, []);
-
-  function remove(id: string) {
-    if (!confirm("Delete this match?")) return;
-    deleteMatch(id);
-    setMatches(loadMatches());
+  async function reload() {
+    setLoading(true);
+    try { setMatches(await fetchAllMatches()); } finally { setLoading(false); }
   }
+
+  useEffect(() => { reload(); }, [user]);
+
+  async function remove(id: string) {
+    if (!confirm("Delete this match?")) return;
+    await removeMatch(id);
+    reload();
+  }
+
+  const visible = mineOnly && user ? matches.filter((m) => m.ownerId === user.id) : matches;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="font-display text-4xl md:text-5xl">Match History</h1>
-      <p className="mt-2 text-muted-foreground">Saved locally on this device.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl md:text-5xl">Match History</h1>
+          <p className="mt-2 text-muted-foreground">Every match, saved under each player's nickname.</p>
+        </div>
+        {user && (
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} />
+            My matches only
+          </label>
+        )}
+      </div>
 
-      {matches.length === 0 ? (
+      {!user && (
+        <div className="panel mt-6 p-6 text-center text-sm text-muted-foreground">
+          <Link to="/auth" className="text-primary hover:underline">Sign in</Link> to see and post matches.
+        </div>
+      )}
+
+      {user && loading ? (
+        <p className="mt-8 text-sm text-muted-foreground">Loading…</p>
+      ) : user && visible.length === 0 ? (
         <div className="panel mt-8 p-12 text-center">
           <p className="text-muted-foreground">No matches yet.</p>
           <Link to="/" className="mt-4 inline-block text-primary hover:underline">Start your first match →</Link>
         </div>
-      ) : (
+      ) : user && (
         <ul className="mt-8 grid gap-3">
-          {matches.map((m) => {
+          {visible.map((m) => {
             const cfg = SPORTS[m.sport];
             const setsA = m.sets.filter((s) => s.a > s.b).length;
             const setsB = m.sets.filter((s) => s.b > s.a).length;
+            const isOwner = m.ownerId === user.id;
             return (
               <li key={m.id} className="panel p-4">
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <span>{cfg.emoji} {cfg.name}</span>
+                      <span>·</span>
+                      <span>by <span className="text-primary">{m.ownerNickname}</span></span>
                       <span>·</span>
                       <span>{new Date(m.startedAt).toLocaleString()}</span>
                       {m.endedAt && <span className="rounded bg-accent/20 px-2 py-0.5 text-accent">Final</span>}
@@ -70,14 +103,16 @@ function History() {
                       search={{ id: m.id }}
                       className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
                     >
-                      {m.endedAt ? "View" : "Resume"}
+                      {isOwner ? (m.endedAt ? "View" : "Resume") : "View"}
                     </Link>
-                    <button
-                      onClick={() => remove(m.id)}
-                      className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                      Delete
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => remove(m.id)}
+                        className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </li>

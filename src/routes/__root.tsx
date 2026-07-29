@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider, useAuth } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -99,21 +100,44 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen">
-        <header className="border-b border-border/60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-            <Link to="/" className="flex items-center gap-2">
-              <span className="inline-block h-3 w-3 rounded-full bg-primary shadow-[0_0_12px] shadow-primary" />
-              <span className="font-display text-2xl tracking-widest">COURTSIDE</span>
-            </Link>
-            <nav className="flex gap-1 text-sm">
-              <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Lobby</Link>
-              <Link to="/history" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">History</Link>
-            </nav>
-          </div>
-        </header>
-        <Outlet />
-      </div>
+      <AuthProvider>
+        <div className="min-h-screen">
+          <header className="border-b border-border/60">
+            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+              <Link to="/" className="flex items-center gap-2">
+                <span className="inline-block h-3 w-3 rounded-full bg-primary shadow-[0_0_12px] shadow-primary" />
+                <span className="font-display text-2xl tracking-widest">COURTSIDE</span>
+              </Link>
+              <nav className="flex items-center gap-1 text-sm">
+                <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Lobby</Link>
+                <Link to="/history" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">History</Link>
+                <AuthNav />
+              </nav>
+            </div>
+          </header>
+          <Outlet />
+        </div>
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AuthNav() {
+  const { user, nickname, signOut, loading } = useAuth();
+  if (loading) return null;
+  if (!user) {
+    return (
+      <Link to="/auth" className="ml-2 rounded-md bg-primary px-3 py-2 text-primary-foreground">Sign in</Link>
+    );
+  }
+  return (
+    <div className="ml-2 flex items-center gap-2">
+      <span className="hidden text-xs text-muted-foreground sm:inline">
+        {nickname ? <>as <span className="text-primary">{nickname}</span></> : null}
+      </span>
+      <button onClick={() => signOut()} className="rounded-md border border-border px-3 py-2 text-muted-foreground hover:text-foreground">
+        Sign out
+      </button>
+    </div>
   );
 }
