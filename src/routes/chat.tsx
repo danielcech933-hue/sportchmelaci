@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { MessagesSquare, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { Avatar } from "@/lib/avatars";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -27,11 +28,28 @@ type ChatRow = {
 function ChatPage() {
   const { user, nickname, isAdmin, loading } = useAuth();
   const [messages, setMessages] = useState<ChatRow[]>([]);
+  const [avatars, setAvatars] = useState<Record<string, string | null>>({});
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const loadAvatarsFor = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,avatar_path")
+      .in("id", ids);
+    if (!data) return;
+    setAvatars((prev) => {
+      const next = { ...prev };
+      for (const p of data as Array<{ id: string; avatar_path: string | null }>) {
+        next[p.id] = p.avatar_path;
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +61,10 @@ function ChatPage() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) { setError(error.message); return; }
-        setMessages((data ?? []) as ChatRow[]);
+        const rows = (data ?? []) as ChatRow[];
+        setMessages(rows);
+        const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+        loadAvatarsFor(ids);
       });
 
     const channel = supabase
@@ -52,10 +73,12 @@ function ChatPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages" },
         (payload) => {
-          setMessages((prev) => {
-            const row = payload.new as ChatRow;
-            if (prev.some((m) => m.id === row.id)) return prev;
-            return [...prev, row];
+          const row = payload.new as ChatRow;
+          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+          setAvatars((prev) => {
+            if (row.user_id in prev) return prev;
+            loadAvatarsFor([row.user_id]);
+            return prev;
           });
         }
       )
@@ -73,7 +96,7 @@ function ChatPage() {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [loadAvatarsFor]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -131,8 +154,10 @@ function ChatPage() {
             const mine = user?.id === m.user_id;
             const canDelete = mine || isAdmin;
             const when = new Date(m.created_at);
+            const avatarPath = avatars[m.user_id] ?? null;
             return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
+                {!mine && <Avatar path={avatarPath} nickname={m.nickname} size={32} />}
                 <div className={`group max-w-[85%] rounded-xl border px-3 py-2 ${
                   mine
                     ? "border-primary/50 bg-primary/15 shadow-[0_0_20px_-10px_var(--color-primary)]"
@@ -155,6 +180,7 @@ function ChatPage() {
                   </div>
                   <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground">{m.content}</p>
                 </div>
+                {mine && <Avatar path={avatarPath} nickname={m.nickname} size={32} />}
               </div>
             );
           })}

@@ -7,6 +7,7 @@ interface AuthState {
   user: User | null;
   nickname: string | null;
   balance: number;
+  avatarPath: string | null;
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -19,17 +20,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0);
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(uid: string | undefined) {
-    if (!uid) { setNickname(null); setBalance(0); setIsAdmin(false); return; }
+    if (!uid) { setNickname(null); setBalance(0); setAvatarPath(null); setIsAdmin(false); return; }
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("nickname,balance").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("nickname,balance,avatar_path").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
-    setNickname(prof?.nickname ?? null);
-    setBalance(Number((prof as { balance?: number } | null)?.balance ?? 0));
+    const p = prof as { nickname?: string; balance?: number; avatar_path?: string | null } | null;
+    setNickname(p?.nickname ?? null);
+    setBalance(Number(p?.balance ?? 0));
+    setAvatarPath(p?.avatar_path ?? null);
     setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
   }
 
@@ -50,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     nickname,
     balance,
+    avatarPath,
     isAdmin,
     loading,
     signOut: async () => { await supabase.auth.signOut(); },
