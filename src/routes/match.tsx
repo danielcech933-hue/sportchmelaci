@@ -22,7 +22,7 @@ export const Route = createFileRoute("/match")({
 function MatchPage() {
   const { id } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [match, setMatch] = useState<Match | null>(null);
   const [notFound, setNotFound] = useState(false);
   const dirty = useRef(false);
@@ -121,7 +121,7 @@ function MatchPage() {
           />
         </div>
 
-        <Lineup teamA={match.teamA} teamB={match.teamB} />
+        <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
 
 
         {cfg.hasSets && (
@@ -303,16 +303,38 @@ function splitPlayers(name: string): string[] {
   return name.split(/\s*(?:&|\/|,|\+| vs\.? | and )\s*/i).map((s) => s.trim()).filter(Boolean);
 }
 
-function Lineup({ teamA, teamB }: { teamA: string; teamB: string }) {
+function Lineup({ teamA, teamB, canEdit, onChange }: { teamA: string; teamB: string; canEdit: boolean; onChange: (a: string, b: string) => void }) {
   const a = splitPlayers(teamA);
   const b = splitPlayers(teamB);
   const total = a.length + b.length;
-  if (total <= 2) return null;
+  if (total <= 2 && !canEdit) return null;
+
+  const join = (arr: string[]) => arr.filter((s) => s.trim()).join(" & ");
+  const setSide = (side: "a" | "b", players: string[]) => {
+    const joined = join(players);
+    if (side === "a") onChange(joined || teamA, teamB);
+    else onChange(teamA, joined || teamB);
+  };
+  const updatePlayer = (side: "a" | "b", i: number, val: string) => {
+    const src = side === "a" ? [...a] : [...b];
+    src[i] = val;
+    setSide(side, src);
+  };
+  const removePlayer = (side: "a" | "b", i: number) => {
+    const src = side === "a" ? [...a] : [...b];
+    src.splice(i, 1);
+    setSide(side, src.length ? src : [""]);
+  };
+  const addPlayer = (side: "a" | "b") => {
+    const src = side === "a" ? [...a, ""] : [...b, ""];
+    setSide(side, src);
+  };
+
   return (
     <div className="mt-6 grid grid-cols-2 gap-3 md:gap-8">
       {[
-        { title: teamA, players: a, tone: "primary" as const },
-        { title: teamB, players: b, tone: "accent" as const },
+        { players: a, key: "a" as const },
+        { players: b, key: "b" as const },
       ].map((side, idx) => (
         <div key={idx} className="rounded-2xl border border-border/60 bg-background/40 p-3 md:p-4">
           <div className="flex items-center justify-between">
@@ -323,12 +345,28 @@ function Lineup({ teamA, teamB }: { teamA: string; teamB: string }) {
           </div>
           <ul className="mt-2 space-y-1">
             {side.players.map((p, i) => (
-              <li key={`${p}-${i}`} className="flex items-center gap-2 text-sm">
+              <li key={i} className="flex items-center gap-2 text-sm">
                 <span className={`inline-block h-2 w-2 rounded-full ${idx === 0 ? "bg-primary" : "bg-accent"}`} />
-                <span className="truncate">{p}</span>
+                {canEdit ? (
+                  <>
+                    <input
+                      value={p}
+                      onChange={(e) => updatePlayer(side.key, i, e.target.value)}
+                      className="flex-1 rounded border border-border bg-background/60 px-2 py-1 text-sm outline-none focus:border-primary"
+                    />
+                    <button onClick={() => removePlayer(side.key, i)} className="text-muted-foreground hover:text-foreground" aria-label="Remove player">×</button>
+                  </>
+                ) : (
+                  <span className="truncate">{p}</span>
+                )}
               </li>
             ))}
           </ul>
+          {canEdit && (
+            <button onClick={() => addPlayer(side.key)} className="mt-2 text-xs text-primary hover:underline">
+              + Add player
+            </button>
+          )}
         </div>
       ))}
     </div>
