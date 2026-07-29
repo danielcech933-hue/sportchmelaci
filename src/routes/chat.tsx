@@ -28,11 +28,28 @@ type ChatRow = {
 function ChatPage() {
   const { user, nickname, isAdmin, loading } = useAuth();
   const [messages, setMessages] = useState<ChatRow[]>([]);
+  const [avatars, setAvatars] = useState<Record<string, string | null>>({});
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const loadAvatarsFor = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,avatar_path")
+      .in("id", ids);
+    if (!data) return;
+    setAvatars((prev) => {
+      const next = { ...prev };
+      for (const p of data as Array<{ id: string; avatar_path: string | null }>) {
+        next[p.id] = p.avatar_path;
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +61,10 @@ function ChatPage() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) { setError(error.message); return; }
-        setMessages((data ?? []) as ChatRow[]);
+        const rows = (data ?? []) as ChatRow[];
+        setMessages(rows);
+        const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+        loadAvatarsFor(ids);
       });
 
     const channel = supabase
@@ -53,10 +73,12 @@ function ChatPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages" },
         (payload) => {
-          setMessages((prev) => {
-            const row = payload.new as ChatRow;
-            if (prev.some((m) => m.id === row.id)) return prev;
-            return [...prev, row];
+          const row = payload.new as ChatRow;
+          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+          setAvatars((prev) => {
+            if (row.user_id in prev) return prev;
+            loadAvatarsFor([row.user_id]);
+            return prev;
           });
         }
       )
@@ -74,7 +96,7 @@ function ChatPage() {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [loadAvatarsFor]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
