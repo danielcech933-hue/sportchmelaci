@@ -102,6 +102,11 @@ function Profile() {
     return { total: myMatches.length, victories, betWon, betLost, betOpen, moneyNet };
   }, [myMatches, myBets, nickname]);
 
+  const heroFx = useMemo(() => {
+    const fx = ["avatar-fx-pulse", "avatar-fx-spin", "avatar-fx-glitch", "avatar-fx-float", "avatar-fx-hue"];
+    return fx[Math.floor(Math.random() * fx.length)];
+  }, [user?.id]);
+
   if (authLoading) return <main className="mx-auto max-w-6xl px-4 py-10 text-sm text-muted-foreground">Loading…</main>;
 
   if (!user) {
@@ -116,11 +121,6 @@ function Profile() {
       </main>
     );
   }
-
-  const heroFx = useMemo(() => {
-    const fx = ["avatar-fx-pulse", "avatar-fx-spin", "avatar-fx-glitch", "avatar-fx-float", "avatar-fx-hue"];
-    return fx[Math.floor(Math.random() * fx.length)];
-  }, [user?.id]);
 
   return (
     <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
