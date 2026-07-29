@@ -106,7 +106,7 @@ function Profile() {
 
       <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="Matches" value={stats.total} />
-        <Stat label="Finished" value={stats.finished} />
+        <Stat label="Match victory" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
         <Stat label="Bets won" value={stats.betWon} />
         <Stat label="Bets lost" value={stats.betLost} />
         <Stat label="Net $" value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)} tone={stats.moneyNet >= 0 ? "good" : "bad"} />
