@@ -1,22 +1,33 @@
-## Úprava avataru na profilu
+## Plan: Full-screen hover backgrounds pro každý sport
 
-**Cíl:** Profilovka bude jen v hero rámečku nahoře. Sekce pod hero se zjednoduší jen na upload/replace/remove tlačítka (bez druhého náhledu avataru). Lightbox zvětšení nebude přerůstat obrazovku.
+### Cíl
+Když uživatel najede myší na dlaždici sportu (Nohejball, Volleyball, Tennis, Football, Padel), přes celou obrazovku se v pozadí objeví tématický obrázek s efektem (fade-in, zoom, neonový glow).
 
-### Změny
+### Kroky
 
-1. **`src/routes/profile.tsx` – `AvatarSection`**
-   - Odstranit druhý `<Avatar />` z této sekce (aktuálně size=72). Zůstane jen popisek + tlačítka Upload/Replace/Remove.
-   - Hero avatar (size=96) nahoře zůstává jediným místem, kde je profilovka vidět.
+1. **Vygenerovat 4 nové obrázky** ve stylu stávající nohejbalové koláže (legendární postavy hrající daný sport):
+   - `src/assets/tennis-legends.png` — postavy na tenisovém kurtu
+   - `src/assets/volleyball-legends.png` — postavy na volejbalové plovárně/pláži
+   - `src/assets/football-legends.png` — postavy na fotbalovém hřišti
+   - `src/assets/padel-legends.png` — postavy na padelovém kurtu
+   
+   Každý se stejnou "legendary sunny outdoor" atmosférou jako nohejbal. Uloženo přes `lovable-assets` jako `.asset.json` pointery.
 
-2. **`src/routes/profile.tsx` – hero avatar**
-   - Ponechat náhodný efekt (`heroFx`) a `<Avatar path={avatarPath} size={96} />`. Kliknutím se otevře lightbox (už funguje z `avatars.tsx`).
+2. **Upravit `src/routes/index.tsx`:**
+   - Přidat mapu `sportBackgrounds` (id → asset URL).
+   - Odstranit stávající inline nohejbal background z tlačítka (bude nahrazen novým systémem).
+   - Přidat React state `hoveredSport: string | null`.
+   - Na `<button>` každého sportu přidat `onMouseEnter` / `onMouseLeave` (+ `onFocus`/`onBlur` pro klávesnici a `onTouchStart` pro mobil).
+   - Nad `<main>` (nebo do fixed layeru pod obsahem) přidat `<div>` s `position: fixed inset-0`, který renderuje background aktuálně hoveredovaného sportu:
+     - `opacity-0` → `opacity-80` s `transition-opacity duration-500`
+     - `scale-110` s pomalým "ken-burns" pohybem
+     - Přes obrázek dark gradient overlay + grid/scanline vrstva (reuse existujících tříd), aby zůstala čitelnost UI a futuristická estetika
+     - `pointer-events-none z-0` (obsah `main` dostane `relative z-10`)
+   - Zachovat existující nohejbal in-tile efekt? → **Nahradit** za jednotný fullscreen systém pro všech 5 sportů (konzistence).
 
-3. **`src/lib/avatars.tsx` – `AvatarLightbox`**
-   - Aktuální styl `max-h-[85vh] max-w-[85vw]` + `object-contain` na `<img>`, ale wrapper `<div className="relative">` nemá omezení, takže dlouhá jména nebo velký obrázek můžou přerůst. Přidat `max-h-[90vh] max-w-[92vw] flex flex-col items-center` na wrapper a `object-contain` už je OK.
-   - Snížit `max-h` obrázku na `min(85vh, 640px)` chování ne, jen zaručit, že se vejde: použít `max-h-[80vh] max-w-[90vw]` a wrapper `max-h-[90vh]`, aby popisek + křížek nepřerostly viewport.
+3. **Ověření**: build check + screenshot Playwrightem s hover na jednu dlaždici pro potvrzení fullscreen efektu.
 
-### Ostatní obrázky (beze změny)
-- Hero bannery na jiných stránkách (`profile-hero.jpg` atd.) zůstávají.
-- Avatary v chatu a hlavičce beze změny.
-
-Žádné DB ani backend změny.
+### Technické detaily
+- Obrázky generovány přes `imagegen--generate_image` (fast tier, 1536×1024) a nahrané přes `lovable-assets create` → `.asset.json`.
+- Fullscreen overlay je jeden persistentní `<div>` mimo grid tlačítek; přepíná se `backgroundImage` a `opacity` podle `hoveredSport`, aby přechody byly plynulé (fade-out starého + fade-in nového).
+- Bez změn business logiky, DB, ani jiných route.

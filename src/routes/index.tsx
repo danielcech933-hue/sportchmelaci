@@ -5,6 +5,18 @@ import { fetchAllMatches, createMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import heroImg from "@/assets/lobby-hero.jpg";
 import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
+import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
+import volleyballLegendsAsset from "@/assets/volleyball-legends.png.asset.json";
+import footballLegendsAsset from "@/assets/football-legends.png.asset.json";
+import padelLegendsAsset from "@/assets/padel-legends.png.asset.json";
+
+const SPORT_BG: Record<string, string> = {
+  tennis: tennisLegendsAsset.url,
+  volleyball: volleyballLegendsAsset.url,
+  nohejball: nohejbalLegendsAsset.url,
+  football: footballLegendsAsset.url,
+  padel: padelLegendsAsset.url,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +35,7 @@ function Lobby() {
   const { user, nickname, loading } = useAuth();
   const [recent, setRecent] = useState<Match[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
+  const [hoveredSport, setHoveredSport] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { setRecent([]); setUpcoming([]); return; }
@@ -48,6 +61,23 @@ function Lobby() {
   }
 
   return (
+    <>
+      {/* Fullscreen hover background for sport tiles */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        {Object.entries(SPORT_BG).map(([id, url]) => (
+          <img
+            key={id}
+            src={url}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover saturate-125 contrast-110 transition-all duration-700 ease-out ${
+              hoveredSport === id ? "opacity-60 scale-105" : "opacity-0 scale-110"
+            }`}
+          />
+        ))}
+        <div className={`absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/60 transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
+        <div className={`absolute inset-0 grid-bg transition-opacity duration-500 ${hoveredSport ? "opacity-40" : "opacity-0"}`} />
+        <div className={`absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.35),transparent_60%)] transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
+      </div>
     <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       {/* HERO */}
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
@@ -115,33 +145,24 @@ function Lobby() {
         <h2 className="mb-4 font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">CHOOSE SPORT</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {SPORT_LIST.map((s) => {
-            const isNohejbal = s.id === "nohejball";
+            const active = hoveredSport === s.id;
             return (
               <button
                 key={s.id}
                 onClick={() => start(s.id)}
+                onMouseEnter={() => setHoveredSport(s.id)}
+                onMouseLeave={() => setHoveredSport((prev) => (prev === s.id ? null : prev))}
+                onFocus={() => setHoveredSport(s.id)}
+                onBlur={() => setHoveredSport((prev) => (prev === s.id ? null : prev))}
+                onTouchStart={() => setHoveredSport(s.id)}
                 className={`group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border p-5 text-left backdrop-blur transition hover:shadow-[0_0_0_1px_var(--color-primary),0_0_30px_-8px_var(--color-primary)] ${
-                  isNohejbal
-                    ? "border-primary/40 bg-background/40 hover:border-primary"
-                    : "border-primary/25 bg-background/60 hover:border-primary"
+                  active ? "border-primary bg-background/30" : "border-primary/25 bg-background/60 hover:border-primary"
                 }`}
               >
-                {isNohejbal && (
-                  <>
-                    <img
-                      src={nohejbalLegendsAsset.url}
-                      alt=""
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-125 contrast-110 transition duration-500 group-hover:scale-105 group-hover:opacity-70"
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
-                    <div className="pointer-events-none absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.25),transparent_60%)]" />
-                  </>
-                )}
-                <div className={`absolute inset-0 grid-bg transition ${isNohejbal ? "opacity-25 group-hover:opacity-40" : "opacity-15 group-hover:opacity-30"}`} />
+                <div className={`absolute inset-0 grid-bg transition ${active ? "opacity-40" : "opacity-15 group-hover:opacity-30"}`} />
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-                <span className={`relative text-4xl ${isNohejbal ? "drop-shadow-[0_0_12px_hsl(45_100%_60%/0.7)]" : ""}`}>{s.emoji}</span>
-                <span className={`relative font-display text-xl tracking-wider ${isNohejbal ? "neon-text text-primary" : ""}`}>{s.name}</span>
+                <span className={`relative text-4xl transition ${active ? "drop-shadow-[0_0_12px_hsl(45_100%_60%/0.9)] scale-110" : ""}`}>{s.emoji}</span>
+                <span className={`relative font-display text-xl tracking-wider transition ${active ? "neon-text text-primary" : ""}`}>{s.name}</span>
                 <span className="relative mt-auto text-xs uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary">
                   {user ? "Start match →" : "Sign in →"}
                 </span>
@@ -191,5 +212,6 @@ function Lobby() {
         </section>
       )}
     </main>
+    </>
   );
 }
