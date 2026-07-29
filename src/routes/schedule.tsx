@@ -5,7 +5,7 @@ import { SPORTS, SPORT_LIST, type SportId, type Match } from "@/lib/matches";
 import { createMatch, fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { supabase } from "@/integrations/supabase/client";
-
+import heroImg from "@/assets/schedule-hero.jpg";
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
@@ -46,7 +46,6 @@ function SchedulePage() {
     setPlayersB((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[1]]));
   }, [sport]);
 
-
   useEffect(() => {
     if (!user) return;
     fetchAllTeams().then(setTeams).catch(() => {});
@@ -62,7 +61,6 @@ function SchedulePage() {
     const set = new Set<string>([...nicknames, ...teams.map((t) => t.name)]);
     return Array.from(set);
   }, [teams, nicknames]);
-
 
   if (loading) return null;
   if (!user) {
@@ -95,75 +93,96 @@ function SchedulePage() {
     finally { setBusy(false); }
   }
 
+  const chipBase = "rounded-md px-3 py-1.5 text-xs uppercase tracking-widest transition-all";
+  const chipOn = "bg-primary text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]";
+  const chipOff = "text-muted-foreground hover:text-foreground";
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-4xl">Schedule a match</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Plan ahead and share the fixture with your crew.</p>
-
-      <form onSubmit={submit} className="panel mt-6 space-y-4 p-5">
-        <div>
-          <label className="text-xs uppercase tracking-widest text-muted-foreground">Sport</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {SPORT_LIST.map((s) => (
-              <button
-                type="button"
-                key={s.id}
-                onClick={() => setSport(s.id)}
-                className={`rounded-md border px-3 py-2 text-sm ${sport === s.id ? "border-primary text-primary" : "border-border text-muted-foreground"}`}
-              >
-                {s.emoji} {s.name}
-              </button>
-            ))}
+    <main className="relative mx-auto max-w-3xl px-4 py-10">
+      <section className="relative overflow-hidden rounded-2xl neon-border scanline">
+        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-60 sm:h-60" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
+        <div className="absolute inset-0 flex flex-col justify-end p-6">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+            <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
+            Fixture control
           </div>
+          <h1 className="mt-2 font-display text-4xl tracking-wider neon-text sm:text-6xl">SCHEDULE <span className="text-primary">MATCH</span></h1>
+          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">// Plan ahead and share the fixture</p>
         </div>
+      </section>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={playerOptions} />
-          <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={playerOptions} />
-        </div>
+      <form onSubmit={submit} className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-5 backdrop-blur">
+        <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
+        <div className="relative space-y-5">
+          <div>
+            <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Sport</label>
+            <div className="mt-2 inline-flex flex-wrap gap-1 rounded-md border border-primary/30 bg-background/40 p-1 backdrop-blur">
+              {SPORT_LIST.map((s) => (
+                <button
+                  type="button"
+                  key={s.id}
+                  onClick={() => setSport(s.id)}
+                  className={`${chipBase} ${sport === s.id ? chipOn : chipOff}`}
+                >{s.emoji} {s.name}</button>
+              ))}
+            </div>
+          </div>
 
+          <div className="grid gap-3 md:grid-cols-2">
+            <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={playerOptions} />
+            <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={playerOptions} />
+          </div>
 
-        <div>
-          <label className="text-xs uppercase tracking-widest text-muted-foreground">Kick-off</label>
-          <input
-            type="datetime-local"
-            value={when}
-            onChange={(e) => setWhen(e.target.value)}
-            className="mt-2 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
+          <div>
+            <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Kick-off</label>
+            <input
+              type="datetime-local"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+              className="mt-2 w-full rounded-md border border-primary/30 bg-background/40 px-3 py-2 font-mono text-sm text-primary neon-text focus:border-primary focus:outline-none focus:shadow-[0_0_20px_-8px_var(--color-primary)]"
+            />
+          </div>
 
-        {err && <p className="text-sm text-destructive">{err}</p>}
+          {err && <p className="text-sm text-destructive">{err}</p>}
 
-        <div className="flex items-center justify-between">
-          <Link to="/teams" className="text-xs text-primary hover:underline">Manage teams →</Link>
-          <button disabled={busy} className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
-            Schedule match
-          </button>
+          <div className="flex items-center justify-between">
+            <Link to="/teams" className="text-xs uppercase tracking-[0.25em] text-primary hover:underline">// Manage teams →</Link>
+            <button disabled={busy} className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] disabled:opacity-50">
+              Schedule match
+            </button>
+          </div>
         </div>
       </form>
 
       <section className="mt-10">
-        <h2 className="font-display text-2xl tracking-wider text-muted-foreground">Upcoming</h2>
+        <h2 className="font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">UPCOMING</h2>
         <ul className="mt-3 space-y-2">
           {upcoming.map((m) => {
             const cfg = SPORTS[m.sport];
             return (
               <li key={m.id}>
-                <Link to="/match" search={{ id: m.id }} className="panel flex items-center justify-between p-4 hover:border-primary">
-                  <div>
+                <Link to="/match" search={{ id: m.id }} className="relative flex items-center justify-between overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary hover:shadow-[0_0_20px_-10px_var(--color-primary)]">
+                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                  <div className="relative">
                     <p className="text-xs text-muted-foreground">{cfg.emoji} {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span></p>
-                    <p className="mt-1 font-display text-lg">{m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}</p>
+                    <p className="mt-1 font-display text-lg tracking-wide">{m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}</p>
                   </div>
-                  <div className="text-right font-mono text-xs text-primary">
+                  <div className="relative text-right font-mono text-xs text-primary neon-text">
                     {m.scheduledAt ? new Date(m.scheduledAt).toLocaleString() : ""}
                   </div>
                 </Link>
               </li>
             );
           })}
-          {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming matches scheduled.</p>}
+          {upcoming.length === 0 && (
+            <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-background/40 px-4 py-8 text-center backdrop-blur">
+              <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+              <div className="relative font-display text-xl tracking-widest text-muted-foreground neon-text">NO FIXTURES</div>
+              <p className="relative mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">No upcoming matches scheduled</p>
+            </div>
+          )}
         </ul>
       </section>
     </main>
@@ -178,7 +197,7 @@ function PlayersInput({ label, players, onChange, options }: { label: string; pl
   return (
     <div>
       <div className="flex items-center justify-between">
-        <label className="text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
+        <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">{label}</label>
         <button type="button" onClick={add} className="text-xs text-primary hover:underline">+ Add player</button>
       </div>
       <div className="mt-2 space-y-2">
@@ -189,14 +208,14 @@ function PlayersInput({ label, players, onChange, options }: { label: string; pl
               value={p}
               onChange={(e) => update(i, e.target.value)}
               placeholder={i === 0 ? "Player or team name" : `Player ${i + 1}`}
-              className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+              className="w-full rounded-md border border-primary/30 bg-background/40 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:shadow-[0_0_20px_-8px_var(--color-primary)]"
               maxLength={60}
             />
             {players.length > 1 && (
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="rounded-md border border-border px-2 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
+                className="rounded-md border border-primary/25 px-2 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
                 aria-label="Remove player"
               >
                 ✕
@@ -211,4 +230,3 @@ function PlayersInput({ label, players, onChange, options }: { label: string; pl
     </div>
   );
 }
-

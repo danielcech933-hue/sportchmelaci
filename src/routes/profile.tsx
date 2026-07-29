@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SPORTS, type Match, type Bet } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import heroImg from "@/assets/profile-hero.jpg";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -86,8 +87,9 @@ function Profile() {
   if (!user) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="panel p-8 text-center">
-          <p className="text-muted-foreground">
+        <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
+          <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
+          <p className="relative text-muted-foreground">
             <Link to="/auth" className="text-primary hover:underline">Sign in</Link> to see your profile.
           </p>
         </div>
@@ -96,29 +98,41 @@ function Profile() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
-      <header>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Profile</p>
-        <h1 className="font-display text-4xl md:text-5xl">
-          <span className="text-primary">{nickname ?? "player"}</span>
-        </h1>
-      </header>
+    <main className="relative mx-auto max-w-6xl px-4 py-10">
+      <section className="relative overflow-hidden rounded-2xl neon-border scanline">
+        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-60 sm:h-64" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
+        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+            <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
+            Player profile
+          </div>
+          <h1 className="mt-2 font-display text-5xl tracking-wider neon-text sm:text-7xl">
+            <span className="text-primary">{nickname ?? "PLAYER"}</span>
+          </h1>
+          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">// Matches & betting history</p>
+        </div>
+      </section>
 
       <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="Matches" value={stats.total} />
-        <Stat label="Match victory" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
+        <Stat label="Victories" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
         <Stat label="Bets won" value={stats.betWon} />
         <Stat label="Bets lost" value={stats.betLost} />
         <Stat label="Net $" value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)} tone={stats.moneyNet >= 0 ? "good" : "bad"} />
       </section>
 
       <section className="mt-10">
-        <h2 className="font-display text-2xl">My matches</h2>
+        <h2 className="font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">MY MATCHES</h2>
         {loading ? (
           <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
         ) : myMatches.length === 0 ? (
-          <div className="panel mt-4 p-8 text-center text-sm text-muted-foreground">
-            No matches yet. <Link to="/" className="text-primary hover:underline">Start one →</Link>
+          <div className="relative mt-4 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
+            <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+            <p className="relative text-sm text-muted-foreground">
+              No matches yet. <Link to="/" className="text-primary hover:underline">Start one →</Link>
+            </p>
           </div>
         ) : (
           <ul className="mt-4 grid gap-3">
@@ -127,14 +141,15 @@ function Profile() {
               const setsA = m.sets.filter((s) => s.a > s.b).length;
               const setsB = m.sets.filter((s) => s.b > s.a).length;
               return (
-                <li key={m.id} className="panel p-4">
-                  <div className="flex flex-wrap items-center gap-4">
+                <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
+                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                  <div className="relative flex flex-wrap items-center gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span>{cfg.emoji} {cfg.name}</span>
                         <span>·</span>
                         <span>{new Date(m.startedAt).toLocaleString()}</span>
-                        {m.endedAt && <span className="rounded bg-accent/20 px-2 py-0.5 text-accent">Final</span>}
+                        {m.endedAt && <span className="rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">Final</span>}
                       </div>
                       <div className="mt-2 flex items-center gap-4">
                         <span className="min-w-0 flex-1 truncate">{m.teamA}</span>
@@ -147,7 +162,7 @@ function Profile() {
                     <Link
                       to="/match"
                       search={{ id: m.id }}
-                      className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+                      className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
                     >
                       {m.endedAt ? "View" : "Resume"}
                     </Link>
@@ -160,12 +175,13 @@ function Profile() {
       </section>
 
       <section className="mt-10">
-        <h2 className="font-display text-2xl">My bets</h2>
+        <h2 className="font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">MY BETS</h2>
         {loading ? (
           <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
         ) : myBets.length === 0 ? (
-          <div className="panel mt-4 p-8 text-center text-sm text-muted-foreground">
-            You haven't placed any bets yet.
+          <div className="relative mt-4 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
+            <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+            <p className="relative text-sm text-muted-foreground">You haven't placed any bets yet.</p>
           </div>
         ) : (
           <ul className="mt-4 grid gap-3">
@@ -174,12 +190,13 @@ function Profile() {
               const cfg = SPORTS[m.sport];
               const pickTeam = b.pick === "a" ? m.teamA : m.teamB;
               const tone =
-                b.status === "won" ? "text-accent" :
-                b.status === "lost" ? "text-destructive" :
-                "text-muted-foreground";
+                b.status === "won" ? "text-accent border-accent/40 bg-accent/10" :
+                b.status === "lost" ? "text-destructive border-destructive/40 bg-destructive/10" :
+                "text-muted-foreground border-primary/25 bg-background/40";
               return (
-                <li key={b.id} className="panel p-4">
-                  <div className="flex flex-wrap items-center gap-4">
+                <li key={b.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
+                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                  <div className="relative flex flex-wrap items-center gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span>{cfg.emoji} {m.teamA} vs {m.teamB}</span>
@@ -193,11 +210,11 @@ function Profile() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs uppercase tracking-widest ${tone}`}>{b.status}</span>
+                      <span className={`rounded border px-2 py-0.5 text-[10px] uppercase tracking-widest ${tone}`}>{b.status}</span>
                       <Link
                         to="/match"
                         search={{ id: m.id }}
-                        className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                        className="rounded-md border border-primary/25 px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-foreground"
                       >
                         Match
                       </Link>
@@ -214,11 +231,12 @@ function Profile() {
 }
 
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: "good" | "bad" }) {
-  const color = tone === "good" ? "text-accent" : tone === "bad" ? "text-destructive" : "text-foreground";
+  const color = tone === "good" ? "text-accent" : tone === "bad" ? "text-destructive" : "text-primary";
   return (
-    <div className="panel p-4">
-      <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-1 font-display text-3xl ${color}`}>{value}</div>
+    <div className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur">
+      <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
+      <div className="relative text-[10px] uppercase tracking-[0.3em] text-primary/70">{label}</div>
+      <div className={`relative mt-1 font-display text-3xl neon-text ${color}`}>{value}</div>
     </div>
   );
 }
