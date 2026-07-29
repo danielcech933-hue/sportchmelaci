@@ -98,27 +98,27 @@ function SchedulePage() {
   const chipOff = "text-muted-foreground hover:text-foreground";
 
   return (
-    <main className="relative mx-auto max-w-3xl px-4 py-10">
+    <main className="relative mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-60 sm:h-60" />
+        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-60" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6">
-          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
             Fixture control
           </div>
-          <h1 className="mt-2 font-display text-4xl tracking-wider neon-text sm:text-6xl">SCHEDULE <span className="text-primary">MATCH</span></h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">// Plan ahead and share the fixture</p>
+          <h1 className="mt-2 font-display text-3xl tracking-wider neon-text sm:text-6xl">SCHEDULE <span className="text-primary">MATCH</span></h1>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Plan ahead and share the fixture</p>
         </div>
       </section>
 
-      <form onSubmit={submit} className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-5 backdrop-blur">
+      <form onSubmit={submit} className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-4 backdrop-blur sm:p-5">
         <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
         <div className="relative space-y-5">
           <div>
             <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Sport</label>
-            <div className="mt-2 inline-flex flex-wrap gap-1 rounded-md border border-primary/30 bg-background/40 p-1 backdrop-blur">
+            <div className="mt-2 flex flex-wrap gap-1 rounded-md border border-primary/30 bg-background/40 p-1 backdrop-blur">
               {SPORT_LIST.map((s) => (
                 <button
                   type="button"
@@ -147,9 +147,9 @@ function SchedulePage() {
 
           {err && <p className="text-sm text-destructive">{err}</p>}
 
-          <div className="flex items-center justify-between">
-            <Link to="/teams" className="text-xs uppercase tracking-[0.25em] text-primary hover:underline">// Manage teams →</Link>
-            <button disabled={busy} className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] disabled:opacity-50">
+          <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Link to="/teams" className="text-center text-xs uppercase tracking-[0.25em] text-primary hover:underline sm:text-left">// Manage teams →</Link>
+            <button disabled={busy} className="w-full rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] disabled:opacity-50 sm:w-auto">
               Schedule match
             </button>
           </div>
