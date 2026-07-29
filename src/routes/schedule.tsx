@@ -26,8 +26,8 @@ function SchedulePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [sport, setSport] = useState<SportId>("tennis");
-  const [teamA, setTeamA] = useState("");
-  const [teamB, setTeamB] = useState("");
+  const [playersA, setPlayersA] = useState<string[]>([""]);
+  const [playersB, setPlayersB] = useState<string[]>([""]);
   const [when, setWhen] = useState(() => {
     const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0);
     return toLocalInput(d);
@@ -38,11 +38,11 @@ function SchedulePage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
     const cfg = SPORTS[sport];
-    setTeamA((v) => v || cfg.defaultTeams[0]);
-    setTeamB((v) => v || cfg.defaultTeams[1]);
-  }, [sport, user]);
+    setPlayersA((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[0]]));
+    setPlayersB((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[1]]));
+  }, [sport]);
+
 
   useEffect(() => {
     if (!user) return;
