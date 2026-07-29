@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     nickname,
     balance,
+    avatarPath,
     isAdmin,
     loading,
     signOut: async () => { await supabase.auth.signOut(); },
