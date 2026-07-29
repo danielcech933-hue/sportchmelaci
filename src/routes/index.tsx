@@ -91,15 +91,15 @@ function Lobby() {
               const when = m.scheduledAt ? new Date(m.scheduledAt) : null;
               return (
                 <li key={m.id}>
-                  <Link to="/match" search={{ id: m.id }} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-primary/10">
-                    <span className="text-xl">{cfg.emoji}</span>
-                    <span className="font-display text-lg tracking-wide">
+                  <Link to="/match" search={{ id: m.id }} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-3 transition hover:bg-primary/10 sm:px-4">
+                    <span className="row-span-2 text-xl">{cfg.emoji}</span>
+                    <span className="min-w-0 truncate font-display text-base tracking-wide sm:text-lg">
                       {m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}
                     </span>
-                    <span className="ml-auto font-mono text-xs text-primary neon-text">
-                      {when ? when.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                    <span className="shrink-0 font-mono text-[10px] text-primary neon-text sm:text-xs">
+                      {when ? when.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
-                    <span className="w-full text-[11px] text-muted-foreground md:w-auto">
+                    <span className="col-span-2 truncate text-[10px] text-muted-foreground sm:text-[11px]">
                       {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span>
                     </span>
                   </Link>
