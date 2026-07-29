@@ -141,28 +141,29 @@ function Profile() {
               const setsA = m.sets.filter((s) => s.a > s.b).length;
               const setsB = m.sets.filter((s) => s.b > s.a).length;
               return (
-                <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
+                <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition hover:border-primary/60 sm:p-4">
                   <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                  <div className="relative flex flex-wrap items-center gap-4">
+                  <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
                         <span>{cfg.emoji} {cfg.name}</span>
                         <span>·</span>
-                        <span>{new Date(m.startedAt).toLocaleString()}</span>
+                        <span className="hidden sm:inline">{new Date(m.startedAt).toLocaleString()}</span>
+                        <span className="sm:hidden">{new Date(m.startedAt).toLocaleDateString()}</span>
                         {m.endedAt && <span className="rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">Final</span>}
                       </div>
-                      <div className="mt-2 flex items-center gap-4">
-                        <span className="min-w-0 flex-1 truncate">{m.teamA}</span>
-                        <span className="led-digit text-2xl md:text-3xl">
+                      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
+                        <span className="min-w-0 truncate text-sm sm:text-base">{m.teamA}</span>
+                        <span className="led-digit text-xl sm:text-3xl">
                           {cfg.hasSets && m.sets.length > 0 ? `${setsA} : ${setsB}` : `${m.scoreA} : ${m.scoreB}`}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-right">{m.teamB}</span>
+                        <span className="min-w-0 truncate text-right text-sm sm:text-base">{m.teamB}</span>
                       </div>
                     </div>
                     <Link
                       to="/match"
                       search={{ id: m.id }}
-                      className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
+                      className="shrink-0 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
                     >
                       {m.endedAt ? "View" : "Resume"}
                     </Link>
