@@ -267,8 +267,9 @@ function RankingsPage() {
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center">
                   <div className="font-display text-2xl tracking-widest text-muted-foreground neon-text">NO SIGNAL</div>
-                  <div className="mt-1 text-xs uppercase tracking-[0.3em] text-muted-foreground">No finished matches yet</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.3em] text-muted-foreground">No players or teams yet</div>
                 </td>
+
               </tr>
             )}
           </tbody>
