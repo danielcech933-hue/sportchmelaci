@@ -155,6 +155,7 @@ function Lobby() {
                 onFocus={() => setHoveredSport(s.id)}
                 onBlur={() => setHoveredSport((prev) => (prev === s.id ? null : prev))}
                 onTouchStart={() => setHoveredSport(s.id)}
+                onTouchEnd={() => setTimeout(() => setHoveredSport((prev) => (prev === s.id ? null : prev)), 1200)}
                 className={`group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border p-5 text-left backdrop-blur transition hover:shadow-[0_0_0_1px_var(--color-primary),0_0_30px_-8px_var(--color-primary)] ${
                   active ? "border-primary bg-background/30" : "border-primary/25 bg-background/60 hover:border-primary"
                 }`}
