@@ -25,8 +25,14 @@ function splitPlayers(name: string): string[] {
 
 function winnerSide(m: Match): "A" | "B" | null {
   if (!m.endedAt) return null;
-  if (m.scoreA > m.scoreB) return "A";
-  if (m.scoreB > m.scoreA) return "B";
+  let a = m.scoreA;
+  let b = m.scoreB;
+  if (a === 0 && b === 0 && m.sets && m.sets.length > 0) {
+    a = m.sets.filter((s) => s.a > s.b).length;
+    b = m.sets.filter((s) => s.b > s.a).length;
+  }
+  if (a > b) return "A";
+  if (b > a) return "B";
   return null;
 }
 
