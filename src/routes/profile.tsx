@@ -263,3 +263,111 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
     </div>
   );
 }
+
+function AvatarSection({
+  userId,
+  nickname,
+  avatarPath,
+  onChange,
+}: {
+  userId: string;
+  nickname: string | null;
+  avatarPath: string | null;
+  onChange: () => Promise<void>;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setError("Only PNG, JPEG or WebP.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Max size 2 MB.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = `${userId}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (upErr) throw upErr;
+      const { error: dbErr } = await supabase
+        .from("profiles")
+        .update({ avatar_path: path })
+        .eq("id", userId);
+      if (dbErr) throw dbErr;
+      if (avatarPath && avatarPath !== path) {
+        await supabase.storage.from("avatars").remove([avatarPath]);
+        invalidateAvatar(avatarPath);
+      }
+      await onChange();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (!avatarPath) return;
+    setBusy(true); setError(null);
+    try {
+      await supabase.storage.from("avatars").remove([avatarPath]);
+      const { error: dbErr } = await supabase
+        .from("profiles")
+        .update({ avatar_path: null })
+        .eq("id", userId);
+      if (dbErr) throw dbErr;
+      invalidateAvatar(avatarPath);
+      await onChange();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Remove failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-4 backdrop-blur sm:p-5">
+      <div className="pointer-events-none absolute inset-0 grid-bg opacity-15" />
+      <div className="relative flex flex-wrap items-center gap-4">
+        <Avatar path={avatarPath} nickname={nickname} size={72} />
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">// Avatar</p>
+          <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG or WebP · max 2 MB. Visible on your profile and in chat.</p>
+          {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+        </div>
+        <div className="flex items-center gap-2">
+          <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={onPick} />
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-[0_0_20px_-6px_var(--color-primary)] disabled:opacity-50"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {avatarPath ? "Replace" : "Upload"}
+          </button>
+          {avatarPath && (
+            <button
+              onClick={remove}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-md border border-danger/40 px-3 py-2 text-xs text-danger hover:bg-danger/10 disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
