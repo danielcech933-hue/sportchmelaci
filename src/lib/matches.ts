@@ -65,6 +65,15 @@ export interface SetScore {
   b: number;
 }
 
+export interface Bet {
+  id: string;
+  bettor: string;
+  pick: "a" | "b";
+  amount?: number; // dollars, optional
+  note?: string; // "case of beer", etc.
+  createdAt: number;
+}
+
 export interface Match {
   id: string;
   sport: SportId;
@@ -73,6 +82,7 @@ export interface Match {
   scoreA: number;
   scoreB: number;
   sets: SetScore[]; // completed sets
+  bets: Bet[];
   startedAt: number;
   endedAt?: number;
 }
