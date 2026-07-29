@@ -100,3 +100,42 @@
   50% { opacity: 1; }
 }
 .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+/* Rotating sports emoji: kick, tennis, volleyball, ping pong */
+@keyframes sport-cycle {
+  0%, 20%   { transform: translateY(0%)    rotate(0deg); }
+  25%, 45%  { transform: translateY(-100%) rotate(-8deg); }
+  50%, 70%  { transform: translateY(-200%) rotate(8deg); }
+  75%, 95%  { transform: translateY(-300%) rotate(-6deg); }
+  100%      { transform: translateY(-400%) rotate(0deg); }
+}
+@keyframes sport-kick {
+  0%, 18% { transform: translateX(0) rotate(0deg); }
+  22%     { transform: translateX(6px) rotate(35deg); }
+  25%, 100% { transform: translateX(0) rotate(0deg); }
+}
+.sport-cycle {
+  display: inline-flex;
+  flex-direction: column;
+  animation: sport-cycle 6s steps(1, end) infinite,
+             sport-kick 6s ease-in-out infinite;
+}
+.sport-cycle > span {
+  height: 1em;
+  line-height: 1;
+  display: block;
+}
+
+@keyframes brand-shimmer {
+  0%, 100% {
+    text-shadow:
+      0 0 6px color-mix(in oklab, var(--color-primary) 55%, transparent),
+      0 0 20px color-mix(in oklab, var(--color-primary) 30%, transparent);
+  }
+  50% {
+    text-shadow:
+      0 0 10px color-mix(in oklab, var(--color-primary) 90%, transparent),
+      0 0 32px color-mix(in oklab, var(--color-accent) 55%, transparent);
+  }
+}
+.brand-shimmer { animation: brand-shimmer 3s ease-in-out infinite; }
