@@ -177,6 +177,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_match: {
+        Args: { _confirm: boolean; _match_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
