@@ -72,8 +72,14 @@ function Profile() {
       else if (b.status === "lost") { betLost++; if (b.amount) moneyNet -= b.amount; }
       else betOpen++;
     }
-    return { total: myMatches.length, finished: myMatches.filter((m) => m.endedAt).length, betWon, betLost, betOpen, moneyNet };
-  }, [myMatches, myBets]);
+    const victories = myMatches.filter((m) => {
+      const w = winnerSideOf(m);
+      if (!w || !nickname) return false;
+      const winner = w === "a" ? m.teamA : m.teamB;
+      return winner.trim().toLowerCase() === nickname.toLowerCase();
+    }).length;
+    return { total: myMatches.length, victories, betWon, betLost, betOpen, moneyNet };
+  }, [myMatches, myBets, nickname]);
 
   if (authLoading) return <main className="mx-auto max-w-6xl px-4 py-10 text-sm text-muted-foreground">Loading…</main>;
 
