@@ -123,13 +123,10 @@ export async function removeMatch(id: string): Promise<void> {
 }
 
 export async function setMatchConfirmed(id: string, userId: string | null): Promise<void> {
-  const { error } = await supabase
-    .from("matches")
-    .update({
-      confirmed_at: userId ? new Date().toISOString() : null,
-      confirmed_by: userId,
-    })
-    .eq("id", id);
+  const { error } = await supabase.rpc("confirm_match" as never, {
+    _match_id: id,
+    _confirm: userId !== null,
+  } as never);
   if (error) throw error;
 }
 
