@@ -130,17 +130,17 @@ function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId
   return (
     <li className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
       <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-      <div className="relative flex items-center justify-between">
-        <div>
-          <h3 className="font-display text-xl tracking-wider neon-text">{team.name}</h3>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-display text-lg tracking-wider neon-text sm:text-xl">{team.name}</h3>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
             captain <span className="text-primary">{team.ownerNickname}</span> · {team.members.length} member{team.members.length === 1 ? "" : "s"}
           </p>
         </div>
         {isOwner && (
           <button
             onClick={async () => { if (confirm(`Delete team "${team.name}"?`)) { await deleteTeam(team.id); onChange(); } }}
-            className="rounded-md border border-primary/25 px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
+            className="shrink-0 rounded-md border border-primary/25 px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
           >Delete</button>
         )}
       </div>
