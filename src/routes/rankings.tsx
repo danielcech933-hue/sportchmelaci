@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { SPORT_LIST, type Match, type SportId } from "@/lib/matches";
+import heroImg from "@/assets/scoreboard-hero.jpg";
+import goldImg from "@/assets/rank-gold.jpg";
+import silverImg from "@/assets/rank-silver.jpg";
+import bronzeImg from "@/assets/rank-bronze.jpg";
 
 export const Route = createFileRoute("/rankings")({
   head: () => ({
@@ -38,6 +42,12 @@ function winnerSide(m: Match): "A" | "B" | null {
 
 type Row = { key: string; label: string; wins: number; losses: number; played: number };
 
+const PODIUM = [
+  { img: goldImg, label: "CHAMPION", ring: "shadow-[0_0_60px_-10px_hsl(45_100%_60%/0.7)] border-primary/60" },
+  { img: silverImg, label: "RUNNER-UP", ring: "shadow-[0_0_50px_-12px_hsl(200_100%_70%/0.55)] border-sky-400/50" },
+  { img: bronzeImg, label: "THIRD", ring: "shadow-[0_0_50px_-12px_hsl(20_100%_60%/0.55)] border-orange-500/50" },
+];
+
 function RankingsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -69,7 +79,6 @@ function RankingsPage() {
       if (!w) continue;
       const aPlayers = splitPlayers(m.teamA);
       const bPlayers = splitPlayers(m.teamB);
-      // solo = each side has exactly one player
       if (aPlayers.length !== 1 || bPlayers.length !== 1) continue;
       const a = aPlayers[0];
       const b = bPlayers[0];
@@ -107,34 +116,53 @@ function RankingsPage() {
   }, [finished, teams]);
 
   const rows = tab === "solo" ? soloRows : teamRows;
+  const podium = rows.slice(0, 3);
+  const rest = rows.slice(3);
+
+  const chipBase = "rounded-md px-3 py-1.5 text-xs uppercase tracking-widest transition-all";
+  const chipOn = "bg-primary text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]";
+  const chipOff = "text-muted-foreground hover:text-foreground";
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-4xl tracking-wider">Scoreboard 🏆</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Rankings by match victories — solo players and teams.</p>
-
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-md border border-border p-1 text-sm">
-          <button
-            onClick={() => setTab("solo")}
-            className={`rounded px-3 py-1.5 ${tab === "solo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >Solo players</button>
-          <button
-            onClick={() => setTab("teams")}
-            className={`rounded px-3 py-1.5 ${tab === "teams" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >Teams</button>
+    <main className="relative mx-auto max-w-5xl px-4 py-10">
+      {/* HERO */}
+      <section className="relative overflow-hidden rounded-2xl neon-border scanline">
+        <img
+          src={heroImg}
+          alt=""
+          width={1600}
+          height={720}
+          className="h-56 w-full object-cover opacity-70 sm:h-72"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 grid-bg opacity-30" />
+        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+            <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
+            Live rankings
+          </div>
+          <h1 className="mt-2 font-display text-5xl tracking-wider neon-text sm:text-7xl">
+            SCOREBOARD <span className="text-primary">🏆</span>
+          </h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Holographic leaderboard — solo players and teams ranked by match victories.
+          </p>
         </div>
+      </section>
 
-        <div className="inline-flex flex-wrap rounded-md border border-border p-1 text-sm">
-          <button
-            onClick={() => setSport("all")}
-            className={`rounded px-3 py-1.5 ${sport === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >All sports</button>
+      {/* FILTERS */}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="inline-flex rounded-md border border-primary/30 bg-background/40 p-1 backdrop-blur">
+          <button onClick={() => setTab("solo")} className={`${chipBase} ${tab === "solo" ? chipOn : chipOff}`}>Solo</button>
+          <button onClick={() => setTab("teams")} className={`${chipBase} ${tab === "teams" ? chipOn : chipOff}`}>Teams</button>
+        </div>
+        <div className="inline-flex flex-wrap rounded-md border border-primary/30 bg-background/40 p-1 backdrop-blur">
+          <button onClick={() => setSport("all")} className={`${chipBase} ${sport === "all" ? chipOn : chipOff}`}>All</button>
           {SPORT_LIST.map((s) => (
             <button
               key={s.id}
               onClick={() => setSport(s.id)}
-              className={`rounded px-3 py-1.5 ${sport === s.id ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              className={`${chipBase} ${sport === s.id ? chipOn : chipOff}`}
             >{s.emoji} {s.name}</button>
           ))}
         </div>
@@ -142,38 +170,92 @@ function RankingsPage() {
 
       {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
 
-      <div className="panel mt-4 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+      {/* PODIUM */}
+      {podium.length > 0 && (
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          {podium.map((r, i) => {
+            const p = PODIUM[i];
+            return (
+              <div
+                key={r.key}
+                className={`relative overflow-hidden rounded-2xl border bg-background/60 p-4 backdrop-blur ${p.ring}`}
+                style={{ transform: i === 0 ? "translateY(-8px)" : undefined }}
+              >
+                <div className="absolute inset-0 grid-bg opacity-20" />
+                <div className="relative flex items-center gap-4">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-primary/40">
+                    <img src={p.img} alt="" width={800} height={800} loading="lazy" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 text-center font-display text-2xl neon-text text-primary">
+                      #{i + 1}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70">{p.label}</div>
+                    <div className="truncate font-display text-2xl tracking-wider">{r.label}</div>
+                    <div className="mt-1 flex items-center gap-3 font-mono text-xs text-muted-foreground">
+                      <span className="text-primary">{r.wins}W</span>
+                      <span>{r.losses}L</span>
+                      <span>{r.played ? Math.round((r.wins / r.played) * 100) : 0}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* TABLE */}
+      <div className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/50 backdrop-blur">
+        <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
+        <table className="relative w-full text-sm">
+          <thead className="bg-primary/5 text-[10px] uppercase tracking-[0.25em] text-primary/70">
             <tr>
-              <th className="px-4 py-2 text-left">#</th>
-              <th className="px-4 py-2 text-left">{tab === "solo" ? "Player" : "Team"}</th>
-              <th className="px-4 py-2 text-right">W</th>
-              <th className="px-4 py-2 text-right">L</th>
-              <th className="px-4 py-2 text-right">Played</th>
-              <th className="px-4 py-2 text-right">Win %</th>
+              <th className="px-4 py-3 text-left">Rank</th>
+              <th className="px-4 py-3 text-left">{tab === "solo" ? "Player" : "Team"}</th>
+              <th className="px-4 py-3 text-right">W</th>
+              <th className="px-4 py-3 text-right">L</th>
+              <th className="px-4 py-3 text-right hidden sm:table-cell">Played</th>
+              <th className="px-4 py-3 text-right">Win %</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.key} className="border-t border-border/40">
-                <td className="px-4 py-2 font-mono text-muted-foreground">{i + 1}</td>
-                <td className="px-4 py-2 font-medium">{r.label}</td>
-                <td className="px-4 py-2 text-right font-mono text-primary">{r.wins}</td>
-                <td className="px-4 py-2 text-right font-mono text-muted-foreground">{r.losses}</td>
-                <td className="px-4 py-2 text-right font-mono">{r.played}</td>
-                <td className="px-4 py-2 text-right font-mono">{r.played ? Math.round((r.wins / r.played) * 100) : 0}%</td>
-              </tr>
-            ))}
+            {rest.map((r, i) => {
+              const rank = i + 4;
+              const pct = r.played ? Math.round((r.wins / r.played) * 100) : 0;
+              return (
+                <tr key={r.key} className="border-t border-primary/10 transition-colors hover:bg-primary/5">
+                  <td className="px-4 py-3 font-mono text-muted-foreground">{rank.toString().padStart(2, "0")}</td>
+                  <td className="px-4 py-3 font-medium">{r.label}</td>
+                  <td className="px-4 py-3 text-right font-mono text-primary neon-text">{r.wins}</td>
+                  <td className="px-4 py-3 text-right font-mono text-muted-foreground">{r.losses}</td>
+                  <td className="px-4 py-3 text-right font-mono hidden sm:table-cell">{r.played}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full bg-gradient-to-r from-primary/70 to-primary shadow-[0_0_8px_hsl(45_100%_60%/0.8)]" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="font-mono text-xs">{pct}%</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">No finished matches yet.</td></tr>
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center">
+                  <div className="font-display text-2xl tracking-widest text-muted-foreground neon-text">NO SIGNAL</div>
+                  <div className="mt-1 text-xs uppercase tracking-[0.3em] text-muted-foreground">No finished matches yet</div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        Manage rosters on the <Link to="/teams" className="text-primary underline">Teams</Link> page.
+      <p className="mt-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+        // Manage rosters on the <Link to="/teams" className="text-primary underline">Teams</Link> grid
       </p>
     </main>
   );
