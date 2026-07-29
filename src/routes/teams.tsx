@@ -59,22 +59,22 @@ function TeamsPage() {
   }
 
   return (
-    <main className="relative mx-auto max-w-3xl px-4 py-10">
+    <main className="relative mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-70 sm:h-60" />
+        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-70 sm:h-60" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6">
-          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
             Roster grid
           </div>
-          <h1 className="mt-2 font-display text-4xl tracking-wider neon-text sm:text-6xl">TEAMS</h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">// Build squads from registered nicknames</p>
+          <h1 className="mt-2 font-display text-3xl tracking-wider neon-text sm:text-6xl">TEAMS</h1>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Build squads from registered nicknames</p>
         </div>
       </section>
 
-      <form onSubmit={submitCreate} className="relative mt-6 flex gap-2 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-4 backdrop-blur">
+      <form onSubmit={submitCreate} className="relative mt-6 flex flex-col gap-2 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-3 backdrop-blur sm:flex-row sm:p-4">
         <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
         <input
           value={name}
@@ -130,17 +130,17 @@ function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId
   return (
     <li className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
       <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-      <div className="relative flex items-center justify-between">
-        <div>
-          <h3 className="font-display text-xl tracking-wider neon-text">{team.name}</h3>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-display text-lg tracking-wider neon-text sm:text-xl">{team.name}</h3>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
             captain <span className="text-primary">{team.ownerNickname}</span> · {team.members.length} member{team.members.length === 1 ? "" : "s"}
           </p>
         </div>
         {isOwner && (
           <button
             onClick={async () => { if (confirm(`Delete team "${team.name}"?`)) { await deleteTeam(team.id); onChange(); } }}
-            className="rounded-md border border-primary/25 px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
+            className="shrink-0 rounded-md border border-primary/25 px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
           >Delete</button>
         )}
       </div>

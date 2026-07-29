@@ -39,18 +39,18 @@ function History() {
   const visible = mineOnly && user ? matches.filter((m) => m.ownerId === user.id) : matches;
 
   return (
-    <main className="relative mx-auto max-w-6xl px-4 py-10">
+    <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-60 sm:h-60" />
+        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-60" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
-          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
             Archive
           </div>
-          <h1 className="mt-2 font-display text-4xl tracking-wider neon-text sm:text-6xl">MATCH <span className="text-primary">HISTORY</span></h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">// Every match, saved under each player's nickname</p>
+          <h1 className="mt-2 font-display text-3xl tracking-wider neon-text sm:text-6xl">MATCH <span className="text-primary">HISTORY</span></h1>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Every match, saved under each player's nickname</p>
         </div>
       </section>
 
@@ -88,43 +88,44 @@ function History() {
             const setsB = m.sets.filter((s) => s.b > s.a).length;
             const isOwner = m.ownerId === user.id;
             return (
-              <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
+              <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition hover:border-primary/60 sm:p-4">
                 <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                <div className="relative flex flex-wrap items-center gap-4">
+                <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
                       <span>{cfg.emoji} {cfg.name}</span>
                       <span>·</span>
                       <span>by <span className="text-primary">{m.ownerNickname}</span></span>
-                      <span>·</span>
-                      <span>{new Date(m.startedAt).toLocaleString()}</span>
+                      <span className="hidden sm:inline">·</span>
+                      <span className="hidden sm:inline">{new Date(m.startedAt).toLocaleString()}</span>
+                      <span className="sm:hidden">{new Date(m.startedAt).toLocaleDateString()}</span>
                       {m.endedAt && <span className="rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">Final</span>}
                     </div>
-                    <div className="mt-2 flex items-center gap-4">
-                      <span className="min-w-0 flex-1 truncate">{m.teamA}</span>
-                      <span className="led-digit text-2xl md:text-3xl">
+                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
+                      <span className="min-w-0 truncate text-sm sm:text-base">{m.teamA}</span>
+                      <span className="led-digit text-xl sm:text-3xl">
                         {cfg.hasSets && m.sets.length > 0 ? `${setsA} : ${setsB}` : `${m.scoreA} : ${m.scoreB}`}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-right">{m.teamB}</span>
+                      <span className="min-w-0 truncate text-right text-sm sm:text-base">{m.teamB}</span>
                     </div>
                     {cfg.hasSets && m.sets.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1 font-mono text-xs text-muted-foreground">
+                      <div className="mt-2 flex flex-wrap gap-1 font-mono text-[10px] text-muted-foreground sm:text-xs">
                         {m.sets.map((s, i) => <span key={i}>({s.a}–{s.b})</span>)}
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-2 sm:flex-col md:flex-row">
                     <Link
                       to="/match"
                       search={{ id: m.id }}
-                      className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
+                      className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] sm:flex-none"
                     >
                       {isOwner ? (m.endedAt ? "View" : "Resume") : "View"}
                     </Link>
                     {isOwner && (
                       <button
                         onClick={() => remove(m.id)}
-                        className="rounded-md border border-primary/25 px-3 py-2 text-sm text-muted-foreground hover:border-destructive hover:text-destructive"
+                        className="flex-1 rounded-md border border-primary/25 px-3 py-2 text-sm text-muted-foreground hover:border-destructive hover:text-destructive sm:flex-none"
                       >
                         Delete
                       </button>

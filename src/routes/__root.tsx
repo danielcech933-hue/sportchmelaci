@@ -103,20 +103,20 @@ function RootComponent() {
       <AuthProvider>
         <div className="min-h-screen">
           <header className="border-b border-border/60">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-              <Link to="/" className="flex items-center gap-2">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4">
+              <Link to="/" className="flex shrink-0 items-center gap-2">
                 <span className="inline-block h-3 w-3 rounded-full bg-primary shadow-[0_0_12px] shadow-primary" />
-                <span className="font-display text-2xl tracking-widest">COURTSIDE</span>
+                <span className="font-display text-xl tracking-widest sm:text-2xl">COURTSIDE</span>
               </Link>
-              <nav className="flex items-center gap-1 text-sm">
-                <Link to="/" activeOptions={{ exact: true }} className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Lobby</Link>
-                <Link to="/schedule" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Schedule</Link>
-                <Link to="/teams" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Teams</Link>
-                <Link to="/rankings" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Scoreboard 🏆</Link>
-                <Link to="/history" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">History</Link>
+              <nav className="-mx-3 order-3 flex w-full items-center gap-1 overflow-x-auto px-3 text-sm sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0">
+                <Link to="/" activeOptions={{ exact: true }} className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Lobby</Link>
+                <Link to="/schedule" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Schedule</Link>
+                <Link to="/teams" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Teams</Link>
+                <Link to="/rankings" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Scoreboard 🏆</Link>
+                <Link to="/history" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">History</Link>
                 <ProfileNavLink />
-                <AuthNav />
               </nav>
+              <div className="shrink-0"><AuthNav /></div>
             </div>
           </header>
           <Outlet />
@@ -151,9 +151,9 @@ function ProfileNavLink() {
   if (loading || !user) return null;
   return (
     <>
-      <Link to="/profile" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Profile</Link>
+      <Link to="/profile" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Profile</Link>
       {isAdmin && (
-        <Link to="/admin" className="rounded-md px-3 py-2 text-accent hover:text-foreground [&.active]:text-foreground">Admin</Link>
+        <Link to="/admin" className="shrink-0 rounded-md px-2.5 py-2 text-accent hover:text-foreground [&.active]:text-foreground sm:px-3">Admin</Link>
       )}
     </>
   );
