@@ -230,7 +230,7 @@ function SiteHeader() {
 }
 
 function AuthNav() {
-  const { user, nickname, signOut, loading } = useAuth();
+  const { user, nickname, balance, signOut, loading } = useAuth();
   if (loading) return null;
   if (!user) {
     return (
@@ -241,6 +241,9 @@ function AuthNav() {
   }
   return (
     <div className="flex items-center gap-2">
+      <span className="inline-flex items-center gap-1 rounded-md border border-accent/40 bg-accent/10 px-2 py-1 font-mono text-[11px] text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:text-xs">
+        💰 ${balance.toFixed(0)}
+      </span>
       {nickname && (
         <span className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:inline">
           as <span className="text-primary neon-text">{nickname}</span>
