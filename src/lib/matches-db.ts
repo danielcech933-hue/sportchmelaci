@@ -16,6 +16,7 @@ type Row = {
   scheduled_at?: string | null;
   confirmed_at?: string | null;
   confirmed_by?: string | null;
+  bets_locked_at?: string | null;
 };
 
 function toMatch(r: Row, nickname: string): Match {
@@ -30,6 +31,7 @@ function toMatch(r: Row, nickname: string): Match {
     scoreB: r.score_b,
     sets: (r.sets as SetScore[]) ?? [],
     bets: (r.bets as Bet[]) ?? [],
+    betsLockedAt: r.bets_locked_at ? new Date(r.bets_locked_at).getTime() : undefined,
     startedAt: new Date(r.started_at).getTime(),
     endedAt: r.ended_at ? new Date(r.ended_at).getTime() : undefined,
     scheduledAt: r.scheduled_at ? new Date(r.scheduled_at).getTime() : undefined,
