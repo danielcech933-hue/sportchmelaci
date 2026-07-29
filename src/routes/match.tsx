@@ -121,6 +121,9 @@ function MatchPage() {
           />
         </div>
 
+        <Lineup teamA={match.teamA} teamB={match.teamB} />
+
+
         {cfg.hasSets && (
           <div className="mt-2 grid grid-cols-2 gap-3 text-center text-xs text-muted-foreground md:gap-8">
             <div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsA}</span></div>
