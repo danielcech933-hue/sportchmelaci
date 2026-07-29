@@ -105,7 +105,48 @@ function Admin() {
           <h1 className="font-display text-4xl md:text-5xl">Review & Remove</h1>
           <p className="mt-2 text-sm text-muted-foreground">Confirm finished matches, delete incorrect entries, and remove bad bets.</p>
         </div>
+        <button
+          onClick={() => setShowAudit((v) => !v)}
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          {showAudit ? "Skrýt historii" : `📜 Historie (${audit.length})`}
+        </button>
       </header>
+
+      {showAudit && (
+        <section className="panel mt-6 p-4">
+          <h2 className="font-display text-xl">Admin history</h2>
+          <p className="text-xs text-muted-foreground">Poslední akce nad zápasy a sázkami.</p>
+          {audit.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">Zatím žádné události.</p>
+          ) : (
+            <ul className="mt-3 max-h-[420px] divide-y divide-border/60 overflow-y-auto text-sm">
+              {audit.map((e) => (
+                <li key={e.id} className="flex flex-wrap items-baseline gap-2 py-2">
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {new Date(e.created_at).toLocaleString()}
+                  </span>
+                  <span className="text-primary">{e.actor_nickname ?? "system"}</span>
+                  <span className="font-medium">{actionLabel(e.action)}</span>
+                  {e.match_id && (
+                    <Link
+                      to="/match"
+                      search={{ id: e.match_id }}
+                      className="text-xs text-accent hover:underline"
+                    >
+                      open match
+                    </Link>
+                  )}
+                  <code className="ml-auto max-w-full truncate rounded bg-background/60 px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                    {JSON.stringify(e.details)}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
 
       <nav className="mt-6 flex flex-wrap gap-2 text-sm">
         {(["unconfirmed", "live", "confirmed", "all"] as const).map((f) => (
