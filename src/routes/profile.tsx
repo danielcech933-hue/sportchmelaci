@@ -20,6 +20,13 @@ export const Route = createFileRoute("/profile")({
 type BetStatus = "won" | "lost" | "open";
 type BetRow = Bet & { matchId: string; match: Match; status: BetStatus };
 
+function splitPlayers(name: string): string[] {
+  return name
+    .split(/\s*(?:&|\/|\+|,|\band\b)\s*/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function winnerSideOf(m: Match): "a" | "b" | null {
   if (!m.endedAt) return null;
   const cfg = SPORTS[m.sport];
@@ -31,6 +38,12 @@ function winnerSideOf(m: Match): "a" | "b" | null {
   }
   if (m.scoreA === m.scoreB) return null;
   return m.scoreA > m.scoreB ? "a" : "b";
+}
+
+function playsInMatch(nickname: string, m: Match): boolean {
+  const nick = nickname.toLowerCase();
+  const inSide = (name: string) => splitPlayers(name).some((p) => p.toLowerCase() === nick);
+  return inSide(m.teamA) || inSide(m.teamB);
 }
 
 function Profile() {
@@ -46,10 +59,12 @@ function Profile() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const myMatches = useMemo(
-    () => matches.filter((m) => m.ownerId === user?.id),
-    [matches, user],
-  );
+  const myMatches = useMemo(() => {
+    if (!nickname) return [];
+    return matches
+      .filter((m) => playsInMatch(nickname, m))
+      .sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt));
+  }, [matches, nickname]);
 
   const myBets: BetRow[] = useMemo(() => {
     if (!nickname) return [];
@@ -73,12 +88,14 @@ function Profile() {
       else if (b.status === "lost") { betLost++; if (b.amount) moneyNet -= b.amount; }
       else betOpen++;
     }
-    const victories = myMatches.filter((m) => {
-      const w = winnerSideOf(m);
-      if (!w || !nickname) return false;
-      const winner = w === "a" ? m.teamA : m.teamB;
-      return winner.trim().toLowerCase() === nickname.toLowerCase();
-    }).length;
+    const victories = nickname
+      ? myMatches.filter((m) => {
+          const w = winnerSideOf(m);
+          if (!w) return false;
+          const winnerSide = w === "a" ? m.teamA : m.teamB;
+          return splitPlayers(winnerSide).some((p) => p.toLowerCase() === nickname.toLowerCase());
+        }).length
+      : 0;
     return { total: myMatches.length, victories, betWon, betLost, betOpen, moneyNet };
   }, [myMatches, myBets, nickname]);
 
@@ -165,7 +182,7 @@ function Profile() {
                       search={{ id: m.id }}
                       className="shrink-0 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
                     >
-                      {m.endedAt ? "View" : "Resume"}
+                      {m.ownerId === user?.id ? (m.endedAt ? "View" : "Resume") : "View"}
                     </Link>
                   </div>
                 </li>
