@@ -78,7 +78,7 @@ function Lobby() {
         <div className={`absolute inset-0 grid-bg transition-opacity duration-500 ${hoveredSport ? "opacity-40" : "opacity-0"}`} />
         <div className={`absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.35),transparent_60%)] transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
       </div>
-    <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
+    <main className="relative z-10 mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       {/* HERO */}
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
         <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-70 sm:h-72" />
