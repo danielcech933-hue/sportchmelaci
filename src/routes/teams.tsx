@@ -9,6 +9,7 @@ import {
   removeMember,
   type Team,
 } from "@/lib/teams-db";
+import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 
 export const Route = createFileRoute("/teams")({
   head: () => ({
