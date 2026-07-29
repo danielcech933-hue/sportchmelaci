@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SPORTS, type Match, type Bet } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, invalidateAvatar } from "@/lib/avatars";
+import { Upload, Trash2 } from "lucide-react";
 import heroImg from "@/assets/profile-hero.jpg";
 
 export const Route = createFileRoute("/profile")({
