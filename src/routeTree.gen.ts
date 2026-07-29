@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScheduleRouteImport } from './routes/schedule'
+import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -32,6 +33,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ScheduleRoute = ScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingsRoute = RankingsRouteImport.update({
+  id: '/rankings',
+  path: '/rankings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
+  '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
+  '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
+  '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/match'
     | '/profile'
+    | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
     | '/teams'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/match'
     | '/profile'
+    | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
     | '/teams'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/match'
     | '/profile'
+    | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
     | '/teams'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   MatchRoute: typeof MatchRoute
   ProfileRoute: typeof ProfileRoute
+  RankingsRoute: typeof RankingsRoute
   ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamsRoute: typeof TeamsRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/schedule'
       fullPath: '/schedule'
       preLoaderRoute: typeof ScheduleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rankings': {
+      id: '/rankings'
+      path: '/rankings'
+      fullPath: '/rankings'
+      preLoaderRoute: typeof RankingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   MatchRoute: MatchRoute,
   ProfileRoute: ProfileRoute,
+  RankingsRoute: RankingsRoute,
   ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamsRoute: TeamsRoute,
