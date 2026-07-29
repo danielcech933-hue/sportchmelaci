@@ -23,6 +23,7 @@ export type Database = {
           ended_at: string | null
           id: string
           owner_id: string
+          scheduled_at: string | null
           score_a: number
           score_b: number
           sets: Json
@@ -40,6 +41,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           owner_id: string
+          scheduled_at?: string | null
           score_a?: number
           score_b?: number
           sets?: Json
@@ -57,6 +59,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           owner_id?: string
+          scheduled_at?: string | null
           score_a?: number
           score_b?: number
           sets?: Json
@@ -85,6 +88,59 @@ export type Database = {
           created_at?: string
           id?: string
           nickname?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
           updated_at?: string
         }
         Relationships: []
