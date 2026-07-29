@@ -18,6 +18,7 @@ import {
   UserRound,
   ShieldCheck,
   Radio,
+  Coins,
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
