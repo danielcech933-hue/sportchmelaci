@@ -29,7 +29,7 @@ function Lobby() {
         .filter((m) => m.scheduledAt && !m.endedAt && m.sets.length === 0 && m.scoreA === 0 && m.scoreB === 0)
         .sort((a, b) => (a.scheduledAt! - b.scheduledAt!));
       setUpcoming(up.slice(0, 5));
-      setRecent(all.slice(0, 6));
+      setRecent(all.filter((m) => !!m.endedAt).slice(0, 6));
     }).catch(() => { setRecent([]); setUpcoming([]); });
   }, [user]);
 
