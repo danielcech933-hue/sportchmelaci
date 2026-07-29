@@ -182,7 +182,7 @@ function Profile() {
                       search={{ id: m.id }}
                       className="shrink-0 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
                     >
-                      {m.endedAt ? "View" : "Resume"}
+                      {m.ownerId === user?.id ? (m.endedAt ? "View" : "Resume") : "View"}
                     </Link>
                   </div>
                 </li>
