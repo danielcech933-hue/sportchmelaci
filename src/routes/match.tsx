@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { SPORTS, type Match, type Bet, MAX_BET, MIN_BET, betsPool, uniqueBettors, isLocked } from "@/lib/matches";
+import { SPORTS, type Match, MAX_BET, MIN_BET, betsPool, uniqueBettors, isLocked } from "@/lib/matches";
 import { fetchMatch, saveMatch, removeMatch, placeBet, withdrawBet } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
