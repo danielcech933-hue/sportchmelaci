@@ -151,9 +151,9 @@ function ProfileNavLink() {
   if (loading || !user) return null;
   return (
     <>
-      <Link to="/profile" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Profile</Link>
+      <Link to="/profile" className="shrink-0 rounded-md px-2.5 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground sm:px-3">Profile</Link>
       {isAdmin && (
-        <Link to="/admin" className="rounded-md px-3 py-2 text-accent hover:text-foreground [&.active]:text-foreground">Admin</Link>
+        <Link to="/admin" className="shrink-0 rounded-md px-2.5 py-2 text-accent hover:text-foreground [&.active]:text-foreground sm:px-3">Admin</Link>
       )}
     </>
   );
