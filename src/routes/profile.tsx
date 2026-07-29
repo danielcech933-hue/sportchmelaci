@@ -98,24 +98,24 @@ function Profile() {
   }
 
   return (
-    <main className="relative mx-auto max-w-6xl px-4 py-10">
+    <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-60 sm:h-64" />
+        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-64" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
-          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
             Player profile
           </div>
-          <h1 className="mt-2 font-display text-5xl tracking-wider neon-text sm:text-7xl">
+          <h1 className="mt-2 truncate font-display text-3xl tracking-wider neon-text sm:text-7xl">
             <span className="text-primary">{nickname ?? "PLAYER"}</span>
           </h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">// Matches & betting history</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Matches & betting history</p>
         </div>
       </section>
 
-      <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+      <section className="mt-6 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-5">
         <Stat label="Matches" value={stats.total} />
         <Stat label="Victories" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
         <Stat label="Bets won" value={stats.betWon} />
