@@ -22,7 +22,7 @@ export const Route = createFileRoute("/match")({
 function MatchPage() {
   const { id } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [match, setMatch] = useState<Match | null>(null);
   const [notFound, setNotFound] = useState(false);
   const dirty = useRef(false);
