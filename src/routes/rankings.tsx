@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { SPORT_LIST, type Match, type SportId } from "@/lib/matches";
+import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/scoreboard-hero.jpg";
 import goldImg from "@/assets/rank-gold.jpg";
 import silverImg from "@/assets/rank-silver.jpg";
 import bronzeImg from "@/assets/rank-bronze.jpg";
+
 
 export const Route = createFileRoute("/rankings")({
   head: () => ({
