@@ -84,7 +84,7 @@ function MatchPage() {
   const resetScore = () => isOwner && update({ ...match, scoreA: 0, scoreB: 0 });
   const remove = async () => {
     if (!isOwner) return;
-    if (!confirm("Delete this match?")) return;
+    if (!confirm("Delete this match? Any open bets will be refunded.")) return;
     await removeMatch(match.id);
     navigate({ to: "/" });
   };
