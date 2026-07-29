@@ -53,6 +53,7 @@ const PODIUM = [
 function RankingsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [profiles, setProfiles] = useState<{ nickname: string }[]>([]);
   const [tab, setTab] = useState<"solo" | "teams">("solo");
   const [sport, setSport] = useState<SportId | "all">("all");
   const [err, setErr] = useState<string | null>(null);
@@ -60,9 +61,14 @@ function RankingsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [m, t] = await Promise.all([fetchAllMatches(), fetchAllTeams().catch(() => [])]);
+        const [m, t, p] = await Promise.all([
+          fetchAllMatches(),
+          fetchAllTeams().catch(() => [] as Team[]),
+          supabase.from("profiles").select("nickname").then((r) => (r.data ?? []) as { nickname: string }[]),
+        ]);
         setMatches(m);
         setTeams(t);
+        setProfiles(p);
       } catch (e) {
         setErr((e as Error).message);
       }
@@ -76,6 +82,12 @@ function RankingsPage() {
 
   const soloRows = useMemo<Row[]>(() => {
     const map = new Map<string, Row>();
+    // Seed with every registered nickname so users without matches still appear
+    for (const p of profiles) {
+      const name = p.nickname?.trim();
+      if (!name) continue;
+      map.set(name.toLowerCase(), { key: name.toLowerCase(), label: name, wins: 0, losses: 0, played: 0 });
+    }
     for (const m of finished) {
       const w = winnerSide(m);
       if (!w) continue;
@@ -91,11 +103,17 @@ function RankingsPage() {
       map.set(rowA.key, rowA); map.set(rowB.key, rowB);
     }
     return [...map.values()].sort((x, y) => y.wins - x.wins || y.played - x.played || x.label.localeCompare(y.label));
-  }, [finished]);
+  }, [finished, profiles]);
 
   const teamRows = useMemo<Row[]>(() => {
     const teamNames = new Set(teams.map((t) => t.name.toLowerCase()));
     const map = new Map<string, Row>();
+    // Seed with every registered team so empty teams still appear
+    for (const t of teams) {
+      const name = t.name.trim();
+      if (!name) continue;
+      map.set(name.toLowerCase(), { key: name.toLowerCase(), label: name, wins: 0, losses: 0, played: 0 });
+    }
     for (const m of finished) {
       const w = winnerSide(m);
       if (!w) continue;
@@ -116,6 +134,7 @@ function RankingsPage() {
     }
     return [...map.values()].sort((x, y) => y.wins - x.wins || y.played - x.played || x.label.localeCompare(y.label));
   }, [finished, teams]);
+
 
   const rows = tab === "solo" ? soloRows : teamRows;
   const podium = rows.slice(0, 3);
