@@ -9,6 +9,7 @@ import {
   removeMember,
   type Team,
 } from "@/lib/teams-db";
+import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 
 export const Route = createFileRoute("/teams")({
   head: () => ({
@@ -75,6 +76,8 @@ function TeamsPage() {
       </form>
       {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
 
+      <NicknamesList />
+
       <ul className="mt-6 space-y-3">
         {teams.map((t) => (
           <TeamCard key={t.id} team={t} currentUserId={user!.id} onChange={reload} />
@@ -83,6 +86,11 @@ function TeamsPage() {
       </ul>
     </main>
   );
+}
+
+function NicknamesList() {
+  const nicknames = useNicknames();
+  return <NicknamesDatalist options={nicknames} />;
 }
 
 function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId: string; onChange: () => void }) {
@@ -135,6 +143,7 @@ function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId
           <input
             value={nick}
             onChange={(e) => setNick(e.target.value)}
+            list={NICKNAMES_DATALIST_ID}
             placeholder="Add player by nickname"
             className="flex-1 rounded-md border border-border bg-transparent px-2 py-1.5 text-xs"
           />

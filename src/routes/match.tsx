@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SPORTS, type Match, type Bet } from "@/lib/matches";
 import { fetchMatch, saveMatch, removeMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 
 const searchSchema = z.object({ id: z.string() });
 
@@ -23,6 +24,7 @@ function MatchPage() {
   const { id } = Route.useSearch();
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const nicknames = useNicknames();
   const [match, setMatch] = useState<Match | null>(null);
   const [notFound, setNotFound] = useState(false);
   const dirty = useRef(false);
@@ -110,16 +112,19 @@ function MatchPage() {
           <input
             value={match.teamA}
             disabled={!isOwner}
+            list={NICKNAMES_DATALIST_ID}
             onChange={(e) => update({ ...match, teamA: e.target.value })}
             className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90"
           />
           <input
             value={match.teamB}
             disabled={!isOwner}
+            list={NICKNAMES_DATALIST_ID}
             onChange={(e) => update({ ...match, teamB: e.target.value })}
             className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90"
           />
         </div>
+        <NicknamesDatalist options={nicknames} />
 
         <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
 
@@ -351,6 +356,7 @@ function Lineup({ teamA, teamB, canEdit, onChange }: { teamA: string; teamB: str
                   <>
                     <input
                       value={p}
+                      list={NICKNAMES_DATALIST_ID}
                       onChange={(e) => updatePlayer(side.key, i, e.target.value)}
                       className="flex-1 rounded border border-border bg-background/60 px-2 py-1 text-sm outline-none focus:border-primary"
                     />
