@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Radio,
   Coins,
+  MessagesSquare,
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
