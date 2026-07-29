@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
       { title: "Courtside — Pick a Sport" },
       { name: "description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
       { property: "og:title", content: "Courtside — Pick a Sport" },
-      { property: "og:description", content: "Start a live scoreboard for the sport you're playing." },
+      { property: "og:description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
     ],
   }),
   component: Lobby,
