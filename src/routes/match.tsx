@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { SPORTS, loadMatches, upsertMatch, deleteMatch, type Match } from "@/lib/matches";
+import { SPORTS, loadMatches, upsertMatch, deleteMatch, type Match, type Bet } from "@/lib/matches";
 
 const searchSchema = z.object({ id: z.string() });
 
