@@ -70,17 +70,22 @@ function SchedulePage() {
     try {
       const ts = new Date(when).getTime();
       if (!ts || isNaN(ts)) throw new Error("Pick a valid date");
+      const joinPlayers = (list: string[], fallback: string) => {
+        const cleaned = list.map((p) => p.trim()).filter(Boolean);
+        return cleaned.length ? cleaned.join(" & ") : fallback;
+      };
       const id = await createMatch({
         ownerId: user!.id,
         sport,
-        teamA: teamA.trim() || SPORTS[sport].defaultTeams[0],
-        teamB: teamB.trim() || SPORTS[sport].defaultTeams[1],
+        teamA: joinPlayers(playersA, SPORTS[sport].defaultTeams[0]),
+        teamB: joinPlayers(playersB, SPORTS[sport].defaultTeams[1]),
         scheduledAt: ts,
       });
       navigate({ to: "/match", search: { id } });
     } catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
