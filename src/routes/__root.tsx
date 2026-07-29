@@ -135,6 +135,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Lobby", icon: Home, exact: true },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
   { to: "/teams", label: "Teams", icon: Users },
+  { to: "/bets", label: "Bets", icon: Coins },
   { to: "/rankings", label: "Scoreboard", icon: Trophy },
   { to: "/history", label: "History", icon: HistoryIcon },
   { to: "/profile", label: "Profile", icon: UserRound, authOnly: true },
