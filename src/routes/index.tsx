@@ -48,6 +48,18 @@ function Lobby() {
     }).catch(() => { setRecent([]); setUpcoming([]); });
   }, [user]);
 
+  useEffect(() => {
+    if (!hoveredSport) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t?.closest("[data-sport-tile]") && !t?.closest("[data-sport-close]")) {
+        setHoveredSport(null);
+      }
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [hoveredSport]);
+
   async function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
     if (!user) { navigate({ to: "/auth" }); return; }
     const cfg = SPORTS[sportId];
