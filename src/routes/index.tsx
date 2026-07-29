@@ -61,6 +61,23 @@ function Lobby() {
   }
 
   return (
+    <>
+      {/* Fullscreen hover background for sport tiles */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        {Object.entries(SPORT_BG).map(([id, url]) => (
+          <img
+            key={id}
+            src={url}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover saturate-125 contrast-110 transition-all duration-700 ease-out ${
+              hoveredSport === id ? "opacity-60 scale-105" : "opacity-0 scale-110"
+            }`}
+          />
+        ))}
+        <div className={`absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/60 transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
+        <div className={`absolute inset-0 grid-bg transition-opacity duration-500 ${hoveredSport ? "opacity-40" : "opacity-0"}`} />
+        <div className={`absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.35),transparent_60%)] transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
+      </div>
     <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       {/* HERO */}
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
