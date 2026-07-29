@@ -85,8 +85,8 @@ export async function saveMatch(m: Match): Promise<void> {
       team_b: m.teamB,
       score_a: m.scoreA,
       score_b: m.scoreB,
-      sets: m.sets,
-      bets: m.bets,
+      sets: m.sets as unknown as never,
+      bets: m.bets as unknown as never,
       ended_at: m.endedAt ? new Date(m.endedAt).toISOString() : null,
     })
     .eq("id", m.id);
