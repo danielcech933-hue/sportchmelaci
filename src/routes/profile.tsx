@@ -50,7 +50,7 @@ function playsInMatch(nickname: string, m: Match): boolean {
 }
 
 function Profile() {
-  const { user, nickname, loading: authLoading } = useAuth();
+  const { user, nickname, avatarPath, refreshProfile, loading: authLoading } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
