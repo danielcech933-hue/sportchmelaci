@@ -1,4 +1,15 @@
-export type SportId = "tennis" | "volleyball" | "nohejball" | "football" | "padel";
+export type SportId =
+  | "tennis"
+  | "volleyball"
+  | "nohejball"
+  | "football"
+  | "padel"
+  | "foosball"
+  | "pingpong"
+  | "basketball"
+  | "darts"
+  | "beerpong"
+  | "beerrace";
 
 export interface SportConfig {
   id: SportId;
@@ -11,11 +22,17 @@ export interface SportConfig {
 }
 
 export const SPORTS: Record<SportId, SportConfig> = {
-  tennis:     { id: "tennis",     name: "Tennis",     emoji: "🎾", hasSets: true,  setLabel: "Set",  quickPoints: [1], defaultTeams: ["Player 1", "Player 2"] },
-  volleyball: { id: "volleyball", name: "Volleyball", emoji: "🏐", hasSets: true,  setLabel: "Set",  quickPoints: [1], defaultTeams: ["Home", "Away"] },
-  nohejball:  { id: "nohejball",  name: "Nohejball",  emoji: "🦶", hasSets: true,  setLabel: "Set",  quickPoints: [1], defaultTeams: ["Home", "Away"] },
-  football:   { id: "football",   name: "Football",   emoji: "⚽", hasSets: false, setLabel: "Half", quickPoints: [1], defaultTeams: ["Home", "Away"] },
-  padel:      { id: "padel",      name: "Padel",      emoji: "🎾", hasSets: true,  setLabel: "Set",  quickPoints: [1], defaultTeams: ["Team A", "Team B"] },
+  tennis:     { id: "tennis",     name: "Tennis",           emoji: "🎾", hasSets: true,  setLabel: "Set",   quickPoints: [1],    defaultTeams: ["Player 1", "Player 2"] },
+  volleyball: { id: "volleyball", name: "Volleyball",       emoji: "🏐", hasSets: true,  setLabel: "Set",   quickPoints: [1],    defaultTeams: ["Home", "Away"] },
+  nohejball:  { id: "nohejball",  name: "Nohejball",        emoji: "🦶", hasSets: true,  setLabel: "Set",   quickPoints: [1],    defaultTeams: ["Home", "Away"] },
+  football:   { id: "football",   name: "Football",         emoji: "⚽", hasSets: false, setLabel: "Half",  quickPoints: [1],    defaultTeams: ["Home", "Away"] },
+  padel:      { id: "padel",      name: "Padel",            emoji: "🎾", hasSets: true,  setLabel: "Set",   quickPoints: [1],    defaultTeams: ["Team A", "Team B"] },
+  foosball:   { id: "foosball",   name: "Stolní fotbálek",  emoji: "⚽", hasSets: false, setLabel: "Game",  quickPoints: [1],    defaultTeams: ["Red", "Blue"] },
+  pingpong:   { id: "pingpong",   name: "Ping Pong",        emoji: "🏓", hasSets: true,  setLabel: "Set",   quickPoints: [1],    defaultTeams: ["Player 1", "Player 2"] },
+  basketball: { id: "basketball", name: "Basketball",       emoji: "🏀", hasSets: false, setLabel: "Q",     quickPoints: [1, 2, 3], defaultTeams: ["Home", "Away"] },
+  darts:      { id: "darts",      name: "Šipky",            emoji: "🎯", hasSets: true,  setLabel: "Leg",   quickPoints: [1, 25, 50], defaultTeams: ["Player 1", "Player 2"] },
+  beerpong:   { id: "beerpong",   name: "Bear Pong",        emoji: "🍺", hasSets: false, setLabel: "Cup",   quickPoints: [1],    defaultTeams: ["Team A", "Team B"] },
+  beerrace:   { id: "beerrace",   name: "Kdo vypije víc piv", emoji: "🍻", hasSets: false, setLabel: "Beer", quickPoints: [1],   defaultTeams: ["Drinker 1", "Drinker 2"] },
 };
 
 export const SPORT_LIST = Object.values(SPORTS);
