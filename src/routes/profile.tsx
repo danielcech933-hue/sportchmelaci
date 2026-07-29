@@ -355,7 +355,7 @@ function AvatarSection({
         <Avatar path={avatarPath} nickname={nickname} size={72} />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">// Avatar</p>
-          <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG or WebP · max 2 MB. Visible on your profile and in chat.</p>
+          <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG or WebP · max 20 MB. Visible on your profile and in chat.</p>
           {error && <p className="mt-1 text-xs text-danger">{error}</p>}
         </div>
         <div className="flex items-center gap-2">
