@@ -16,6 +16,7 @@ import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -56,6 +57,11 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BetsRoute = BetsRouteImport.update({
   id: '/bets',
   path: '/bets',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
+  '/chat': typeof ChatRoute
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
+  '/chat': typeof ChatRoute
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
+  '/chat': typeof ChatRoute
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/bets'
+    | '/chat'
     | '/history'
     | '/match'
     | '/profile'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/bets'
+    | '/chat'
     | '/history'
     | '/match'
     | '/profile'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/bets'
+    | '/chat'
     | '/history'
     | '/match'
     | '/profile'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BetsRoute: typeof BetsRoute
+  ChatRoute: typeof ChatRoute
   HistoryRoute: typeof HistoryRoute
   MatchRoute: typeof MatchRoute
   ProfileRoute: typeof ProfileRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bets': {
       id: '/bets'
       path: '/bets'
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BetsRoute: BetsRoute,
+  ChatRoute: ChatRoute,
   HistoryRoute: HistoryRoute,
   MatchRoute: MatchRoute,
   ProfileRoute: ProfileRoute,

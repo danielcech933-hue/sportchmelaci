@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Radio,
   Coins,
+  MessagesSquare,
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
@@ -137,6 +138,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/teams", label: "Teams", icon: Users },
   { to: "/bets", label: "Bets", icon: Coins },
   { to: "/rankings", label: "Scoreboard", icon: Trophy },
+  { to: "/chat", label: "Chat", icon: MessagesSquare },
   { to: "/history", label: "History", icon: HistoryIcon },
   { to: "/profile", label: "Profile", icon: UserRound, authOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
