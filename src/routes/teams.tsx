@@ -76,6 +76,8 @@ function TeamsPage() {
       </form>
       {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
 
+      <NicknamesList />
+
       <ul className="mt-6 space-y-3">
         {teams.map((t) => (
           <TeamCard key={t.id} team={t} currentUserId={user!.id} onChange={reload} />
@@ -84,6 +86,11 @@ function TeamsPage() {
       </ul>
     </main>
   );
+}
+
+function NicknamesList() {
+  const nicknames = useNicknames();
+  return <NicknamesDatalist options={nicknames} />;
 }
 
 function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId: string; onChange: () => void }) {
