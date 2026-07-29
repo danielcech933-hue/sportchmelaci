@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { SPORTS, SPORT_LIST, type SportId, type Match } from "@/lib/matches";
 import { createMatch, fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
