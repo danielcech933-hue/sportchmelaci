@@ -121,6 +121,9 @@ function MatchPage() {
           />
         </div>
 
+        <Lineup teamA={match.teamA} teamB={match.teamB} />
+
+
         {cfg.hasSets && (
           <div className="mt-2 grid grid-cols-2 gap-3 text-center text-xs text-muted-foreground md:gap-8">
             <div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsA}</span></div>
@@ -293,5 +296,41 @@ function BetsPanel({
         </ul>
       )}
     </section>
+  );
+}
+
+function splitPlayers(name: string): string[] {
+  return name.split(/\s*(?:&|\/|,|\+| vs\.? | and )\s*/i).map((s) => s.trim()).filter(Boolean);
+}
+
+function Lineup({ teamA, teamB }: { teamA: string; teamB: string }) {
+  const a = splitPlayers(teamA);
+  const b = splitPlayers(teamB);
+  const total = a.length + b.length;
+  if (total <= 2) return null;
+  return (
+    <div className="mt-6 grid grid-cols-2 gap-3 md:gap-8">
+      {[
+        { title: teamA, players: a, tone: "primary" as const },
+        { title: teamB, players: b, tone: "accent" as const },
+      ].map((side, idx) => (
+        <div key={idx} className="rounded-2xl border border-border/60 bg-background/40 p-3 md:p-4">
+          <div className="flex items-center justify-between">
+            <span className={`text-[10px] font-mono uppercase tracking-[0.3em] ${idx === 0 ? "text-primary" : "text-accent"}`}>
+              {idx === 0 ? "Team A" : "Team B"}
+            </span>
+            <span className="text-[10px] text-muted-foreground">{side.players.length} {side.players.length === 1 ? "player" : "players"}</span>
+          </div>
+          <ul className="mt-2 space-y-1">
+            {side.players.map((p, i) => (
+              <li key={`${p}-${i}`} className="flex items-center gap-2 text-sm">
+                <span className={`inline-block h-2 w-2 rounded-full ${idx === 0 ? "bg-primary" : "bg-accent"}`} />
+                <span className="truncate">{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
