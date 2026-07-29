@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SPORTS, type Match, type Bet } from "@/lib/matches";
 import { fetchMatch, saveMatch, removeMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 
 const searchSchema = z.object({ id: z.string() });
 
