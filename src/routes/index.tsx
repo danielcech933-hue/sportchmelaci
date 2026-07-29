@@ -212,5 +212,6 @@ function Lobby() {
         </section>
       )}
     </main>
+    </>
   );
 }
