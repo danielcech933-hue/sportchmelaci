@@ -57,3 +57,46 @@
   border: 1px solid var(--color-border);
   border-radius: 1rem;
 }
+
+@utility grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-primary) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-primary) 12%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+@utility neon-border {
+  border: 1px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-primary) 20%, transparent) inset,
+    0 0 24px -8px color-mix(in oklab, var(--color-primary) 60%, transparent),
+    0 0 60px -20px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+@utility neon-text {
+  text-shadow:
+    0 0 6px color-mix(in oklab, var(--color-primary) 55%, transparent),
+    0 0 20px color-mix(in oklab, var(--color-primary) 30%, transparent);
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+@utility scanline {
+  position: relative;
+  overflow: hidden;
+}
+.scanline::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 0%, color-mix(in oklab, var(--color-primary) 20%, transparent) 50%, transparent 100%);
+  animation: scanline 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
