@@ -48,6 +48,18 @@ function Lobby() {
     }).catch(() => { setRecent([]); setUpcoming([]); });
   }, [user]);
 
+  useEffect(() => {
+    if (!hoveredSport) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t?.closest("[data-sport-tile]") && !t?.closest("[data-sport-close]")) {
+        setHoveredSport(null);
+      }
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [hoveredSport]);
+
   async function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
     if (!user) { navigate({ to: "/auth" }); return; }
     const cfg = SPORTS[sportId];
@@ -78,6 +90,17 @@ function Lobby() {
         <div className={`absolute inset-0 grid-bg transition-opacity duration-500 ${hoveredSport ? "opacity-40" : "opacity-0"}`} />
         <div className={`absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.35),transparent_60%)] transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
       </div>
+      {/* Close button while a sport preview is active */}
+      {hoveredSport && (
+        <button
+          data-sport-close
+          type="button"
+          onClick={() => setHoveredSport(null)}
+          className="fixed right-4 top-20 z-30 rounded-full border border-primary/60 bg-background/80 px-3 py-1.5 text-xs uppercase tracking-[0.25em] text-primary backdrop-blur transition hover:bg-primary hover:text-primary-foreground sm:right-6"
+        >
+          ✕ Close
+        </button>
+      )}
     <main className="relative z-10 mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       {/* HERO */}
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
@@ -156,6 +179,7 @@ function Lobby() {
             };
             return (
               <button
+                data-sport-tile
                 key={s.id}
                 onClick={handleClick}
                 onMouseEnter={() => setHoveredSport(s.id)}
