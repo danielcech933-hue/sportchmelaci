@@ -63,7 +63,7 @@ function Lobby() {
   return (
     <>
       {/* Fullscreen hover background for sport tiles */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         {Object.entries(SPORT_BG).map(([id, url]) => (
           <img
             key={id}
@@ -78,7 +78,7 @@ function Lobby() {
         <div className={`absolute inset-0 grid-bg transition-opacity duration-500 ${hoveredSport ? "opacity-40" : "opacity-0"}`} />
         <div className={`absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.35),transparent_60%)] transition-opacity duration-500 ${hoveredSport ? "opacity-100" : "opacity-0"}`} />
       </div>
-    <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
+    <main className="relative z-10 mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       {/* HERO */}
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
         <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-70 sm:h-72" />
@@ -155,6 +155,7 @@ function Lobby() {
                 onFocus={() => setHoveredSport(s.id)}
                 onBlur={() => setHoveredSport((prev) => (prev === s.id ? null : prev))}
                 onTouchStart={() => setHoveredSport(s.id)}
+                onTouchEnd={() => setTimeout(() => setHoveredSport((prev) => (prev === s.id ? null : prev)), 1200)}
                 className={`group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border p-5 text-left backdrop-blur transition hover:shadow-[0_0_0_1px_var(--color-primary),0_0_30px_-8px_var(--color-primary)] ${
                   active ? "border-primary bg-background/30" : "border-primary/25 bg-background/60 hover:border-primary"
                 }`}
