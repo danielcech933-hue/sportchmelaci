@@ -25,6 +25,7 @@ import {
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { Avatar } from "@/lib/avatars";
 
 function NotFoundComponent() {
   return (
