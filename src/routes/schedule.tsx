@@ -35,6 +35,7 @@ function SchedulePage() {
     return toLocalInput(d);
   });
   const [teams, setTeams] = useState<Team[]>([]);
+  const [nicknames, setNicknames] = useState<string[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -49,13 +50,19 @@ function SchedulePage() {
   useEffect(() => {
     if (!user) return;
     fetchAllTeams().then(setTeams).catch(() => {});
+    supabase.from("profiles").select("nickname").order("nickname", { ascending: true })
+      .then(({ data }) => setNicknames((data ?? []).map((p) => p.nickname).filter(Boolean)));
     fetchAllMatches().then((all) =>
       setUpcoming(all.filter((m) => m.scheduledAt && (m.scheduledAt > Date.now() || !m.endedAt) && m.sets.length === 0 && m.scoreA === 0 && m.scoreB === 0)
         .sort((a, b) => (a.scheduledAt! - b.scheduledAt!)))
     ).catch(() => {});
   }, [user]);
 
-  const teamOptions = useMemo(() => teams.map((t) => t.name), [teams]);
+  const playerOptions = useMemo(() => {
+    const set = new Set<string>([...nicknames, ...teams.map((t) => t.name)]);
+    return Array.from(set);
+  }, [teams, nicknames]);
+
 
   if (loading) return null;
   if (!user) {
