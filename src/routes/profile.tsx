@@ -300,8 +300,8 @@ function AvatarSection({
       setError("Only PNG, JPEG or WebP.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Max size 2 MB.");
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Max size 20 MB.");
       return;
     }
     setBusy(true);
