@@ -100,6 +100,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           balance: number
           created_at: string
           id: string
@@ -107,6 +108,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_path?: string | null
           balance?: number
           created_at?: string
           id: string
@@ -114,6 +116,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_path?: string | null
           balance?: number
           created_at?: string
           id?: string
