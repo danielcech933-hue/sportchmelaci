@@ -35,6 +35,7 @@ function Lobby() {
   const { user, nickname, loading } = useAuth();
   const [recent, setRecent] = useState<Match[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
+  const [hoveredSport, setHoveredSport] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { setRecent([]); setUpcoming([]); return; }
