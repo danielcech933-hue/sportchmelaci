@@ -121,7 +121,7 @@ function MatchPage() {
           />
         </div>
 
-        <Lineup teamA={match.teamA} teamB={match.teamB} />
+        <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
 
 
         {cfg.hasSets && (
