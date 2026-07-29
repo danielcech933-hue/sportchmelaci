@@ -13,6 +13,8 @@ type Row = {
   bets: unknown;
   started_at: string;
   ended_at: string | null;
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
 };
 
 function toMatch(r: Row, nickname: string): Match {
@@ -29,6 +31,8 @@ function toMatch(r: Row, nickname: string): Match {
     bets: (r.bets as Bet[]) ?? [],
     startedAt: new Date(r.started_at).getTime(),
     endedAt: r.ended_at ? new Date(r.ended_at).getTime() : undefined,
+    confirmedAt: r.confirmed_at ? new Date(r.confirmed_at).getTime() : undefined,
+    confirmedBy: r.confirmed_by ?? null,
   };
 }
 
