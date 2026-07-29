@@ -4,10 +4,21 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type ReactNode, type ComponentType } from "react";
+import {
+  Home,
+  CalendarDays,
+  Users,
+  Trophy,
+  History as HistoryIcon,
+  UserRound,
+  ShieldCheck,
+  Radio,
+} from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
