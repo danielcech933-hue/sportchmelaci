@@ -26,8 +26,8 @@ function SchedulePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [sport, setSport] = useState<SportId>("tennis");
-  const [teamA, setTeamA] = useState("");
-  const [teamB, setTeamB] = useState("");
+  const [playersA, setPlayersA] = useState<string[]>([""]);
+  const [playersB, setPlayersB] = useState<string[]>([""]);
   const [when, setWhen] = useState(() => {
     const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0);
     return toLocalInput(d);
@@ -38,11 +38,11 @@ function SchedulePage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
     const cfg = SPORTS[sport];
-    setTeamA((v) => v || cfg.defaultTeams[0]);
-    setTeamB((v) => v || cfg.defaultTeams[1]);
-  }, [sport, user]);
+    setPlayersA((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[0]]));
+    setPlayersB((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[1]]));
+  }, [sport]);
+
 
   useEffect(() => {
     if (!user) return;
@@ -70,17 +70,22 @@ function SchedulePage() {
     try {
       const ts = new Date(when).getTime();
       if (!ts || isNaN(ts)) throw new Error("Pick a valid date");
+      const joinPlayers = (list: string[], fallback: string) => {
+        const cleaned = list.map((p) => p.trim()).filter(Boolean);
+        return cleaned.length ? cleaned.join(" & ") : fallback;
+      };
       const id = await createMatch({
         ownerId: user!.id,
         sport,
-        teamA: teamA.trim() || SPORTS[sport].defaultTeams[0],
-        teamB: teamB.trim() || SPORTS[sport].defaultTeams[1],
+        teamA: joinPlayers(playersA, SPORTS[sport].defaultTeams[0]),
+        teamB: joinPlayers(playersB, SPORTS[sport].defaultTeams[1]),
         scheduledAt: ts,
       });
       navigate({ to: "/match", search: { id } });
     } catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -105,9 +110,10 @@ function SchedulePage() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <TeamInput label="Team A" value={teamA} onChange={setTeamA} options={teamOptions} />
-          <TeamInput label="Team B" value={teamB} onChange={setTeamB} options={teamOptions} />
+          <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={teamOptions} />
+          <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={teamOptions} />
         </div>
+
 
         <div>
           <label className="text-xs uppercase tracking-widest text-muted-foreground">Kick-off</label>
@@ -155,21 +161,45 @@ function SchedulePage() {
   );
 }
 
-function TeamInput({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+function PlayersInput({ label, players, onChange, options }: { label: string; players: string[]; onChange: (v: string[]) => void; options: string[] }) {
   const listId = `teams-${label.replace(/\s/g, "")}`;
+  const update = (i: number, v: string) => onChange(players.map((p, idx) => (idx === i ? v : p)));
+  const add = () => onChange([...players, ""]);
+  const remove = (i: number) => onChange(players.length > 1 ? players.filter((_, idx) => idx !== i) : players);
   return (
     <div>
-      <label className="text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
-      <input
-        list={listId}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
-        maxLength={60}
-      />
+      <div className="flex items-center justify-between">
+        <label className="text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
+        <button type="button" onClick={add} className="text-xs text-primary hover:underline">+ Add player</button>
+      </div>
+      <div className="mt-2 space-y-2">
+        {players.map((p, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              list={listId}
+              value={p}
+              onChange={(e) => update(i, e.target.value)}
+              placeholder={i === 0 ? "Player or team name" : `Player ${i + 1}`}
+              className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+              maxLength={60}
+            />
+            {players.length > 1 && (
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="rounded-md border border-border px-2 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
+                aria-label="Remove player"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
       <datalist id={listId}>
         {options.map((o) => <option key={o} value={o} />)}
       </datalist>
     </div>
   );
 }
+
