@@ -167,6 +167,153 @@ function MatchPage() {
           </button>
         </div>
       </div>
+
+      <BetsPanel match={match} onChange={update} />
     </main>
+  );
+}
+
+function BetsPanel({ match, onChange }: { match: Match; onChange: (m: Match) => void }) {
+  const [bettor, setBettor] = useState("");
+  const [pick, setPick] = useState<"a" | "b">("a");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+
+  const bets = match.bets ?? [];
+
+  const winnerSide: "a" | "b" | null = match.endedAt
+    ? (() => {
+        const cfg = SPORTS[match.sport];
+        if (cfg.hasSets && match.sets.length > 0) {
+          const sA = match.sets.filter((s) => s.a > s.b).length;
+          const sB = match.sets.filter((s) => s.b > s.a).length;
+          return sA === sB ? null : sA > sB ? "a" : "b";
+        }
+        if (match.scoreA === match.scoreB) return null;
+        return match.scoreA > match.scoreB ? "a" : "b";
+      })()
+    : null;
+
+  function addBet(e: React.FormEvent) {
+    e.preventDefault();
+    const name = bettor.trim().slice(0, 40);
+    if (!name) return;
+    const amt = amount.trim() ? Math.max(0, Math.min(1_000_000, Number(amount))) : undefined;
+    if (amount.trim() && (!Number.isFinite(amt!) || isNaN(amt!))) return;
+    const bet: Bet = {
+      id: crypto.randomUUID(),
+      bettor: name,
+      pick,
+      amount: amt,
+      note: note.trim().slice(0, 120) || undefined,
+      createdAt: Date.now(),
+    };
+    onChange({ ...match, bets: [...bets, bet] });
+    setBettor("");
+    setAmount("");
+    setNote("");
+  }
+
+  function removeBet(id: string) {
+    onChange({ ...match, bets: bets.filter((b) => b.id !== id) });
+  }
+
+  const totals = {
+    a: bets.filter((b) => b.pick === "a").reduce((s, b) => s + (b.amount ?? 0), 0),
+    b: bets.filter((b) => b.pick === "b").reduce((s, b) => s + (b.amount ?? 0), 0),
+  };
+
+  return (
+    <section className="panel mt-6 p-4 md:p-6">
+      <div className="mb-4 flex items-baseline justify-between">
+        <h2 className="font-display text-xl tracking-wider">Betting board</h2>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+          Pot ${totals.a + totals.b}
+        </span>
+      </div>
+
+      <form onSubmit={addBet} className="grid gap-2 md:grid-cols-[1fr_auto_auto_1fr_auto]">
+        <input
+          value={bettor}
+          onChange={(e) => setBettor(e.target.value)}
+          maxLength={40}
+          placeholder="Your name"
+          className="rounded-md border border-border bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary"
+        />
+        <div className="flex overflow-hidden rounded-md border border-border">
+          <button
+            type="button"
+            onClick={() => setPick("a")}
+            className={`px-3 py-2 text-xs font-semibold ${pick === "a" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            {match.teamA.slice(0, 12) || "A"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPick("b")}
+            className={`px-3 py-2 text-xs font-semibold ${pick === "b" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            {match.teamB.slice(0, 12) || "B"}
+          </button>
+        </div>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
+            inputMode="decimal"
+            placeholder="0"
+            className="w-full rounded-md border border-border bg-background/60 py-2 pl-6 pr-3 text-sm outline-none focus:border-primary"
+          />
+        </div>
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={120}
+          placeholder="…or a note (e.g. beer)"
+          className="rounded-md border border-border bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary"
+        />
+        <button
+          type="submit"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:brightness-110"
+        >
+          Bet
+        </button>
+      </form>
+
+      {bets.length === 0 ? (
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          No bets yet. Who's brave?
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y divide-border/60">
+          {bets.map((b) => {
+            const won = winnerSide && b.pick === winnerSide;
+            const lost = winnerSide && b.pick !== winnerSide;
+            return (
+              <li key={b.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="min-w-0 flex-1 truncate font-semibold">{b.bettor}</span>
+                <span className="rounded bg-background/60 px-2 py-0.5 text-xs text-muted-foreground">
+                  on {b.pick === "a" ? match.teamA : match.teamB}
+                </span>
+                {b.amount != null && b.amount > 0 && (
+                  <span className="font-mono text-primary">${b.amount}</span>
+                )}
+                {b.note && <span className="truncate text-muted-foreground">"{b.note}"</span>}
+                {won && <span className="rounded bg-accent/20 px-2 py-0.5 text-xs text-accent">WON</span>}
+                {lost && <span className="rounded bg-danger/20 px-2 py-0.5 text-xs" style={{ color: "var(--danger)" }}>LOST</span>}
+                <button
+                  onClick={() => removeBet(b.id)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Remove bet"
+                >
+                  ×
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
