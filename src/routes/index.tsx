@@ -63,6 +63,42 @@ function Lobby() {
         )}
       </section>
 
+      {upcoming.length > 0 && (
+        <section className="mb-10 overflow-hidden rounded-lg border border-primary/40 bg-primary/5 shadow-[0_0_40px_-15px_var(--color-primary)]">
+          <div className="flex items-center gap-3 border-b border-primary/30 bg-primary/10 px-4 py-2">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
+            <p className="font-mono text-[11px] uppercase tracking-[0.35em] text-primary">On the schedule</p>
+            <Link to="/schedule" className="ml-auto text-xs text-primary/80 hover:text-primary hover:underline">See all →</Link>
+          </div>
+          <ul className="divide-y divide-primary/10">
+            {upcoming.map((m) => {
+              const cfg = SPORTS[m.sport];
+              const when = m.scheduledAt ? new Date(m.scheduledAt) : null;
+              return (
+                <li key={m.id}>
+                  <Link
+                    to="/match"
+                    search={{ id: m.id }}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-primary/10"
+                  >
+                    <span className="text-xl">{cfg.emoji}</span>
+                    <span className="font-display text-lg tracking-wide">
+                      {m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}
+                    </span>
+                    <span className="ml-auto font-mono text-xs text-primary">
+                      {when ? when.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                    </span>
+                    <span className="w-full text-[11px] text-muted-foreground md:w-auto">
+                      {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <section>
         <h2 className="mb-4 font-display text-2xl tracking-wider text-muted-foreground">Choose sport</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
