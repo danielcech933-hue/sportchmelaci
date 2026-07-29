@@ -110,9 +110,10 @@ function SchedulePage() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <TeamInput label="Team A" value={teamA} onChange={setTeamA} options={teamOptions} />
-          <TeamInput label="Team B" value={teamB} onChange={setTeamB} options={teamOptions} />
+          <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={teamOptions} />
+          <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={teamOptions} />
         </div>
+
 
         <div>
           <label className="text-xs uppercase tracking-widest text-muted-foreground">Kick-off</label>
