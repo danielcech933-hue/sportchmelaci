@@ -154,8 +154,10 @@ function ChatPage() {
             const mine = user?.id === m.user_id;
             const canDelete = mine || isAdmin;
             const when = new Date(m.created_at);
+            const avatarPath = avatars[m.user_id] ?? null;
             return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
+                {!mine && <Avatar path={avatarPath} nickname={m.nickname} size={32} />}
                 <div className={`group max-w-[85%] rounded-xl border px-3 py-2 ${
                   mine
                     ? "border-primary/50 bg-primary/15 shadow-[0_0_20px_-10px_var(--color-primary)]"
@@ -178,6 +180,7 @@ function ChatPage() {
                   </div>
                   <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground">{m.content}</p>
                 </div>
+                {mine && <Avatar path={avatarPath} nickname={m.nickname} size={32} />}
               </div>
             );
           })}
