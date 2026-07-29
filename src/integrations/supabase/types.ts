@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          nickname: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          nickname: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          nickname?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           bets: Json
