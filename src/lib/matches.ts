@@ -127,6 +127,7 @@ export function newMatch(sport: SportId): Match {
     scoreA: 0,
     scoreB: 0,
     sets: [],
+    bets: [],
     startedAt: Date.now(),
   };
 }
