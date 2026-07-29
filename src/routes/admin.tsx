@@ -37,8 +37,13 @@ function Admin() {
 
   async function reload() {
     setLoading(true);
-    try { setMatches(await fetchAllMatches()); } finally { setLoading(false); }
+    try {
+      const [ms, a] = await Promise.all([fetchAllMatches(), fetchAuditLog(200)]);
+      setMatches(ms);
+      setAudit(a);
+    } finally { setLoading(false); }
   }
+
 
   const visible = useMemo(() => {
     return matches.filter((m) => {
