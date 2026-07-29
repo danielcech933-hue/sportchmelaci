@@ -13,6 +13,7 @@ type Row = {
   bets: unknown;
   started_at: string;
   ended_at: string | null;
+  scheduled_at?: string | null;
   confirmed_at?: string | null;
   confirmed_by?: string | null;
 };
@@ -31,6 +32,7 @@ function toMatch(r: Row, nickname: string): Match {
     bets: (r.bets as Bet[]) ?? [],
     startedAt: new Date(r.started_at).getTime(),
     endedAt: r.ended_at ? new Date(r.ended_at).getTime() : undefined,
+    scheduledAt: r.scheduled_at ? new Date(r.scheduled_at).getTime() : undefined,
     confirmedAt: r.confirmed_at ? new Date(r.confirmed_at).getTime() : undefined,
     confirmedBy: r.confirmed_by ?? null,
   };
@@ -66,15 +68,18 @@ export async function createMatch(input: {
   sport: SportId;
   teamA: string;
   teamB: string;
+  scheduledAt?: number | null;
 }): Promise<string> {
+  const payload: Record<string, unknown> = {
+    owner_id: input.ownerId,
+    sport: input.sport,
+    team_a: input.teamA,
+    team_b: input.teamB,
+  };
+  if (input.scheduledAt) payload.scheduled_at = new Date(input.scheduledAt).toISOString();
   const { data, error } = await supabase
     .from("matches")
-    .insert({
-      owner_id: input.ownerId,
-      sport: input.sport,
-      team_a: input.teamA,
-      team_b: input.teamB,
-    })
+    .insert(payload as never)
     .select("id")
     .single();
   if (error) throw error;
