@@ -115,7 +115,7 @@ function Lobby() {
         <h2 className="mb-4 font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">CHOOSE SPORT</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {SPORT_LIST.map((s) => {
-            const isNohejbal = s.id === "nohejbal";
+            const isNohejbal = s.id === "nohejball";
             return (
               <button
                 key={s.id}
