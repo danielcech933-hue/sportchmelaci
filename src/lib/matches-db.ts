@@ -101,3 +101,28 @@ export async function removeMatch(id: string): Promise<void> {
   const { error } = await supabase.from("matches").delete().eq("id", id);
   if (error) throw error;
 }
+
+export async function setMatchConfirmed(id: string, userId: string | null): Promise<void> {
+  const { error } = await supabase
+    .from("matches")
+    .update({
+      confirmed_at: userId ? new Date().toISOString() : null,
+      confirmed_by: userId,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function removeBetFromMatch(matchId: string, betId: string): Promise<void> {
+  const { data, error: fetchErr } = await supabase
+    .from("matches")
+    .select("bets")
+    .eq("id", matchId)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
+  if (!data) return;
+  const bets = ((data.bets as Bet[]) ?? []).filter((b) => b.id !== betId);
+  const { error } = await supabase.from("matches").update({ bets: bets as unknown as never }).eq("id", matchId);
+  if (error) throw error;
+}
+
