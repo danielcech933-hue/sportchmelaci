@@ -179,6 +179,7 @@ function Lobby() {
             };
             return (
               <button
+                data-sport-tile
                 key={s.id}
                 onClick={handleClick}
                 onMouseEnter={() => setHoveredSport(s.id)}
