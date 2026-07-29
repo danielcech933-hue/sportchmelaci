@@ -97,11 +97,24 @@ export async function saveMatch(m: Match): Promise<void> {
       score_a: m.scoreA,
       score_b: m.scoreB,
       sets: m.sets as unknown as never,
-      bets: m.bets as unknown as never,
       ended_at: m.endedAt ? new Date(m.endedAt).toISOString() : null,
     })
     .eq("id", m.id);
   if (error) throw error;
+}
+
+export async function placeBet(matchId: string, pick: "a" | "b", amount: number, note: string): Promise<{ balance: number }> {
+  const { data, error } = await supabase.rpc("place_bet" as never, {
+    _match_id: matchId, _pick: pick, _amount: amount, _note: note,
+  } as never);
+  if (error) throw error;
+  return data as { balance: number };
+}
+
+export async function withdrawBet(matchId: string): Promise<{ refunded: number }> {
+  const { data, error } = await supabase.rpc("withdraw_bet" as never, { _match_id: matchId } as never);
+  if (error) throw error;
+  return data as { refunded: number };
 }
 
 export async function removeMatch(id: string): Promise<void> {
