@@ -112,16 +112,19 @@ function MatchPage() {
           <input
             value={match.teamA}
             disabled={!isOwner}
+            list={NICKNAMES_DATALIST_ID}
             onChange={(e) => update({ ...match, teamA: e.target.value })}
             className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90"
           />
           <input
             value={match.teamB}
             disabled={!isOwner}
+            list={NICKNAMES_DATALIST_ID}
             onChange={(e) => update({ ...match, teamB: e.target.value })}
             className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90"
           />
         </div>
+        <NicknamesDatalist options={nicknames} />
 
         <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
 
