@@ -142,3 +142,11 @@ function AuthNav() {
     </div>
   );
 }
+
+function ProfileNavLink() {
+  const { user, loading } = useAuth();
+  if (loading || !user) return null;
+  return (
+    <Link to="/profile" className="rounded-md px-3 py-2 text-muted-foreground hover:text-foreground [&.active]:text-foreground">Profile</Link>
+  );
+}
