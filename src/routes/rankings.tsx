@@ -2,14 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
-import type { Match } from "@/lib/matches";
+import { SPORT_LIST, type Match, type SportId } from "@/lib/matches";
 
 export const Route = createFileRoute("/rankings")({
   head: () => ({
     meta: [
-      { title: "Courtside — ScoreboardaTeams" },
+      { title: "Courtside — Scoreboard 🏆" },
       { name: "description", content: "Rankings for teams and solo players by match victories." },
-      { property: "og:title", content: "Courtside — ScoreboardaTeams" },
+      { property: "og:title", content: "Courtside — Scoreboard 🏆" },
       { property: "og:description", content: "Rankings for teams and solo players by match victories." },
     ],
   }),
@@ -42,6 +42,7 @@ function RankingsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [tab, setTab] = useState<"solo" | "teams">("solo");
+  const [sport, setSport] = useState<SportId | "all">("all");
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,7 +57,10 @@ function RankingsPage() {
     })();
   }, []);
 
-  const finished = useMemo(() => matches.filter((m) => m.endedAt), [matches]);
+  const finished = useMemo(
+    () => matches.filter((m) => m.endedAt && (sport === "all" || m.sport === sport)),
+    [matches, sport],
+  );
 
   const soloRows = useMemo<Row[]>(() => {
     const map = new Map<string, Row>();
@@ -106,18 +110,34 @@ function RankingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-4xl tracking-wider">ScoreboardaTeams</h1>
+      <h1 className="font-display text-4xl tracking-wider">Scoreboard 🏆</h1>
       <p className="mt-1 text-sm text-muted-foreground">Rankings by match victories — solo players and teams.</p>
 
-      <div className="mt-6 inline-flex rounded-md border border-border p-1 text-sm">
-        <button
-          onClick={() => setTab("solo")}
-          className={`rounded px-3 py-1.5 ${tab === "solo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-        >Solo players</button>
-        <button
-          onClick={() => setTab("teams")}
-          className={`rounded px-3 py-1.5 ${tab === "teams" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-        >Teams</button>
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="inline-flex rounded-md border border-border p-1 text-sm">
+          <button
+            onClick={() => setTab("solo")}
+            className={`rounded px-3 py-1.5 ${tab === "solo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >Solo players</button>
+          <button
+            onClick={() => setTab("teams")}
+            className={`rounded px-3 py-1.5 ${tab === "teams" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >Teams</button>
+        </div>
+
+        <div className="inline-flex flex-wrap rounded-md border border-border p-1 text-sm">
+          <button
+            onClick={() => setSport("all")}
+            className={`rounded px-3 py-1.5 ${sport === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >All sports</button>
+          {SPORT_LIST.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setSport(s.id)}
+              className={`rounded px-3 py-1.5 ${sport === s.id ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >{s.emoji} {s.name}</button>
+          ))}
+        </div>
       </div>
 
       {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
