@@ -20,10 +20,17 @@ function Lobby() {
   const navigate = useNavigate();
   const { user, nickname, loading } = useAuth();
   const [recent, setRecent] = useState<Match[]>([]);
+  const [upcoming, setUpcoming] = useState<Match[]>([]);
 
   useEffect(() => {
-    if (!user) { setRecent([]); return; }
-    fetchAllMatches().then((all) => setRecent(all.slice(0, 6))).catch(() => setRecent([]));
+    if (!user) { setRecent([]); setUpcoming([]); return; }
+    fetchAllMatches().then((all) => {
+      const up = all
+        .filter((m) => m.scheduledAt && !m.endedAt && m.sets.length === 0 && m.scoreA === 0 && m.scoreB === 0)
+        .sort((a, b) => (a.scheduledAt! - b.scheduledAt!));
+      setUpcoming(up.slice(0, 5));
+      setRecent(all.slice(0, 6));
+    }).catch(() => { setRecent([]); setUpcoming([]); });
   }, [user]);
 
   async function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
