@@ -143,6 +143,7 @@ function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId
           <input
             value={nick}
             onChange={(e) => setNick(e.target.value)}
+            list={NICKNAMES_DATALIST_ID}
             placeholder="Add player by nickname"
             className="flex-1 rounded-md border border-border bg-transparent px-2 py-1.5 text-xs"
           />
