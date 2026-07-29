@@ -43,4 +43,7 @@ export interface Match {
   bets: Bet[];
   startedAt: number;
   endedAt?: number;
+  confirmedAt?: number;
+  confirmedBy?: string | null;
 }
+
