@@ -119,8 +119,8 @@ function SchedulePage() {
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={teamOptions} />
-          <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={teamOptions} />
+          <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={playerOptions} />
+          <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={playerOptions} />
         </div>
 
 
