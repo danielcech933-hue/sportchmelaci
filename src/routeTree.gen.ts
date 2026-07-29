@@ -16,6 +16,7 @@ import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -55,6 +56,11 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BetsRoute = BetsRouteImport.update({
+  id: '/bets',
+  path: '/bets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/bets': typeof BetsRoute
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/bets': typeof BetsRoute
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/bets': typeof BetsRoute
   '/history': typeof HistoryRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/bets'
     | '/history'
     | '/match'
     | '/profile'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/bets'
     | '/history'
     | '/match'
     | '/profile'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/bets'
     | '/history'
     | '/match'
     | '/profile'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  BetsRoute: typeof BetsRoute
   HistoryRoute: typeof HistoryRoute
   MatchRoute: typeof MatchRoute
   ProfileRoute: typeof ProfileRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bets': {
+      id: '/bets'
+      path: '/bets'
+      fullPath: '/bets'
+      preLoaderRoute: typeof BetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  BetsRoute: BetsRoute,
   HistoryRoute: HistoryRoute,
   MatchRoute: MatchRoute,
   ProfileRoute: ProfileRoute,
