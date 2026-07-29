@@ -170,12 +170,19 @@ function SiteHeader() {
       <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
       <div className="relative mx-auto max-w-6xl px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center justify-between gap-2">
-          <Link to="/" className="flex shrink-0 items-center gap-2">
-            <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-md border border-primary/40 bg-primary/10">
-              <Trophy className="h-3.5 w-3.5 text-primary" />
+          <Link to="/" className="group flex shrink-0 items-center gap-2">
+            <span className="relative inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/40 bg-primary/10">
+              <span aria-hidden className="sport-cycle text-base leading-none">
+                <span>⚽</span>
+                <span>🎾</span>
+                <span>🏐</span>
+                <span>🏓</span>
+              </span>
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
             </span>
-            <span className="font-display text-lg tracking-widest neon-text sm:text-2xl">COURTSIDE</span>
+            <span className="brand-shimmer font-display text-lg tracking-widest neon-text sm:text-2xl">
+              CHMELOVÍ SPORTOVCI
+            </span>
           </Link>
 
           {current && (
