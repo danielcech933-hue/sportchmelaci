@@ -11,6 +11,12 @@ import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
 import volleyballLegendsAsset from "@/assets/volleyball-legends.png.asset.json";
 import footballLegendsAsset from "@/assets/football-legends.png.asset.json";
 import padelLegendsAsset from "@/assets/padel-legends.png.asset.json";
+import foosballLegendsAsset from "@/assets/foosball-legends.png.asset.json";
+import pingpongLegendsAsset from "@/assets/pingpong-legends.png.asset.json";
+import basketballLegendsAsset from "@/assets/basketball-legends.png.asset.json";
+import dartsLegendsAsset from "@/assets/darts-legends.png.asset.json";
+import beerpongLegendsAsset from "@/assets/beerpong-legends.png.asset.json";
+import beerraceLegendsAsset from "@/assets/beerrace-legends.png.asset.json";
 
 const SPORT_BG: Record<string, string> = {
   tennis: tennisLegendsAsset.url,
@@ -18,6 +24,12 @@ const SPORT_BG: Record<string, string> = {
   nohejball: nohejbalLegendsAsset.url,
   football: footballLegendsAsset.url,
   padel: padelLegendsAsset.url,
+  foosball: foosballLegendsAsset.url,
+  pingpong: pingpongLegendsAsset.url,
+  basketball: basketballLegendsAsset.url,
+  darts: dartsLegendsAsset.url,
+  beerpong: beerpongLegendsAsset.url,
+  beerrace: beerraceLegendsAsset.url,
 };
 
 export const Route = createFileRoute("/schedule")({
