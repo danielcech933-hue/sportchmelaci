@@ -6,6 +6,19 @@ import { createMatch, fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/schedule-hero.jpg";
+import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
+import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
+import volleyballLegendsAsset from "@/assets/volleyball-legends.png.asset.json";
+import footballLegendsAsset from "@/assets/football-legends.png.asset.json";
+import padelLegendsAsset from "@/assets/padel-legends.png.asset.json";
+
+const SPORT_BG: Record<string, string> = {
+  tennis: tennisLegendsAsset.url,
+  volleyball: volleyballLegendsAsset.url,
+  nohejball: nohejbalLegendsAsset.url,
+  football: footballLegendsAsset.url,
+  padel: padelLegendsAsset.url,
+};
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
@@ -99,6 +112,23 @@ function SchedulePage() {
 
   return (
     <main className="relative mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
+      {/* Fixed sport background reacting to selected sport */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        {Object.entries(SPORT_BG).map(([id, url]) => (
+          <img
+            key={id}
+            src={url}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover saturate-125 contrast-110 transition-all duration-700 ease-out ${
+              sport === id ? "opacity-40 scale-105" : "opacity-0 scale-110"
+            }`}
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/60" />
+        <div className="absolute inset-0 grid-bg opacity-30" />
+        <div className="absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.25),transparent_60%)]" />
+      </div>
+      <div className="relative z-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
         <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-60" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -185,6 +215,7 @@ function SchedulePage() {
           )}
         </ul>
       </section>
+      </div>
     </main>
   );
 }
