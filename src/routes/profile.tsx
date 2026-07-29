@@ -195,22 +195,22 @@ function Profile() {
                 b.status === "lost" ? "text-destructive border-destructive/40 bg-destructive/10" :
                 "text-muted-foreground border-primary/25 bg-background/40";
               return (
-                <li key={b.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
+                <li key={b.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition hover:border-primary/60 sm:p-4">
                   <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                  <div className="relative flex flex-wrap items-center gap-4">
+                  <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>{cfg.emoji} {m.teamA} vs {m.teamB}</span>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
+                        <span className="truncate">{cfg.emoji} {m.teamA} vs {m.teamB}</span>
                         <span>·</span>
-                        <span>{new Date(b.createdAt ?? m.startedAt).toLocaleString()}</span>
+                        <span>{new Date(b.createdAt ?? m.startedAt).toLocaleDateString()}</span>
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <span className="text-sm">Picked <span className="text-primary font-semibold">{pickTeam}</span></span>
-                        {b.amount ? <span className="text-sm">· ${b.amount}</span> : null}
-                        {b.note ? <span className="text-sm text-muted-foreground">· "{b.note}"</span> : null}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                        <span>Picked <span className="text-primary font-semibold">{pickTeam}</span></span>
+                        {b.amount ? <span>· ${b.amount}</span> : null}
+                        {b.note ? <span className="text-muted-foreground">· "{b.note}"</span> : null}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
                       <span className={`rounded border px-2 py-0.5 text-[10px] uppercase tracking-widest ${tone}`}>{b.status}</span>
                       <Link
                         to="/match"
