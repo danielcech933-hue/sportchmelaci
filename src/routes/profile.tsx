@@ -135,6 +135,8 @@ function Profile() {
         </div>
       </section>
 
+      <AvatarSection userId={user.id} nickname={nickname} avatarPath={avatarPath} onChange={refreshProfile} />
+
       <section className="mt-6 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-5">
         <Stat label="Matches" value={stats.total} />
         <Stat label="Victories" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
