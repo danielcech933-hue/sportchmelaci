@@ -352,7 +352,7 @@ function AvatarSection({
     <section className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-4 backdrop-blur sm:p-5">
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-15" />
       <div className="relative flex flex-wrap items-center gap-4">
-        <Avatar path={avatarPath} nickname={nickname} size={72} />
+
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">// Avatar</p>
           <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG or WebP · max 20 MB. Visible on your profile and in chat.</p>

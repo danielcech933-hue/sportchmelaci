@@ -56,11 +56,11 @@ function AvatarLightbox({ url, nickname, onClose }: { url: string; nickname?: st
       onClick={onClose}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4 backdrop-blur-sm animate-in fade-in"
     >
-      <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <div className="relative flex max-h-[90vh] max-w-[92vw] flex-col items-center" onClick={(e) => e.stopPropagation()}>
         <img
           src={url}
           alt={nickname ?? "avatar"}
-          className="max-h-[85vh] max-w-[85vw] rounded-2xl border border-primary/50 object-contain shadow-[0_0_40px_-5px_var(--color-primary)]"
+          className="max-h-[80vh] max-w-[90vw] rounded-2xl border border-primary/50 object-contain shadow-[0_0_40px_-5px_var(--color-primary)]"
         />
         {nickname && (
           <div className="mt-3 text-center font-display text-lg tracking-widest text-primary neon-text">

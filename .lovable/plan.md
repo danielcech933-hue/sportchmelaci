@@ -1,42 +1,22 @@
+## Úprava avataru na profilu
 
-## Cíl
-Každý přihlášený uživatel si může nahrát vlastní profilový obrázek. Avatar se zobrazuje na profilu, v hlavičce a u každé zprávy v public chatu.
+**Cíl:** Profilovka bude jen v hero rámečku nahoře. Sekce pod hero se zjednoduší jen na upload/replace/remove tlačítka (bez druhého náhledu avataru). Lightbox zvětšení nebude přerůstat obrazovku.
 
-## Co přibude
+### Změny
 
-**1. Storage bucket `avatars` (veřejný pro čtení)**
-- Nový public bucket `avatars` (přes storage tool, ne SQL).
-- RLS na `storage.objects`:
-  - kdokoli může číst soubory z bucketu `avatars` (aby avatar viděli i další uživatelé v chatu),
-  - uživatel může nahrávat/mazat/aktualizovat pouze soubory ve své vlastní složce `{user_id}/…` (kontrola přes `auth.uid()::text = (storage.foldername(name))[1]`).
+1. **`src/routes/profile.tsx` – `AvatarSection`**
+   - Odstranit druhý `<Avatar />` z této sekce (aktuálně size=72). Zůstane jen popisek + tlačítka Upload/Replace/Remove.
+   - Hero avatar (size=96) nahoře zůstává jediným místem, kde je profilovka vidět.
 
-**2. Migrace: sloupec `avatar_url` v `profiles`**
-- Přidání `avatar_url TEXT NULL` do tabulky `profiles`.
-- Stávající RLS na `profiles` už dovoluje uživateli update vlastního řádku (kromě balance), takže žádná nová politika není potřeba. Nový sloupec se aktualizuje přes normální `update`.
-- Denormalizovaný `avatar_url` ve staré `chat_messages` **nezavádím** — avatar budu joinovat z `profiles` podle `user_id`, takže se automaticky změní i u historických zpráv, když si uživatel obrázek přenahraje.
+2. **`src/routes/profile.tsx` – hero avatar**
+   - Ponechat náhodný efekt (`heroFx`) a `<Avatar path={avatarPath} size={96} />`. Kliknutím se otevře lightbox (už funguje z `avatars.tsx`).
 
-**3. Profil (`src/routes/profile.tsx`) – uploader**
-- Nová sekce „Avatar" s náhledem, tlačítkem *Upload* a *Remove*.
-- Client-side validace: pouze `image/png`, `image/jpeg`, `image/webp`, max ~2 MB.
-- Cesta v bucketu: `avatars/{user.id}/avatar-{timestamp}.{ext}` (timestamp v názvu obejde CDN cache po výměně).
-- Po uploadu se získá `publicUrl` a uloží se do `profiles.avatar_url`; starý soubor uživatele se smaže (best-effort).
+3. **`src/lib/avatars.tsx` – `AvatarLightbox`**
+   - Aktuální styl `max-h-[85vh] max-w-[85vw]` + `object-contain` na `<img>`, ale wrapper `<div className="relative">` nemá omezení, takže dlouhá jména nebo velký obrázek můžou přerůst. Přidat `max-h-[90vh] max-w-[92vw] flex flex-col items-center` na wrapper a `object-contain` už je OK.
+   - Snížit `max-h` obrázku na `min(85vh, 640px)` chování ne, jen zaručit, že se vejde: použít `max-h-[80vh] max-w-[90vw]` a wrapper `max-h-[90vh]`, aby popisek + křížek nepřerostly viewport.
 
-**4. Chat (`src/routes/chat.tsx`) – zobrazení avatarů**
-- Initial load: k `chat_messages` doplním `profiles!inner(avatar_url, nickname)` embed přes Supabase select (přes existující FK `chat_messages.user_id → auth.users` join na `profiles` funguje přes `profiles!user_id`; použiji explicit hint).
-- Pro realtime `INSERT` payloady (které nesou jen řádek `chat_messages`, bez joinu) budu držet malý in-memory `Map<user_id, avatar_url>` naplněný z initial fetch a doplňovaný lazy dotazem, když přijde zpráva od dosud neznámého uživatele.
-- Vedle jména se v bublině zobrazí kulatý avatar (fallback = iniciála přezdívky v neonovém kroužku, styl sladěný se stávajícím cyber vzhledem).
+### Ostatní obrázky (beze změny)
+- Hero bannery na jiných stránkách (`profile-hero.jpg` atd.) zůstávají.
+- Avatary v chatu a hlavičce beze změny.
 
-**5. Header (`src/routes/__root.tsx`) – malý avatar u přihlášeného uživatele**
-- V `AuthNav` (kde je nickname/balance) přidat 24 px avatar vedle nicknamu; fallback iniciála. Bez avataru nic nerozbije.
-
-## Poznámky k bezpečnosti
-- Bucket je *public read* jen pro obrázky avatarů — nic citlivého se tam nedostane.
-- Zápis je striktně scoped na `{auth.uid()}/…`, cizí uživatel nemůže přepsat cizí avatar.
-- Neukládám avatar do `chat_messages`, takže neexistuje cesta, jak by uživatel „podstrčil" chat zprávě cizí obrázek.
-
-## Co zůstává beze změny
-- `AuthProvider`, existující RLS na `profiles`/`chat_messages`, seedy, jiné route.
-- Betting, teams, rankings nejsou dotčeny.
-
-## Otevřené otázky
-Žádné — postupuji podle výše uvedeného. Pokud chceš jiný limit velikosti nebo povolit GIFy, řekni před schválením.
+Žádné DB ani backend změny.
