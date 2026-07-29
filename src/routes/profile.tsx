@@ -72,8 +72,14 @@ function Profile() {
       else if (b.status === "lost") { betLost++; if (b.amount) moneyNet -= b.amount; }
       else betOpen++;
     }
-    return { total: myMatches.length, finished: myMatches.filter((m) => m.endedAt).length, betWon, betLost, betOpen, moneyNet };
-  }, [myMatches, myBets]);
+    const victories = myMatches.filter((m) => {
+      const w = winnerSideOf(m);
+      if (!w || !nickname) return false;
+      const winner = w === "a" ? m.teamA : m.teamB;
+      return winner.trim().toLowerCase() === nickname.toLowerCase();
+    }).length;
+    return { total: myMatches.length, victories, betWon, betLost, betOpen, moneyNet };
+  }, [myMatches, myBets, nickname]);
 
   if (authLoading) return <main className="mx-auto max-w-6xl px-4 py-10 text-sm text-muted-foreground">Loading…</main>;
 
@@ -100,7 +106,7 @@ function Profile() {
 
       <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="Matches" value={stats.total} />
-        <Stat label="Finished" value={stats.finished} />
+        <Stat label="Match victory" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
         <Stat label="Bets won" value={stats.betWon} />
         <Stat label="Bets lost" value={stats.betLost} />
         <Stat label="Net $" value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)} tone={stats.moneyNet >= 0 ? "good" : "bad"} />
