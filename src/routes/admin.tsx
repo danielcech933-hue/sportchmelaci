@@ -24,6 +24,9 @@ function Admin() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unconfirmed" | "confirmed" | "live">("unconfirmed");
   const [busy, setBusy] = useState<string | null>(null);
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+
 
   useEffect(() => {
     if (authLoading) return;
