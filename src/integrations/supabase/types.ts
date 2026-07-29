@@ -17,6 +17,7 @@ export type Database = {
       matches: {
         Row: {
           bets: Json
+          bets_locked_at: string | null
           confirmed_at: string | null
           confirmed_by: string | null
           created_at: string
@@ -35,6 +36,7 @@ export type Database = {
         }
         Insert: {
           bets?: Json
+          bets_locked_at?: string | null
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
@@ -53,6 +55,7 @@ export type Database = {
         }
         Update: {
           bets?: Json
+          bets_locked_at?: string | null
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
@@ -73,18 +76,21 @@ export type Database = {
       }
       profiles: {
         Row: {
+          balance: number
           created_at: string
           id: string
           nickname: string
           updated_at: string
         }
         Insert: {
+          balance?: number
           created_at?: string
           id: string
           nickname: string
           updated_at?: string
         }
         Update: {
+          balance?: number
           created_at?: string
           id?: string
           nickname?: string
@@ -178,6 +184,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      place_bet: {
+        Args: {
+          _amount: number
+          _match_id: string
+          _note: string
+          _pick: string
+        }
+        Returns: Json
+      }
+      settle_match: { Args: { _match_id: string }; Returns: undefined }
+      withdraw_bet: { Args: { _match_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

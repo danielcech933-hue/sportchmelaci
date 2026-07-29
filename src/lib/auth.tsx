@@ -6,6 +6,7 @@ interface AuthState {
   session: Session | null;
   user: User | null;
   nickname: string | null;
+  balance: number;
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -17,16 +18,18 @@ const Ctx = createContext<AuthState | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(uid: string | undefined) {
-    if (!uid) { setNickname(null); setIsAdmin(false); return; }
+    if (!uid) { setNickname(null); setBalance(0); setIsAdmin(false); return; }
     const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("nickname").eq("id", uid).maybeSingle(),
+      supabase.from("profiles").select("nickname,balance").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setNickname(prof?.nickname ?? null);
+    setBalance(Number((prof as { balance?: number } | null)?.balance ?? 0));
     setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
   }
 
@@ -46,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     user: session?.user ?? null,
     nickname,
+    balance,
     isAdmin,
     loading,
     signOut: async () => { await supabase.auth.signOut(); },
