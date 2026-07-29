@@ -4,6 +4,7 @@ import { SPORT_LIST, SPORTS, type Match } from "@/lib/matches";
 import { fetchAllMatches, createMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import heroImg from "@/assets/lobby-hero.jpg";
+import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -113,20 +114,40 @@ function Lobby() {
       <section className="mt-10">
         <h2 className="mb-4 font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">CHOOSE SPORT</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-          {SPORT_LIST.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => start(s.id)}
-              className="group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-5 text-left backdrop-blur transition hover:border-primary hover:shadow-[0_0_0_1px_var(--color-primary),0_0_30px_-8px_var(--color-primary)]"
-            >
-              <div className="absolute inset-0 grid-bg opacity-15 transition group-hover:opacity-30" />
-              <span className="relative text-4xl">{s.emoji}</span>
-              <span className="relative font-display text-xl tracking-wider">{s.name}</span>
-              <span className="relative mt-auto text-xs uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary">
-                {user ? "Start match →" : "Sign in →"}
-              </span>
-            </button>
-          ))}
+          {SPORT_LIST.map((s) => {
+            const isNohejbal = s.id === "nohejball";
+            return (
+              <button
+                key={s.id}
+                onClick={() => start(s.id)}
+                className={`group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border p-5 text-left backdrop-blur transition hover:shadow-[0_0_0_1px_var(--color-primary),0_0_30px_-8px_var(--color-primary)] ${
+                  isNohejbal
+                    ? "border-primary/40 bg-background/40 hover:border-primary"
+                    : "border-primary/25 bg-background/60 hover:border-primary"
+                }`}
+              >
+                {isNohejbal && (
+                  <>
+                    <img
+                      src={nohejbalLegendsAsset.url}
+                      alt=""
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45 saturate-125 contrast-110 transition duration-500 group-hover:scale-105 group-hover:opacity-70"
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
+                    <div className="pointer-events-none absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.25),transparent_60%)]" />
+                  </>
+                )}
+                <div className={`absolute inset-0 grid-bg transition ${isNohejbal ? "opacity-25 group-hover:opacity-40" : "opacity-15 group-hover:opacity-30"}`} />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+                <span className={`relative text-4xl ${isNohejbal ? "drop-shadow-[0_0_12px_hsl(45_100%_60%/0.7)]" : ""}`}>{s.emoji}</span>
+                <span className={`relative font-display text-xl tracking-wider ${isNohejbal ? "neon-text text-primary" : ""}`}>{s.name}</span>
+                <span className="relative mt-auto text-xs uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary">
+                  {user ? "Start match →" : "Sign in →"}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
