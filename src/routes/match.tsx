@@ -356,6 +356,7 @@ function Lineup({ teamA, teamB, canEdit, onChange }: { teamA: string; teamB: str
                   <>
                     <input
                       value={p}
+                      list={NICKNAMES_DATALIST_ID}
                       onChange={(e) => updatePlayer(side.key, i, e.target.value)}
                       className="flex-1 rounded border border-border bg-background/60 px-2 py-1 text-sm outline-none focus:border-primary"
                     />
