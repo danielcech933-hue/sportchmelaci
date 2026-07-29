@@ -62,21 +62,34 @@ function Lobby() {
             <Link to="/history" className="text-sm text-primary hover:underline">View all</Link>
           </div>
           <ul className="grid gap-3 md:grid-cols-3">
-            {recent.map((m) => (
-              <li key={m.id}>
-                <Link to="/match" search={{ id: m.id }} className="panel block p-4 hover:border-primary">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{SPORTS[m.sport].emoji} {SPORTS[m.sport].name}</span>
-                    <span>{new Date(m.startedAt).toLocaleDateString()}</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="truncate pr-2">{m.teamA}</span>
-                    <span className="led-digit text-2xl">{m.scoreA} : {m.scoreB}</span>
-                    <span className="truncate pl-2 text-right">{m.teamB}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
+            {recent.map((m) => {
+              const cfg = SPORTS[m.sport];
+              const setsA = m.sets.filter((s) => s.a > s.b).length;
+              const setsB = m.sets.filter((s) => s.b > s.a).length;
+              const showSets = cfg.hasSets && m.sets.length > 0;
+              const a = showSets ? setsA : m.scoreA;
+              const b = showSets ? setsB : m.scoreB;
+              return (
+                <li key={m.id}>
+                  <Link to="/match" search={{ id: m.id }} className="panel block p-4 hover:border-primary">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{cfg.emoji} {cfg.name}</span>
+                      <span>{new Date(m.startedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="truncate pr-2">{m.teamA}</span>
+                      <span className="led-digit text-2xl">{a} : {b}</span>
+                      <span className="truncate pl-2 text-right">{m.teamB}</span>
+                    </div>
+                    {showSets && (
+                      <div className="mt-1 text-center font-mono text-[10px] text-muted-foreground">
+                        {m.sets.map((s, i) => <span key={i} className="mx-1">{s.a}–{s.b}</span>)}
+                      </div>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
