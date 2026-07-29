@@ -161,21 +161,45 @@ function SchedulePage() {
   );
 }
 
-function TeamInput({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+function PlayersInput({ label, players, onChange, options }: { label: string; players: string[]; onChange: (v: string[]) => void; options: string[] }) {
   const listId = `teams-${label.replace(/\s/g, "")}`;
+  const update = (i: number, v: string) => onChange(players.map((p, idx) => (idx === i ? v : p)));
+  const add = () => onChange([...players, ""]);
+  const remove = (i: number) => onChange(players.length > 1 ? players.filter((_, idx) => idx !== i) : players);
   return (
     <div>
-      <label className="text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
-      <input
-        list={listId}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
-        maxLength={60}
-      />
+      <div className="flex items-center justify-between">
+        <label className="text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
+        <button type="button" onClick={add} className="text-xs text-primary hover:underline">+ Add player</button>
+      </div>
+      <div className="mt-2 space-y-2">
+        {players.map((p, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              list={listId}
+              value={p}
+              onChange={(e) => update(i, e.target.value)}
+              placeholder={i === 0 ? "Player or team name" : `Player ${i + 1}`}
+              className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+              maxLength={60}
+            />
+            {players.length > 1 && (
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="rounded-md border border-border px-2 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
+                aria-label="Remove player"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
       <datalist id={listId}>
         {options.map((o) => <option key={o} value={o} />)}
       </datalist>
     </div>
   );
 }
+
