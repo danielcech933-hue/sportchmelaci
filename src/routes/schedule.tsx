@@ -215,6 +215,7 @@ function SchedulePage() {
           )}
         </ul>
       </section>
+      </div>
     </main>
   );
 }
