@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { SPORTS, type Match, type Bet } from "@/lib/matches";
 import { fetchAllMatches, removeMatch, setMatchConfirmed, removeBetFromMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { fetchAuditLog, actionLabel, type AuditEntry } from "@/lib/audit";
+
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
