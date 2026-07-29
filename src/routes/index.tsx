@@ -47,21 +47,21 @@ function Lobby() {
   }
 
   return (
-    <main className="relative mx-auto max-w-6xl px-4 py-10">
+    <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
       {/* HERO */}
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-56 w-full object-cover opacity-70 sm:h-72" />
+        <img src={heroImg} alt="" width={1600} height={720} className="h-48 w-full object-cover opacity-70 sm:h-72" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-30" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
-          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8">
+          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
             Ready · Set · Play
           </div>
-          <h1 className="mt-2 font-display text-5xl tracking-wider neon-text sm:text-7xl">
+          <h1 className="mt-2 font-display text-4xl leading-none tracking-wider neon-text sm:text-7xl">
             YOUR LIVE <span className="text-primary">SCOREBOARD</span>
           </h1>
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+          <p className="mt-1 max-w-xl text-xs text-muted-foreground sm:text-sm">
             Pick a sport and start scoring. Every match is saved under your nickname.
           </p>
           {!loading && !user && (
@@ -70,7 +70,7 @@ function Lobby() {
             </Link>
           )}
           {user && nickname && (
-            <p className="mt-3 font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">
               // Playing as <span className="text-primary neon-text">{nickname}</span>
             </p>
           )}
