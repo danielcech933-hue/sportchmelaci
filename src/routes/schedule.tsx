@@ -157,20 +157,20 @@ function SchedulePage() {
       </form>
 
       <section className="mt-10">
-        <h2 className="font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">UPCOMING</h2>
+        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">UPCOMING</h2>
         <ul className="mt-3 space-y-2">
           {upcoming.map((m) => {
             const cfg = SPORTS[m.sport];
             return (
               <li key={m.id}>
-                <Link to="/match" search={{ id: m.id }} className="relative flex items-center justify-between overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary hover:shadow-[0_0_20px_-10px_var(--color-primary)]">
+                <Link to="/match" search={{ id: m.id }} className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition hover:border-primary hover:shadow-[0_0_20px_-10px_var(--color-primary)] sm:p-4">
                   <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                  <div className="relative">
-                    <p className="text-xs text-muted-foreground">{cfg.emoji} {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span></p>
-                    <p className="mt-1 font-display text-lg tracking-wide">{m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}</p>
+                  <div className="relative min-w-0 flex-1">
+                    <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{cfg.emoji} {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span></p>
+                    <p className="mt-1 truncate font-display text-base tracking-wide sm:text-lg">{m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}</p>
                   </div>
-                  <div className="relative text-right font-mono text-xs text-primary neon-text">
-                    {m.scheduledAt ? new Date(m.scheduledAt).toLocaleString() : ""}
+                  <div className="relative shrink-0 text-right font-mono text-[10px] leading-tight text-primary neon-text sm:text-xs">
+                    {m.scheduledAt ? new Date(m.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
                   </div>
                 </Link>
               </li>
