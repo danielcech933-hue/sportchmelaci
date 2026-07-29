@@ -93,6 +93,7 @@ function Lobby() {
       {/* Close button while a sport preview is active */}
       {hoveredSport && (
         <button
+          data-sport-close
           type="button"
           onClick={() => setHoveredSport(null)}
           className="fixed right-4 top-20 z-30 rounded-full border border-primary/60 bg-background/80 px-3 py-1.5 text-xs uppercase tracking-[0.25em] text-primary backdrop-blur transition hover:bg-primary hover:text-primary-foreground sm:right-6"
