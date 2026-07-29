@@ -24,6 +24,7 @@ function MatchPage() {
   const { id } = Route.useSearch();
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const nicknames = useNicknames();
   const [match, setMatch] = useState<Match | null>(null);
   const [notFound, setNotFound] = useState(false);
   const dirty = useRef(false);
