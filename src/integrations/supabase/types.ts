@@ -328,6 +328,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_remove_bet: {
+        Args: { _bet_id: string; _match_id: string }
+        Returns: undefined
+      }
       advance_bracket_from: { Args: { _match_id: string }; Returns: undefined }
       confirm_match: {
         Args: { _confirm: boolean; _match_id: string }
