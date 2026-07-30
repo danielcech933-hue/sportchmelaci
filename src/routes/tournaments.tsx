@@ -30,6 +30,11 @@ const FORMATS: { id: TournamentFormat; label: string; hint: string }[] = [
   { id: "single_elimination", label: "Pavouk (vyřazovací)", hint: "Single elimination s postupem vítězů" },
 ];
 
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function TournamentsPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -41,12 +46,19 @@ function TournamentsPage() {
   const [count, setCount] = useState(3);
   const [teams, setTeams] = useState<string[]>(["", "", ""]);
   const [rosters, setRosters] = useState<string[][]>([[""], [""], [""]]);
+  const [when, setWhen] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(18, 0, 0, 0);
+    return toLocalInput(d);
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTournaments().then(setList).catch(() => {});
   }, []);
+
 
   function setSize(n: number) {
     const size = Math.max(2, Math.min(32, n));
