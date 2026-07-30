@@ -139,6 +139,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Lobby", icon: Home, exact: true },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
   { to: "/teams", label: "Teams", icon: Users },
+  { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/bets", label: "Bets", icon: Coins },
   { to: "/rankings", label: "Scoreboard", icon: Trophy },
   { to: "/chat", label: "Chat", icon: MessagesSquare },

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORTS, type Match, betsPool, uniqueBettors, isLocked } from "@/lib/matches";
+import { SPORTS, type Match, betsPool, uniqueBettors } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 
 export const Route = createFileRoute("/bets")({
@@ -30,8 +30,7 @@ function BetsPage() {
   }, []);
 
   const withBets = matches.filter((m) => (m.bets ?? []).length > 0);
-  const live = withBets.filter((m) => !m.endedAt && isLocked(m)).sort((a, b) => betsPool(b.bets) - betsPool(a.bets));
-  const open = withBets.filter((m) => !m.endedAt && !isLocked(m));
+  const live = withBets.filter((m) => !m.endedAt).sort((a, b) => betsPool(b.bets) - betsPool(a.bets));
   const settled = withBets.filter((m) => m.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0)).slice(0, 10);
 
   return (
@@ -43,7 +42,7 @@ function BetsPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-accent">// LIVE BET BOARD</p>
           <h1 className="mt-2 font-display text-4xl tracking-widest neon-text md:text-6xl">💸 BETS</h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Every locked pot in real time. Max bet $50. Fewer than 2 bettors → refunded on settle.
+            Sázet můžeš, dokud zápas neskončí. Max sázka $250 · jedna sázka na hráče a zápas.
           </p>
         </div>
       </div>
@@ -52,13 +51,10 @@ function BetsPage() {
         <p className="mt-8 text-center text-sm text-muted-foreground">Loading…</p>
       ) : (
         <>
-          <Section title="🔒 Locked & Live" empty="No live locked pools right now.">
+          <Section title="🔥 Otevřené sázky" empty="Zatím žádné otevřené sázky.">
             {live.map((m) => <LiveCard key={m.id} m={m} />)}
           </Section>
-          <Section title="⏳ Open — needs bettors" empty="No open bets waiting.">
-            {open.map((m) => <LiveCard key={m.id} m={m} showNeeds />)}
-          </Section>
-          <Section title="✅ Recently settled" empty="No settled bets yet.">
+          <Section title="✅ Vypořádané" empty="Zatím nic vypořádaného.">
             {settled.map((m) => <SettledCard key={m.id} m={m} />)}
           </Section>
         </>
@@ -78,7 +74,7 @@ function Section({ title, children, empty }: { title: string; children: React.Re
   );
 }
 
-function LiveCard({ m, showNeeds }: { m: Match; showNeeds?: boolean }) {
+function LiveCard({ m }: { m: Match }) {
   const cfg = SPORTS[m.sport];
   const pool = betsPool(m.bets);
   const nB = uniqueBettors(m.bets);
@@ -91,11 +87,7 @@ function LiveCard({ m, showNeeds }: { m: Match; showNeeds?: boolean }) {
     <Link to="/match" search={{ id: m.id }} className="panel neon-border block p-4 transition hover:brightness-110">
       <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.3em]">
         <span className="text-primary">{cfg.emoji} {cfg.name}</span>
-        {showNeeds ? (
-          <span className="text-muted-foreground">needs {2 - nB} more</span>
-        ) : (
-          <span className="text-accent">🔴 LOCKED · LIVE</span>
-        )}
+        <span className="text-accent">🔴 OPEN · {nB} sázejících</span>
       </div>
       <div className="mt-2 flex items-baseline justify-between gap-2">
         <span className="truncate font-display text-lg">{m.teamA}</span>

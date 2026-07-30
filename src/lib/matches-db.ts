@@ -17,6 +17,11 @@ type Row = {
   confirmed_at?: string | null;
   confirmed_by?: string | null;
   bets_locked_at?: string | null;
+  tournament_id?: string | null;
+  round?: number | null;
+  slot?: number | null;
+  team_a_ref?: string | null;
+  team_b_ref?: string | null;
 };
 
 function toMatch(r: Row, nickname: string): Match {
@@ -37,6 +42,11 @@ function toMatch(r: Row, nickname: string): Match {
     scheduledAt: r.scheduled_at ? new Date(r.scheduled_at).getTime() : undefined,
     confirmedAt: r.confirmed_at ? new Date(r.confirmed_at).getTime() : undefined,
     confirmedBy: r.confirmed_by ?? null,
+    tournamentId: r.tournament_id ?? null,
+    round: r.round ?? null,
+    slot: r.slot ?? null,
+    teamARef: r.team_a_ref ?? null,
+    teamBRef: r.team_b_ref ?? null,
   };
 }
 

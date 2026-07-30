@@ -84,14 +84,19 @@ export type Database = {
           ended_at: string | null
           id: string
           owner_id: string
+          round: number | null
           scheduled_at: string | null
           score_a: number
           score_b: number
           sets: Json
+          slot: number | null
           sport: string
           started_at: string
           team_a: string
+          team_a_ref: string | null
           team_b: string
+          team_b_ref: string | null
+          tournament_id: string | null
           updated_at: string
         }
         Insert: {
@@ -103,14 +108,19 @@ export type Database = {
           ended_at?: string | null
           id?: string
           owner_id: string
+          round?: number | null
           scheduled_at?: string | null
           score_a?: number
           score_b?: number
           sets?: Json
+          slot?: number | null
           sport: string
           started_at?: string
           team_a: string
+          team_a_ref?: string | null
           team_b: string
+          team_b_ref?: string | null
+          tournament_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -122,17 +132,30 @@ export type Database = {
           ended_at?: string | null
           id?: string
           owner_id?: string
+          round?: number | null
           scheduled_at?: string | null
           score_a?: number
           score_b?: number
           sets?: Json
+          slot?: number | null
           sport?: string
           started_at?: string
           team_a?: string
+          team_a_ref?: string | null
           team_b?: string
+          team_b_ref?: string | null
+          tournament_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "matches_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -214,6 +237,71 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          seed: number
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          seed?: number
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          seed?: number
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_teams_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string
+          created_by: string
+          format: string
+          id: string
+          name: string
+          sport: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          format: string
+          id?: string
+          name: string
+          sport: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          format?: string
+          id?: string
+          name?: string
+          sport?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -240,9 +328,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_bracket_from: { Args: { _match_id: string }; Returns: undefined }
       confirm_match: {
         Args: { _confirm: boolean; _match_id: string }
         Returns: undefined
+      }
+      create_tournament: {
+        Args: {
+          _format: string
+          _name: string
+          _sport: string
+          _teams: string[]
+        }
+        Returns: string
       }
       has_role: {
         Args: {

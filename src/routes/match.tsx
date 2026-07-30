@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { SPORTS, type Match, MAX_BET, MIN_BET, betsPool, uniqueBettors, isLocked } from "@/lib/matches";
+import { SPORTS, type Match, MAX_BET, MIN_BET, betsPool, uniqueBettors } from "@/lib/matches";
 import { fetchMatch, saveMatch, removeMatch, placeBet, withdrawBet } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
@@ -192,10 +192,9 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   const bets = match.bets ?? [];
   const pool = betsPool(bets);
   const nBettors = uniqueBettors(bets);
-  const locked = isLocked(match);
   const ended = !!match.endedAt;
   const myBet = user ? bets.find((b) => b.userId === user.id || b.bettor === nickname) : undefined;
-  const canBet = !!user && !myBet && !ended && !locked && balance > 0;
+  const canBet = !!user && !myBet && !ended && balance > 0;
   const totals = {
     a: bets.filter((b) => b.pick === "a").reduce((s, b) => s + (b.amount ?? 0), 0),
     b: bets.filter((b) => b.pick === "b").reduce((s, b) => s + (b.amount ?? 0), 0),
@@ -224,7 +223,7 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   }
 
   async function withdraw() {
-    if (!myBet || locked || ended) return;
+    if (!myBet || ended) return;
     setBusy(true); setErr(null);
     try {
       await withdrawBet(match.id);
@@ -240,20 +239,16 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
         <div>
           <h2 className="font-display text-xl tracking-wider neon-text">💸 Betting board</h2>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Max bet ${MAX_BET} · 1 per player · needs 2+ bettors
+            Max sázka ${MAX_BET} · 1 sázka na hráče
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded border border-primary/40 bg-primary/10 px-2 py-1 font-mono text-primary">Pool ${pool}</span>
           {ended ? (
             <span className="rounded border border-accent/50 bg-accent/10 px-2 py-1 font-mono text-accent">SETTLED</span>
-          ) : locked ? (
-            <span className="rounded border border-accent/50 bg-accent/10 px-2 py-1 font-mono text-accent">🔒 LOCKED · LIVE</span>
-          ) : nBettors === 0 ? (
-            <span className="rounded border border-border px-2 py-1 font-mono text-muted-foreground">OPEN · needs 2 bettors</span>
           ) : (
             <span className="rounded border border-border px-2 py-1 font-mono text-muted-foreground">
-              OPEN · needs {2 - nBettors} more
+              OPEN · {nBettors} {nBettors === 1 ? "sázející" : "sázejících"}
             </span>
           )}
         </div>
@@ -278,21 +273,21 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
       ) : ended ? (
         <p className="text-sm text-muted-foreground">Match is over. Bets have been settled.</p>
       ) : myBet ? (
-        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+        <div className="rounded-md border-2 p-3 text-sm" style={{ borderColor: "#3b82f6", background: "rgba(59,130,246,0.12)" }}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              Your bet: <span className="font-mono text-primary">${myBet.amount}</span> on{" "}
+              <span className="mr-2 rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em]" style={{ background: "#3b82f6", color: "#fff" }}>
+                Již vsazeno
+              </span>
+              <span className="font-mono text-primary">${myBet.amount}</span> na{" "}
               <span className="font-semibold">{myBet.pick === "a" ? match.teamA : match.teamB}</span>
               {myBet.note && <span className="text-muted-foreground"> · "{myBet.note}"</span>}
             </span>
-            {!locked && (
-              <button onClick={withdraw} disabled={busy}
-                className="rounded border border-border px-3 py-1 text-xs hover:bg-surface-2 disabled:opacity-50">
-                Withdraw
-              </button>
-            )}
+            <button onClick={withdraw} disabled={busy}
+              className="rounded border border-border px-3 py-1 text-xs hover:bg-surface-2 disabled:opacity-50">
+              Stáhnout sázku
+            </button>
           </div>
-          {locked && <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Locked — cannot withdraw</p>}
         </div>
       ) : balance <= 0 ? (
         <p className="rounded border border-danger/40 bg-danger/10 p-3 text-sm text-danger" style={{ color: "var(--danger)" }}>
