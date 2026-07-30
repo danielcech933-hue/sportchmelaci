@@ -76,7 +76,7 @@ function TournamentDetail() {
           </p>
           <ScheduleBar
             tournament={tournament}
-            onChange={(ts) => {
+            onChange={(ts: number | null) => {
               setTournament((prev) => (prev ? { ...prev, scheduledAt: ts } : prev));
               void fetchTournament(id).then((r) => setMatches(r.matches)).catch(() => {});
             }}
