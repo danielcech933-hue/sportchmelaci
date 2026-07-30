@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORTS, type Match, betsPool, uniqueBettors, isLocked } from "@/lib/matches";
+import { SPORTS, type Match, betsPool, uniqueBettors } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 
 export const Route = createFileRoute("/bets")({
