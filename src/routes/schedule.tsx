@@ -63,6 +63,7 @@ function SchedulePage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [nicknames, setNicknames] = useState<string[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -81,7 +82,17 @@ function SchedulePage() {
       setUpcoming(all.filter((m) => m.scheduledAt && (m.scheduledAt > Date.now() || !m.endedAt) && m.sets.length === 0 && m.scoreA === 0 && m.scoreB === 0)
         .sort((a, b) => (a.scheduledAt! - b.scheduledAt!)))
     ).catch(() => {});
+    fetchTournaments()
+      .then((all) =>
+        setTournaments(
+          all
+            .filter((t) => t.scheduledAt && t.scheduledAt > Date.now() - 6 * 3600_000)
+            .sort((a, b) => a.scheduledAt! - b.scheduledAt!),
+        ),
+      )
+      .catch(() => {});
   }, [user]);
+
 
   const playerOptions = useMemo(() => {
     const set = new Set<string>([...nicknames, ...teams.map((t) => t.name)]);
