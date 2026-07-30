@@ -74,7 +74,7 @@ function Section({ title, children, empty }: { title: string; children: React.Re
   );
 }
 
-function LiveCard({ m, showNeeds }: { m: Match; showNeeds?: boolean }) {
+function LiveCard({ m }: { m: Match }) {
   const cfg = SPORTS[m.sport];
   const pool = betsPool(m.bets);
   const nB = uniqueBettors(m.bets);
@@ -87,11 +87,7 @@ function LiveCard({ m, showNeeds }: { m: Match; showNeeds?: boolean }) {
     <Link to="/match" search={{ id: m.id }} className="panel neon-border block p-4 transition hover:brightness-110">
       <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.3em]">
         <span className="text-primary">{cfg.emoji} {cfg.name}</span>
-        {showNeeds ? (
-          <span className="text-muted-foreground">needs {2 - nB} more</span>
-        ) : (
-          <span className="text-accent">🔴 LOCKED · LIVE</span>
-        )}
+        <span className="text-accent">🔴 OPEN · {nB} sázejících</span>
       </div>
       <div className="mt-2 flex items-baseline justify-between gap-2">
         <span className="truncate font-display text-lg">{m.teamA}</span>
