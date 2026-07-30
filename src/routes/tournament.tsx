@@ -262,6 +262,11 @@ function MatchCard({ m, compact }: { m: Match; compact?: boolean }) {
         </span>
         <span className={ended ? "text-accent" : "text-primary"}>{ended ? "HOTOVO" : "SÁZKY OTEVŘENÉ"}</span>
       </div>
+      {m.scheduledAt && !ended && (
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+          🗓️ {new Date(m.scheduledAt).toLocaleString("cs-CZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+        </p>
+      )}
       <div className="mt-2 flex items-baseline justify-between gap-2">
         <span className="truncate font-display text-base">{m.teamA}</span>
         <span className="font-mono text-xl text-primary">{m.scoreA} : {m.scoreB}</span>
@@ -272,6 +277,7 @@ function MatchCard({ m, compact }: { m: Match; compact?: boolean }) {
           Pool ${pool} · {(m.bets ?? []).length} sázek
         </p>
       )}
+
     </Link>
   );
 }
