@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { SPORTS, SPORT_LIST, type SportId } from "@/lib/matches";
-import { NicknamesDatalist, useNicknames } from "@/lib/nicknames";
+import { NICKNAMES_DATALIST_ID, NicknamesDatalist, useNicknames } from "@/lib/nicknames";
 import {
   createTournament,
   deleteTournament,
@@ -124,7 +124,7 @@ function TournamentsPage() {
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Týmy / hráči</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {teams.map((t, i) => (
-                  <input key={i} value={t} list="nick-options" placeholder={`Tým ${i + 1}`}
+                  <input key={i} value={t} list={NICKNAMES_DATALIST_ID} placeholder={`Tým ${i + 1}`}
                     onChange={(e) => setTeams((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
                     className="rounded-md border border-primary/25 bg-background/60 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60" />
                 ))}
