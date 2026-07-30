@@ -19,6 +19,7 @@ export interface TournamentTeam {
   tournamentId: string;
   name: string;
   seed: number;
+  players: string[];
 }
 
 type TRow = {
@@ -31,7 +32,7 @@ type TRow = {
   created_at: string;
 };
 
-type TeamRow = { id: string; tournament_id: string; name: string; seed: number };
+type TeamRow = { id: string; tournament_id: string; name: string; seed: number; players: string[] | null };
 
 function toTournament(r: TRow): Tournament {
   return {
@@ -85,6 +86,7 @@ export async function fetchTournament(id: string): Promise<{
       tournamentId: t.tournament_id,
       name: t.name,
       seed: t.seed,
+      players: t.players ?? [],
     })),
     matches,
   };
@@ -95,12 +97,14 @@ export async function createTournament(input: {
   sport: SportId;
   format: TournamentFormat;
   teams: string[];
+  players?: string[][];
 }): Promise<string> {
   const { data, error } = await supabase.rpc("create_tournament" as never, {
     _name: input.name,
     _sport: input.sport,
     _format: input.format,
     _teams: input.teams,
+    _players: input.players ?? input.teams.map(() => []),
   } as never);
   if (error) throw error;
   return data as unknown as string;

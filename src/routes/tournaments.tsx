@@ -40,6 +40,7 @@ function TournamentsPage() {
   const [format, setFormat] = useState<TournamentFormat>("round_robin");
   const [count, setCount] = useState(3);
   const [teams, setTeams] = useState<string[]>(["", "", ""]);
+  const [rosters, setRosters] = useState<string[][]>([[""], [""], [""]]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -51,16 +52,29 @@ function TournamentsPage() {
     const size = Math.max(2, Math.min(32, n));
     setCount(size);
     setTeams((prev) => Array.from({ length: size }, (_, i) => prev[i] ?? ""));
+    setRosters((prev) => Array.from({ length: size }, (_, i) => prev[i] ?? [""]));
+  }
+
+  function setPlayer(ti: number, pi: number, v: string) {
+    setRosters((prev) => prev.map((r, i) => (i === ti ? r.map((p, j) => (j === pi ? v : p)) : r)));
+  }
+  function addPlayer(ti: number) {
+    setRosters((prev) => prev.map((r, i) => (i === ti ? [...r, ""] : r)));
+  }
+  function removePlayer(ti: number, pi: number) {
+    setRosters((prev) => prev.map((r, i) => (i === ti ? (r.length > 1 ? r.filter((_, j) => j !== pi) : [""]) : r)));
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const filled = teams.map((t) => t.trim()).filter(Boolean);
+    const idx = teams.map((t, i) => [t.trim(), i] as const).filter(([t]) => t);
+    const filled = idx.map(([t]) => t);
     if (filled.length < 2) { setErr("Zadej alespoň 2 týmy."); return; }
     if (new Set(filled).size !== filled.length) { setErr("Názvy týmů se nesmí opakovat."); return; }
+    const players = idx.map(([, i]) => (rosters[i] ?? []).map((p) => p.trim()).filter(Boolean));
     setBusy(true); setErr(null);
     try {
-      const id = await createTournament({ name: name.trim() || "Turnaj", sport, format, teams: filled });
+      const id = await createTournament({ name: name.trim() || "Turnaj", sport, format, teams: filled, players });
       navigate({ to: "/tournament", search: { id } });
     } catch (e: unknown) {
       const msg = (e as { message?: string })?.message ?? "Nepodařilo se vytvořit turnaj";
@@ -121,16 +135,35 @@ function TournamentsPage() {
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Týmy / hráči</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Týmy a jejich hráči</p>
+              <div className="mt-2 grid gap-3 md:grid-cols-2">
                 {teams.map((t, i) => (
-                  <input key={i} value={t} list={NICKNAMES_DATALIST_ID} placeholder={`Tým ${i + 1}`}
-                    onChange={(e) => setTeams((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
-                    className="rounded-md border border-primary/25 bg-background/60 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60" />
+                  <div key={i} className="rounded-lg border border-primary/20 bg-background/40 p-3">
+                    <input value={t} list={NICKNAMES_DATALIST_ID} placeholder={`Tým ${i + 1}`}
+                      onChange={(e) => setTeams((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
+                      className="w-full rounded-md border border-primary/25 bg-background/60 px-3 py-2 font-display text-sm tracking-wide text-foreground outline-none focus:border-primary/60" />
+                    <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Hráči</p>
+                    <div className="mt-1 grid gap-1.5">
+                      {(rosters[i] ?? [""]).map((p, j) => (
+                        <div key={j} className="flex items-center gap-1.5">
+                          <input value={p} list={NICKNAMES_DATALIST_ID} placeholder={`Hráč ${j + 1}`}
+                            onChange={(e) => setPlayer(i, j, e.target.value)}
+                            className="w-full rounded-md border border-primary/20 bg-background/60 px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary/60" />
+                          <button type="button" onClick={() => removePlayer(i, j)} aria-label="Odebrat hráče"
+                            className="rounded border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground">×</button>
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" onClick={() => addPlayer(i)}
+                      className="mt-2 rounded border border-primary/30 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-primary hover:bg-primary/10">
+                      + přidat hráče
+                    </button>
+                  </div>
                 ))}
               </div>
               <NicknamesDatalist options={nicknames} />
             </div>
+
 
             {err && <p className="text-xs" style={{ color: "var(--danger)" }}>{err}</p>}
             <button type="submit" disabled={busy}
