@@ -6,11 +6,101 @@ import { SPORTS, type Match, betsPool } from "@/lib/matches";
 import {
   computeStandings,
   fetchTournament,
+  setTournamentSchedule,
   type Tournament,
   playerErrorMessage,
   updateTeamPlayers,
   type TournamentTeam,
 } from "@/lib/tournaments-db";
+
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function ScheduleBar({
+  tournament,
+  onChange,
+}: {
+  tournament: Tournament;
+  onChange: (ts: number | null) => void;
+}) {
+  const { isAdmin } = useAuth();
+  const [edit, setEdit] = useState(false);
+  const [when, setWhen] = useState(() =>
+    tournament.scheduledAt ? toLocalInput(new Date(tournament.scheduledAt)) : "",
+  );
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save(ts: number | null) {
+    setBusy(true);
+    setErr(null);
+    try {
+      await setTournamentSchedule(tournament.id, ts);
+      onChange(ts);
+      setEdit(false);
+    } catch (e) {
+      setErr((e as { message?: string })?.message ?? "Nepodařilo se uložit termín.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-accent">
+        🗓️{" "}
+        {tournament.scheduledAt
+          ? new Date(tournament.scheduledAt).toLocaleString("cs-CZ", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "bez termínu"}
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setEdit((v) => !v)}
+            className="ml-3 rounded border border-primary/30 px-2 py-0.5 text-[10px] text-primary hover:bg-primary/10"
+          >
+            {edit ? "zavřít" : "změnit termín"}
+          </button>
+        )}
+      </p>
+      {isAdmin && edit && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <input
+            type="datetime-local"
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+            className="rounded-md border border-primary/25 bg-background/60 px-2.5 py-1.5 font-mono text-sm text-primary outline-none focus:border-primary/60"
+          />
+          <button
+            type="button"
+            disabled={busy || !when}
+            onClick={() => void save(new Date(when).getTime())}
+            className="rounded-md bg-primary px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground disabled:opacity-40"
+          >
+            Uložit
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void save(null)}
+            className="rounded-md border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground disabled:opacity-40"
+          >
+            Zrušit termín
+          </button>
+        </div>
+      )}
+      {err && <p className="mt-1 text-xs" style={{ color: "var(--danger)" }}>{err}</p>}
+    </div>
+  );
+}
+
 
 export const Route = createFileRoute("/tournament")({
   validateSearch: (s: Record<string, unknown>) => ({ id: String(s.id ?? "") }),
