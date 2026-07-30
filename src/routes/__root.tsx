@@ -20,6 +20,8 @@ import {
   Radio,
   Coins,
   MessagesSquare,
+  HeartHandshake,
+
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
