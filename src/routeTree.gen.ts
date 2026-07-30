@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TournamentsRouteImport } from './routes/tournaments'
+import { Route as TournamentRouteImport } from './routes/tournament'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -28,6 +29,11 @@ import { Route as SupportReturnRouteImport } from './routes/support/return'
 const TournamentsRoute = TournamentsRouteImport.update({
   id: '/tournaments',
   path: '/tournaments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TournamentRoute = TournamentRouteImport.update({
+  id: '/tournament',
+  path: '/tournament',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamsRoute = TeamsRouteImport.update({
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
+  '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/support/return': typeof SupportReturnRoute
 }
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
+  '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/support/return': typeof SupportReturnRoute
 }
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
+  '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/support/return': typeof SupportReturnRoute
 }
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/teams'
+    | '/tournament'
     | '/tournaments'
     | '/support/return'
   fileRoutesByTo: FileRoutesByTo
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/teams'
+    | '/tournament'
     | '/tournaments'
     | '/support/return'
   id:
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/teams'
+    | '/tournament'
     | '/tournaments'
     | '/support/return'
   fileRoutesById: FileRoutesById
@@ -221,6 +233,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRouteWithChildren
   TeamsRoute: typeof TeamsRoute
+  TournamentRoute: typeof TournamentRoute
   TournamentsRoute: typeof TournamentsRoute
 }
 
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/tournaments'
       fullPath: '/tournaments'
       preLoaderRoute: typeof TournamentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tournament': {
+      id: '/tournament'
+      path: '/tournament'
+      fullPath: '/tournament'
+      preLoaderRoute: typeof TournamentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/teams': {
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRouteWithChildren,
   TeamsRoute: TeamsRoute,
+  TournamentRoute: TournamentRoute,
   TournamentsRoute: TournamentsRoute,
 }
 export const routeTree = rootRouteImport
