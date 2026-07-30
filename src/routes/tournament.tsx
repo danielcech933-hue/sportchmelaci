@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { NICKNAMES_DATALIST_ID, NicknamesDatalist, useNicknames } from "@/lib/nicknames";
+import { useNicknames } from "@/lib/nicknames";
 import { SPORTS, type Match, betsPool } from "@/lib/matches";
 import {
   computeStandings,
@@ -259,7 +259,7 @@ function RosterCard({
         <form onSubmit={add} className="mt-3 flex items-center gap-1.5">
           <input
             value={value}
-            list={NICKNAMES_DATALIST_ID}
+            list={`roster-${team.id}`}
             placeholder="Přidat hráče"
             onChange={(e) => setValue(e.target.value)}
             className="w-full rounded-md border border-primary/20 bg-background/60 px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary/60"
@@ -271,7 +271,11 @@ function RosterCard({
           >
             +
           </button>
-          <NicknamesDatalist options={available} />
+          <datalist id={`roster-${team.id}`}>
+            {available.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
         </form>
       )}
       {err && <p className="mt-2 text-xs" style={{ color: "var(--danger)" }}>{err}</p>}
