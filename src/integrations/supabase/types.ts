@@ -279,6 +279,7 @@ export type Database = {
           format: string
           id: string
           name: string
+          scheduled_at: string | null
           sport: string
           status: string
           updated_at: string
@@ -289,6 +290,7 @@ export type Database = {
           format: string
           id?: string
           name: string
+          scheduled_at?: string | null
           sport: string
           status?: string
           updated_at?: string
@@ -299,6 +301,7 @@ export type Database = {
           format?: string
           id?: string
           name?: string
+          scheduled_at?: string | null
           sport?: string
           status?: string
           updated_at?: string
@@ -360,6 +363,17 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              _format: string
+              _name: string
+              _players: Json
+              _scheduled_at: string
+              _sport: string
+              _teams: string[]
+            }
+            Returns: string
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -375,6 +389,10 @@ export type Database = {
           _pick: string
         }
         Returns: Json
+      }
+      set_tournament_schedule: {
+        Args: { _scheduled_at: string; _tournament_id: string }
+        Returns: undefined
       }
       settle_match: { Args: { _match_id: string }; Returns: undefined }
       withdraw_bet: { Args: { _match_id: string }; Returns: Json }
