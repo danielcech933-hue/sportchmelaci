@@ -211,6 +211,41 @@ function SchedulePage() {
       </form>
 
       <section className="mt-10">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">PLÁNOVANÉ TURNAJE</h2>
+          <Link to="/tournaments" className="text-xs uppercase tracking-[0.25em] text-primary hover:underline">// Nový turnaj →</Link>
+        </div>
+        <ul className="mt-3 space-y-2">
+          {tournaments.map((t) => {
+            const cfg = SPORTS[t.sport];
+            return (
+              <li key={t.id}>
+                <Link to="/tournament" search={{ id: t.id }} className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl border border-accent/30 bg-background/60 p-3 backdrop-blur transition hover:border-accent hover:shadow-[0_0_20px_-10px_var(--color-accent)] sm:p-4">
+                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                  <div className="relative min-w-0 flex-1">
+                    <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
+                      🏆 {cfg?.emoji} {cfg?.name} · {t.format === "round_robin" ? "každý s každým" : "pavouk"}
+                    </p>
+                    <p className="mt-1 truncate font-display text-base tracking-wide sm:text-lg">{t.name}</p>
+                  </div>
+                  <div className="relative shrink-0 text-right font-mono text-[10px] leading-tight text-accent sm:text-xs">
+                    {new Date(t.scheduledAt!).toLocaleString("cs-CZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+          {tournaments.length === 0 && (
+            <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-background/40 px-4 py-6 text-center backdrop-blur">
+              <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+              <p className="relative text-xs uppercase tracking-[0.25em] text-muted-foreground">Žádný naplánovaný turnaj</p>
+            </div>
+          )}
+        </ul>
+      </section>
+
+
+      <section className="mt-10">
         <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">UPCOMING</h2>
         <ul className="mt-3 space-y-2">
           {upcoming.map((m) => {
