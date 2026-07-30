@@ -69,7 +69,7 @@ export interface Match {
   confirmedBy?: string | null;
 }
 
-export const MAX_BET = 50;
+export const MAX_BET = 250;
 export const MIN_BET = 1;
 export const STARTING_BALANCE = 1000;
 export function betsPool(bets: Bet[]): number {
@@ -77,8 +77,5 @@ export function betsPool(bets: Bet[]): number {
 }
 export function uniqueBettors(bets: Bet[]): number {
   return new Set(bets.map((b) => b.userId ?? b.bettor)).size;
-}
-export function isLocked(m: Pick<Match, "betsLockedAt" | "bets">): boolean {
-  return !!m.betsLockedAt || uniqueBettors(m.bets ?? []) >= 2;
 }
 
