@@ -20,6 +20,8 @@ import {
   Radio,
   Coins,
   MessagesSquare,
+  HeartHandshake,
+
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
@@ -141,6 +143,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/rankings", label: "Scoreboard", icon: Trophy },
   { to: "/chat", label: "Chat", icon: MessagesSquare },
   { to: "/history", label: "History", icon: HistoryIcon },
+  { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
+
   { to: "/profile", label: "Profile", icon: UserRound, authOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
 ];
