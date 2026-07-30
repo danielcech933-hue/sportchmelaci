@@ -142,6 +142,19 @@ function TournamentsPage() {
               </label>
             </div>
 
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Plánovaný začátek
+                <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-primary/25 bg-background/60 px-3 py-2 font-mono text-sm text-primary outline-none focus:border-primary/60" />
+              </label>
+              <p className="self-end font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                Zápasy se naplánují od tohoto termínu — každý s každým po 30 min, pavouk po kolech. Prázdné pole = bez termínu.
+              </p>
+            </div>
+
+
+
             <div className="grid gap-2 sm:grid-cols-2">
               {FORMATS.map((f) => (
                 <button key={f.id} type="button" onClick={() => setFormat(f.id)}
