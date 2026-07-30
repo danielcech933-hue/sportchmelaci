@@ -223,9 +223,18 @@ function TournamentsPage() {
                     <span className="text-accent">{t.format === "round_robin" ? "ROUND ROBIN" : "PAVOUK"}</span>
                   </div>
                   <h3 className="mt-2 font-display text-2xl tracking-wide">{t.name}</h3>
+                  {t.scheduledAt ? (
+                    <p className={`mt-1 font-mono text-[10px] uppercase tracking-[0.2em] ${t.scheduledAt > Date.now() ? "text-primary" : "text-muted-foreground"}`}>
+                      🗓️ {new Date(t.scheduledAt).toLocaleString("cs-CZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      {t.scheduledAt > Date.now() ? " · naplánováno" : ""}
+                    </p>
+                  ) : (
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">bez termínu</p>
+                  )}
                   <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                    {new Date(t.createdAt).toLocaleDateString("cs-CZ")}
+                    vytvořeno {new Date(t.createdAt).toLocaleDateString("cs-CZ")}
                   </p>
+
                 </Link>
                 {isAdmin && (
                   <button
