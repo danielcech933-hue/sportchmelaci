@@ -223,7 +223,7 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   }
 
   async function withdraw() {
-    if (!myBet || locked || ended) return;
+    if (!myBet || ended) return;
     setBusy(true); setErr(null);
     try {
       await withdrawBet(match.id);
