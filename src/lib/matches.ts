@@ -67,6 +67,11 @@ export interface Match {
   scheduledAt?: number;
   confirmedAt?: number;
   confirmedBy?: string | null;
+  tournamentId?: string | null;
+  round?: number | null;
+  slot?: number | null;
+  teamARef?: string | null;
+  teamBRef?: string | null;
 }
 
 export const MAX_BET = 250;
