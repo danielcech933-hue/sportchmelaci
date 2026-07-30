@@ -135,16 +135,35 @@ function TournamentsPage() {
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Týmy / hráči</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Týmy a jejich hráči</p>
+              <div className="mt-2 grid gap-3 md:grid-cols-2">
                 {teams.map((t, i) => (
-                  <input key={i} value={t} list={NICKNAMES_DATALIST_ID} placeholder={`Tým ${i + 1}`}
-                    onChange={(e) => setTeams((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
-                    className="rounded-md border border-primary/25 bg-background/60 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60" />
+                  <div key={i} className="rounded-lg border border-primary/20 bg-background/40 p-3">
+                    <input value={t} list={NICKNAMES_DATALIST_ID} placeholder={`Tým ${i + 1}`}
+                      onChange={(e) => setTeams((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
+                      className="w-full rounded-md border border-primary/25 bg-background/60 px-3 py-2 font-display text-sm tracking-wide text-foreground outline-none focus:border-primary/60" />
+                    <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Hráči</p>
+                    <div className="mt-1 grid gap-1.5">
+                      {(rosters[i] ?? [""]).map((p, j) => (
+                        <div key={j} className="flex items-center gap-1.5">
+                          <input value={p} list={NICKNAMES_DATALIST_ID} placeholder={`Hráč ${j + 1}`}
+                            onChange={(e) => setPlayer(i, j, e.target.value)}
+                            className="w-full rounded-md border border-primary/20 bg-background/60 px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary/60" />
+                          <button type="button" onClick={() => removePlayer(i, j)} aria-label="Odebrat hráče"
+                            className="rounded border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground">×</button>
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" onClick={() => addPlayer(i)}
+                      className="mt-2 rounded border border-primary/30 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-primary hover:bg-primary/10">
+                      + přidat hráče
+                    </button>
+                  </div>
                 ))}
               </div>
               <NicknamesDatalist options={nicknames} />
             </div>
+
 
             {err && <p className="text-xs" style={{ color: "var(--danger)" }}>{err}</p>}
             <button type="submit" disabled={busy}
