@@ -74,9 +74,17 @@ function TournamentDetail() {
           <p className="mt-2 text-sm text-muted-foreground">
             {teams.length} týmů · {matches.length} zápasů · sázky max $250, jedna na hráče
           </p>
+          <ScheduleBar
+            tournament={tournament}
+            onChange={(ts) => {
+              setTournament((prev) => (prev ? { ...prev, scheduledAt: ts } : prev));
+              void fetchTournament(id).then((r) => setMatches(r.matches)).catch(() => {});
+            }}
+          />
           <Link to="/tournaments" className="mt-3 inline-block font-mono text-[10px] uppercase tracking-[0.3em] text-primary">
             ← všechny turnaje
           </Link>
+
         </div>
       </div>
 
