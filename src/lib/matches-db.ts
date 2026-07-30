@@ -141,15 +141,10 @@ export async function setMatchConfirmed(id: string, userId: string | null): Prom
 }
 
 export async function removeBetFromMatch(matchId: string, betId: string): Promise<void> {
-  const { data, error: fetchErr } = await supabase
-    .from("matches")
-    .select("bets")
-    .eq("id", matchId)
-    .maybeSingle();
-  if (fetchErr) throw fetchErr;
-  if (!data) return;
-  const bets = (((data.bets as unknown) as Bet[]) ?? []).filter((b) => b.id !== betId);
-  const { error } = await supabase.from("matches").update({ bets: bets as unknown as never }).eq("id", matchId);
+  const { error } = await supabase.rpc("admin_remove_bet" as never, {
+    _match_id: matchId,
+    _bet_id: betId,
+  } as never);
   if (error) throw error;
 }
 
