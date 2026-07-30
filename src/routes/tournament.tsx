@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { useNicknames } from "@/lib/nicknames";
 import { SPORTS, type Match, betsPool } from "@/lib/matches";
 import {
   computeStandings,
   fetchTournament,
   type Tournament,
+  playerErrorMessage,
+  updateTeamPlayers,
   type TournamentTeam,
 } from "@/lib/tournaments-db";
 
@@ -76,29 +80,20 @@ function TournamentDetail() {
         </div>
       </div>
 
-      {teams.some((t) => t.players.length > 0) && (
-        <section className="mt-6">
-          <h2 className="mb-3 font-display text-xl tracking-wider neon-text">👥 Soupisky</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            {teams.map((t) => (
-              <div key={t.id} className="panel neon-border p-4">
-                <h3 className="font-display text-lg tracking-wide">{t.name}</h3>
-                {t.players.length === 0 ? (
-                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Bez hráčů</p>
-                ) : (
-                  <ul className="mt-2 grid gap-1">
-                    {t.players.map((p) => (
-                      <li key={p} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="text-primary">▸</span> {p}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="mt-6">
+        <h2 className="mb-3 font-display text-xl tracking-wider neon-text">👥 Soupisky</h2>
+        <div className="grid gap-3 md:grid-cols-3">
+          {teams.map((t) => (
+            <RosterCard
+              key={t.id}
+              team={t}
+              takenElsewhere={teams.filter((x) => x.id !== t.id).flatMap((x) => x.players)}
+              onChange={(players: string[]) => setTeams((prev) => prev.map((x) => (x.id === t.id ? { ...x, players } : x)))}
+            />
+          ))}
+        </div>
+      </section>
+
 
       {tournament.format === "round_robin" ? (
         <section className="panel neon-border mt-6 overflow-x-auto p-4">
@@ -180,5 +175,110 @@ function MatchCard({ m, compact }: { m: Match; compact?: boolean }) {
         </p>
       )}
     </Link>
+  );
+}
+
+function RosterCard({
+  team,
+  takenElsewhere,
+  onChange,
+}: {
+  team: TournamentTeam;
+  takenElsewhere: string[];
+  onChange: (players: string[]) => void;
+}) {
+  const { isAdmin } = useAuth();
+  const nicknames = useNicknames();
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save(players: string[]) {
+    setBusy(true);
+    setErr(null);
+    try {
+      await updateTeamPlayers(team.id, players);
+      onChange(players);
+      setValue("");
+    } catch (e) {
+      setErr(playerErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function add(e: React.FormEvent) {
+    e.preventDefault();
+    const name = value.trim();
+    if (!name) return;
+    const lower = name.toLowerCase();
+    if (team.players.some((p) => p.toLowerCase() === lower)) {
+      setErr("Tento hráč už v týmu je.");
+      return;
+    }
+    if (takenElsewhere.some((p) => p.toLowerCase() === lower)) {
+      setErr(`Hráč "${name}" už je v jiném týmu tohoto turnaje.`);
+      return;
+    }
+    void save([...team.players, name]);
+  }
+
+  const available = nicknames.filter(
+    (n) => ![...team.players, ...takenElsewhere].some((p) => p.toLowerCase() === n.toLowerCase()),
+  );
+
+  return (
+    <div className="panel neon-border p-4">
+      <h3 className="font-display text-lg tracking-wide">{team.name}</h3>
+      {team.players.length === 0 ? (
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Bez hráčů</p>
+      ) : (
+        <ul className="mt-2 grid gap-1">
+          {team.players.map((p) => (
+            <li key={p} className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2 truncate">
+                <span className="text-primary">▸</span> {p}
+              </span>
+              {isAdmin && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-label={`Odebrat ${p}`}
+                  onClick={() => void save(team.players.filter((x) => x !== p))}
+                  className="rounded border border-border px-2 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+                >
+                  ×
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {isAdmin && (
+        <form onSubmit={add} className="mt-3 flex items-center gap-1.5">
+          <input
+            value={value}
+            list={`roster-${team.id}`}
+            placeholder="Přidat hráče"
+            onChange={(e) => setValue(e.target.value)}
+            className="w-full rounded-md border border-primary/20 bg-background/60 px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary/60"
+          />
+          <button
+            type="submit"
+            disabled={busy}
+            className="rounded-md bg-primary px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground disabled:opacity-40"
+          >
+            +
+          </button>
+          <datalist id={`roster-${team.id}`}>
+            {available.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+        </form>
+      )}
+      {err && <p className="mt-2 text-xs" style={{ color: "var(--danger)" }}>{err}</p>}
+    </div>
   );
 }

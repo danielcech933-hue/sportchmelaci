@@ -160,3 +160,21 @@ export function computeStandings(teams: TournamentTeam[], matches: Match[]): Sta
       x.name.localeCompare(y.name),
   );
 }
+
+export async function updateTeamPlayers(teamId: string, players: string[]): Promise<void> {
+  const { error } = await supabase
+    .from("tournament_teams" as never)
+    .update({ players } as never)
+    .eq("id", teamId);
+  if (error) throw error;
+}
+
+export function playerErrorMessage(e: unknown): string {
+  const msg = (e as { message?: string })?.message ?? "";
+  if (msg.includes("player_in_other_team")) {
+    const who = msg.split("player_in_other_team:")[1]?.trim();
+    return `Hráč ${who ? `"${who}" ` : ""}už je v jiném týmu tohoto turnaje.`;
+  }
+  if (msg.includes("duplicate_player")) return "Tento hráč už v týmu je.";
+  return msg || "Nepodařilo se uložit soupisku.";
+}
