@@ -76,29 +76,20 @@ function TournamentDetail() {
         </div>
       </div>
 
-      {teams.some((t) => t.players.length > 0) && (
-        <section className="mt-6">
-          <h2 className="mb-3 font-display text-xl tracking-wider neon-text">👥 Soupisky</h2>
-          <div className="grid gap-3 md:grid-cols-3">
-            {teams.map((t) => (
-              <div key={t.id} className="panel neon-border p-4">
-                <h3 className="font-display text-lg tracking-wide">{t.name}</h3>
-                {t.players.length === 0 ? (
-                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Bez hráčů</p>
-                ) : (
-                  <ul className="mt-2 grid gap-1">
-                    {t.players.map((p) => (
-                      <li key={p} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="text-primary">▸</span> {p}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="mt-6">
+        <h2 className="mb-3 font-display text-xl tracking-wider neon-text">👥 Soupisky</h2>
+        <div className="grid gap-3 md:grid-cols-3">
+          {teams.map((t) => (
+            <RosterCard
+              key={t.id}
+              team={t}
+              takenElsewhere={teams.filter((x) => x.id !== t.id).flatMap((x) => x.players)}
+              onChange={(players) => setTeams((prev) => prev.map((x) => (x.id === t.id ? { ...x, players } : x)))}
+            />
+          ))}
+        </div>
+      </section>
+
 
       {tournament.format === "round_robin" ? (
         <section className="panel neon-border mt-6 overflow-x-auto p-4">
