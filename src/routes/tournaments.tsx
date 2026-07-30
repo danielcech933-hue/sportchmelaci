@@ -40,6 +40,7 @@ function TournamentsPage() {
   const [format, setFormat] = useState<TournamentFormat>("round_robin");
   const [count, setCount] = useState(3);
   const [teams, setTeams] = useState<string[]>(["", "", ""]);
+  const [rosters, setRosters] = useState<string[][]>([[""], [""], [""]]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -51,16 +52,29 @@ function TournamentsPage() {
     const size = Math.max(2, Math.min(32, n));
     setCount(size);
     setTeams((prev) => Array.from({ length: size }, (_, i) => prev[i] ?? ""));
+    setRosters((prev) => Array.from({ length: size }, (_, i) => prev[i] ?? [""]));
+  }
+
+  function setPlayer(ti: number, pi: number, v: string) {
+    setRosters((prev) => prev.map((r, i) => (i === ti ? r.map((p, j) => (j === pi ? v : p)) : r)));
+  }
+  function addPlayer(ti: number) {
+    setRosters((prev) => prev.map((r, i) => (i === ti ? [...r, ""] : r)));
+  }
+  function removePlayer(ti: number, pi: number) {
+    setRosters((prev) => prev.map((r, i) => (i === ti ? (r.length > 1 ? r.filter((_, j) => j !== pi) : [""]) : r)));
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const filled = teams.map((t) => t.trim()).filter(Boolean);
+    const idx = teams.map((t, i) => [t.trim(), i] as const).filter(([t]) => t);
+    const filled = idx.map(([t]) => t);
     if (filled.length < 2) { setErr("Zadej alespoň 2 týmy."); return; }
     if (new Set(filled).size !== filled.length) { setErr("Názvy týmů se nesmí opakovat."); return; }
+    const players = idx.map(([, i]) => (rosters[i] ?? []).map((p) => p.trim()).filter(Boolean));
     setBusy(true); setErr(null);
     try {
-      const id = await createTournament({ name: name.trim() || "Turnaj", sport, format, teams: filled });
+      const id = await createTournament({ name: name.trim() || "Turnaj", sport, format, teams: filled, players });
       navigate({ to: "/tournament", search: { id } });
     } catch (e: unknown) {
       const msg = (e as { message?: string })?.message ?? "Nepodařilo se vytvořit turnaj";
