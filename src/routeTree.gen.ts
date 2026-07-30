@@ -22,6 +22,7 @@ import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SupportReturnRouteImport } from './routes/support/return'
 
 const TeamsRoute = TeamsRouteImport.update({
   id: '/teams',
@@ -88,6 +89,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupportReturnRoute = SupportReturnRouteImport.update({
+  id: '/return',
+  path: '/return',
+  getParentRoute: () => SupportRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,8 +107,9 @@ export interface FileRoutesByFullPath {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/support': typeof SupportRoute
+  '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
+  '/support/return': typeof SupportReturnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,8 +123,9 @@ export interface FileRoutesByTo {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/support': typeof SupportRoute
+  '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
+  '/support/return': typeof SupportReturnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,8 +140,9 @@ export interface FileRoutesById {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/support': typeof SupportRoute
+  '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
+  '/support/return': typeof SupportReturnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/teams'
+    | '/support/return'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/teams'
+    | '/support/return'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/teams'
+    | '/support/return'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -195,7 +207,7 @@ export interface RootRouteChildren {
   RankingsRoute: typeof RankingsRoute
   ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  SupportRoute: typeof SupportRoute
+  SupportRoute: typeof SupportRouteWithChildren
   TeamsRoute: typeof TeamsRoute
 }
 
@@ -292,8 +304,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/support/return': {
+      id: '/support/return'
+      path: '/return'
+      fullPath: '/support/return'
+      preLoaderRoute: typeof SupportReturnRouteImport
+      parentRoute: typeof SupportRoute
+    }
   }
 }
+
+interface SupportRouteChildren {
+  SupportReturnRoute: typeof SupportReturnRoute
+}
+
+const SupportRouteChildren: SupportRouteChildren = {
+  SupportReturnRoute: SupportReturnRoute,
+}
+
+const SupportRouteWithChildren =
+  SupportRoute._addFileChildren(SupportRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -307,7 +337,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingsRoute: RankingsRoute,
   ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  SupportRoute: SupportRoute,
+  SupportRoute: SupportRouteWithChildren,
   TeamsRoute: TeamsRoute,
 }
 export const routeTree = rootRouteImport
