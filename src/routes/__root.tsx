@@ -28,6 +28,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
+import { NotificationsBell } from "@/lib/notifications";
+
 
 function NotFoundComponent() {
   return (
@@ -202,7 +204,7 @@ function SiteHeader() {
             </div>
           )}
 
-          <div className="shrink-0"><AuthNav /></div>
+          <div className="flex shrink-0 items-center gap-2"><NotificationsBell /><AuthNav /></div>
         </div>
 
         {current && (
