@@ -192,10 +192,9 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   const bets = match.bets ?? [];
   const pool = betsPool(bets);
   const nBettors = uniqueBettors(bets);
-  const locked = isLocked(match);
   const ended = !!match.endedAt;
   const myBet = user ? bets.find((b) => b.userId === user.id || b.bettor === nickname) : undefined;
-  const canBet = !!user && !myBet && !ended && !locked && balance > 0;
+  const canBet = !!user && !myBet && !ended && balance > 0;
   const totals = {
     a: bets.filter((b) => b.pick === "a").reduce((s, b) => s + (b.amount ?? 0), 0),
     b: bets.filter((b) => b.pick === "b").reduce((s, b) => s + (b.amount ?? 0), 0),
