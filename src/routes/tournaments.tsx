@@ -86,7 +86,15 @@ function TournamentsPage() {
     const players = idx.map(([, i]) => (rosters[i] ?? []).map((p) => p.trim()).filter(Boolean));
     setBusy(true); setErr(null);
     try {
-      const id = await createTournament({ name: name.trim() || "Turnaj", sport, format, teams: filled, players });
+      const ts = when ? new Date(when).getTime() : NaN;
+      const id = await createTournament({
+        name: name.trim() || "Turnaj",
+        sport,
+        format,
+        teams: filled,
+        players,
+        scheduledAt: Number.isNaN(ts) ? null : ts,
+      });
       navigate({ to: "/tournament", search: { id } });
     } catch (e: unknown) {
       const msg = (e as { message?: string })?.message ?? "Nepodařilo se vytvořit turnaj";
