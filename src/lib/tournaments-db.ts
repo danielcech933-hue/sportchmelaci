@@ -12,6 +12,7 @@ export interface Tournament {
   status: string;
   createdBy: string;
   createdAt: number;
+  scheduledAt?: number | null;
 }
 
 export interface TournamentTeam {
@@ -30,6 +31,7 @@ type TRow = {
   status: string;
   created_by: string;
   created_at: string;
+  scheduled_at?: string | null;
 };
 
 type TeamRow = { id: string; tournament_id: string; name: string; seed: number; players: string[] | null };
@@ -43,8 +45,10 @@ function toTournament(r: TRow): Tournament {
     status: r.status,
     createdBy: r.created_by,
     createdAt: new Date(r.created_at).getTime(),
+    scheduledAt: r.scheduled_at ? new Date(r.scheduled_at).getTime() : null,
   };
 }
+
 
 export async function fetchTournaments(): Promise<Tournament[]> {
   const { data, error } = await supabase
@@ -98,6 +102,7 @@ export async function createTournament(input: {
   format: TournamentFormat;
   teams: string[];
   players?: string[][];
+  scheduledAt?: number | null;
 }): Promise<string> {
   const { data, error } = await supabase.rpc("create_tournament" as never, {
     _name: input.name,
@@ -105,10 +110,20 @@ export async function createTournament(input: {
     _format: input.format,
     _teams: input.teams,
     _players: input.players ?? input.teams.map(() => []),
+    _scheduled_at: input.scheduledAt ? new Date(input.scheduledAt).toISOString() : null,
   } as never);
   if (error) throw error;
   return data as unknown as string;
 }
+
+export async function setTournamentSchedule(id: string, scheduledAt: number | null): Promise<void> {
+  const { error } = await supabase.rpc("set_tournament_schedule" as never, {
+    _tournament_id: id,
+    _scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+  } as never);
+  if (error) throw error;
+}
+
 
 export async function deleteTournament(id: string): Promise<void> {
   const { error } = await supabase.from("tournaments" as never).delete().eq("id", id);

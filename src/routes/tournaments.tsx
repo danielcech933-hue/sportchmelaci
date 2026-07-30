@@ -30,6 +30,11 @@ const FORMATS: { id: TournamentFormat; label: string; hint: string }[] = [
   { id: "single_elimination", label: "Pavouk (vyřazovací)", hint: "Single elimination s postupem vítězů" },
 ];
 
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function TournamentsPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -41,12 +46,19 @@ function TournamentsPage() {
   const [count, setCount] = useState(3);
   const [teams, setTeams] = useState<string[]>(["", "", ""]);
   const [rosters, setRosters] = useState<string[][]>([[""], [""], [""]]);
+  const [when, setWhen] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(18, 0, 0, 0);
+    return toLocalInput(d);
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTournaments().then(setList).catch(() => {});
   }, []);
+
 
   function setSize(n: number) {
     const size = Math.max(2, Math.min(32, n));
@@ -74,7 +86,15 @@ function TournamentsPage() {
     const players = idx.map(([, i]) => (rosters[i] ?? []).map((p) => p.trim()).filter(Boolean));
     setBusy(true); setErr(null);
     try {
-      const id = await createTournament({ name: name.trim() || "Turnaj", sport, format, teams: filled, players });
+      const ts = when ? new Date(when).getTime() : NaN;
+      const id = await createTournament({
+        name: name.trim() || "Turnaj",
+        sport,
+        format,
+        teams: filled,
+        players,
+        scheduledAt: Number.isNaN(ts) ? null : ts,
+      });
       navigate({ to: "/tournament", search: { id } });
     } catch (e: unknown) {
       const msg = (e as { message?: string })?.message ?? "Nepodařilo se vytvořit turnaj";
@@ -121,6 +141,19 @@ function TournamentsPage() {
                   className="mt-1 w-full rounded-md border border-primary/25 bg-background/60 px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-primary/60" />
               </label>
             </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Plánovaný začátek
+                <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-primary/25 bg-background/60 px-3 py-2 font-mono text-sm text-primary outline-none focus:border-primary/60" />
+              </label>
+              <p className="self-end font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                Zápasy se naplánují od tohoto termínu — každý s každým po 30 min, pavouk po kolech. Prázdné pole = bez termínu.
+              </p>
+            </div>
+
+
 
             <div className="grid gap-2 sm:grid-cols-2">
               {FORMATS.map((f) => (
@@ -190,9 +223,18 @@ function TournamentsPage() {
                     <span className="text-accent">{t.format === "round_robin" ? "ROUND ROBIN" : "PAVOUK"}</span>
                   </div>
                   <h3 className="mt-2 font-display text-2xl tracking-wide">{t.name}</h3>
+                  {t.scheduledAt ? (
+                    <p className={`mt-1 font-mono text-[10px] uppercase tracking-[0.2em] ${t.scheduledAt > Date.now() ? "text-primary" : "text-muted-foreground"}`}>
+                      🗓️ {new Date(t.scheduledAt).toLocaleString("cs-CZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      {t.scheduledAt > Date.now() ? " · naplánováno" : ""}
+                    </p>
+                  ) : (
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">bez termínu</p>
+                  )}
                   <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                    {new Date(t.createdAt).toLocaleDateString("cs-CZ")}
+                    vytvořeno {new Date(t.createdAt).toLocaleDateString("cs-CZ")}
                   </p>
+
                 </Link>
                 {isAdmin && (
                   <button
