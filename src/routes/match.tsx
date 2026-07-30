@@ -239,20 +239,16 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
         <div>
           <h2 className="font-display text-xl tracking-wider neon-text">💸 Betting board</h2>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Max bet ${MAX_BET} · 1 per player · needs 2+ bettors
+            Max sázka ${MAX_BET} · 1 sázka na hráče
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded border border-primary/40 bg-primary/10 px-2 py-1 font-mono text-primary">Pool ${pool}</span>
           {ended ? (
             <span className="rounded border border-accent/50 bg-accent/10 px-2 py-1 font-mono text-accent">SETTLED</span>
-          ) : locked ? (
-            <span className="rounded border border-accent/50 bg-accent/10 px-2 py-1 font-mono text-accent">🔒 LOCKED · LIVE</span>
-          ) : nBettors === 0 ? (
-            <span className="rounded border border-border px-2 py-1 font-mono text-muted-foreground">OPEN · needs 2 bettors</span>
           ) : (
             <span className="rounded border border-border px-2 py-1 font-mono text-muted-foreground">
-              OPEN · needs {2 - nBettors} more
+              OPEN · {nBettors} {nBettors === 1 ? "sázející" : "sázejících"}
             </span>
           )}
         </div>
