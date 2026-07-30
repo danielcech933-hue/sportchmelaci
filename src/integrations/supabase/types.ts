@@ -242,6 +242,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          players: string[]
           seed: number
           tournament_id: string
         }
@@ -249,6 +250,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          players?: string[]
           seed?: number
           tournament_id: string
         }
@@ -256,6 +258,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          players?: string[]
           seed?: number
           tournament_id?: string
         }
@@ -337,15 +340,26 @@ export type Database = {
         Args: { _confirm: boolean; _match_id: string }
         Returns: undefined
       }
-      create_tournament: {
-        Args: {
-          _format: string
-          _name: string
-          _sport: string
-          _teams: string[]
-        }
-        Returns: string
-      }
+      create_tournament:
+        | {
+            Args: {
+              _format: string
+              _name: string
+              _sport: string
+              _teams: string[]
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _format: string
+              _name: string
+              _players: Json
+              _sport: string
+              _teams: string[]
+            }
+            Returns: string
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
