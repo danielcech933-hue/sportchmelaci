@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { SPORTS, SPORT_LIST, type SportId, type Match } from "@/lib/matches";
 import { createMatch, fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
+import { fetchTournaments, type Tournament } from "@/lib/tournaments-db";
 import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/schedule-hero.jpg";
 import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
