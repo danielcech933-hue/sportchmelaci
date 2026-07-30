@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.trg_bracket_advance() FROM PUBLIC, anon, authenticated;
