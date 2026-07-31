@@ -158,6 +158,7 @@ export function DmProvider({ children }: { children: ReactNode }) {
     openInbox: () => setView({ kind: "inbox" }),
     close: () => setView(null),
     reload: load,
+    applyRow: upsert,
   };
 
   return (
@@ -302,7 +303,7 @@ function InboxPane({ onClose, onOpenChat }: { onClose: () => void; onOpenChat: (
 
 function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => void; onClose: () => void }) {
   const { user } = useAuth();
-  const { messages, reload } = useDm();
+  const { messages, reload, applyRow } = useDm();
   const { profiles } = useProfileDirectory();
   const peer = profiles.find((p) => p.id === peerId);
   const [text, setText] = useState("");
