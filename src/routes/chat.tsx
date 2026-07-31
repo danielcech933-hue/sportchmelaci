@@ -4,6 +4,7 @@ import { MessagesSquare, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
+import { NickLink } from "@/lib/profile-links";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -13,6 +14,9 @@ export const Route = createFileRoute("/chat")({
       { property: "og:title", content: "Courtside — Public Chat" },
       { property: "og:description", content: "Chat live with other Chmeloví Sportovci players." },
     ],
+  }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    to: typeof search.to === "string" ? search.to : undefined,
   }),
   component: ChatPage,
 });
@@ -26,6 +30,7 @@ type ChatRow = {
 };
 
 function ChatPage() {
+  const { to } = Route.useSearch();
   const { user, nickname, isAdmin, loading } = useAuth();
   const [messages, setMessages] = useState<ChatRow[]>([]);
   const [avatars, setAvatars] = useState<Record<string, string | null>>({});
@@ -104,6 +109,10 @@ function ChatPage() {
 
   useEffect(() => { inputRef.current?.focus(); }, [user]);
 
+  useEffect(() => {
+    if (to) setInput((v) => (v ? v : `@${to} `));
+  }, [to]);
+
   async function send(e: FormEvent) {
     e.preventDefault();
     if (!user || !nickname) return;
@@ -164,7 +173,7 @@ function ChatPage() {
                     : "border-primary/20 bg-background/70"
                 }`}>
                   <div className="flex items-baseline gap-2">
-                    <span className="font-display text-sm tracking-wider text-primary neon-text">{m.nickname}</span>
+                    <span className="font-display text-sm tracking-wider text-primary neon-text"><NickLink nickname={m.nickname} userId={m.user_id} /></span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                       {when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                     </span>

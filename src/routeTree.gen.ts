@@ -16,7 +16,6 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as RankingsRouteImport } from './routes/rankings'
-import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -25,7 +24,9 @@ import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
+import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 
 const TournamentsRoute = TournamentsRouteImport.update({
   id: '/tournaments',
@@ -60,11 +61,6 @@ const ScheduleRoute = ScheduleRouteImport.update({
 const RankingsRoute = RankingsRouteImport.update({
   id: '/rankings',
   path: '/rankings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchRoute = MatchRouteImport.update({
@@ -107,10 +103,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportReturnRoute = SupportReturnRouteImport.update({
   id: '/return',
   path: '/return',
   getParentRoute: () => SupportRoute,
+} as any)
+const ProfileIdRoute = ProfileIdRouteImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -122,7 +128,6 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
-  '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -130,7 +135,9 @@ export interface FileRoutesByFullPath {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,7 +148,6 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
-  '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -149,7 +155,9 @@ export interface FileRoutesByTo {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -161,7 +169,6 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
-  '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -169,7 +176,9 @@ export interface FileRoutesById {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,7 +191,6 @@ export interface FileRouteTypes {
     | '/history'
     | '/live'
     | '/match'
-    | '/profile'
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
@@ -190,7 +198,9 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/profile/$id'
     | '/support/return'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -201,7 +211,6 @@ export interface FileRouteTypes {
     | '/history'
     | '/live'
     | '/match'
-    | '/profile'
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
@@ -209,7 +218,9 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/profile/$id'
     | '/support/return'
+    | '/profile'
   id:
     | '__root__'
     | '/'
@@ -220,7 +231,6 @@ export interface FileRouteTypes {
     | '/history'
     | '/live'
     | '/match'
-    | '/profile'
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
@@ -228,7 +238,9 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/profile/$id'
     | '/support/return'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,7 +252,6 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   LiveRoute: typeof LiveRoute
   MatchRoute: typeof MatchRoute
-  ProfileRoute: typeof ProfileRoute
   RankingsRoute: typeof RankingsRoute
   ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -248,6 +259,8 @@ export interface RootRouteChildren {
   TeamsRoute: typeof TeamsRoute
   TournamentRoute: typeof TournamentRoute
   TournamentsRoute: typeof TournamentsRoute
+  ProfileIdRoute: typeof ProfileIdRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -299,13 +312,6 @@ declare module '@tanstack/react-router' {
       path: '/rankings'
       fullPath: '/rankings'
       preLoaderRoute: typeof RankingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/match': {
@@ -364,12 +370,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support/return': {
       id: '/support/return'
       path: '/return'
       fullPath: '/support/return'
       preLoaderRoute: typeof SupportReturnRouteImport
       parentRoute: typeof SupportRoute
+    }
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -394,7 +414,6 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   LiveRoute: LiveRoute,
   MatchRoute: MatchRoute,
-  ProfileRoute: ProfileRoute,
   RankingsRoute: RankingsRoute,
   ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
@@ -402,17 +421,9 @@ const rootRouteChildren: RootRouteChildren = {
   TeamsRoute: TeamsRoute,
   TournamentRoute: TournamentRoute,
   TournamentsRoute: TournamentsRoute,
+  ProfileIdRoute: ProfileIdRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
