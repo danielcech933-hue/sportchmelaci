@@ -97,6 +97,7 @@ export function DmProvider({ children }: { children: ReactNode }) {
   const value: DmCtx = {
     messages,
     unread,
+
     openChat: (peerId) => setView({ kind: "chat", peerId }),
     openInbox: () => setView({ kind: "inbox" }),
     close: () => setView(null),
