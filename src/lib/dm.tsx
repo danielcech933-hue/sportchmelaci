@@ -49,6 +49,7 @@ type DmCtx = {
   openInbox: () => void;
   close: () => void;
   reload: () => void;
+  applyRow: (row: Row) => void;
 };
 
 const Ctx = createContext<DmCtx | null>(null);
