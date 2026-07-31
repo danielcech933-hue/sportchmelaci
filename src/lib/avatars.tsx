@@ -104,7 +104,7 @@ export function Avatar({
         type={canZoom ? "button" : undefined}
         onClick={
           canZoom
-            ? (e: React.MouseEvent) => {
+            ? (e: ReactMouseEvent) => {
                 // zoom only — never bubble into a parent <Link>/row click
                 e.preventDefault();
                 e.stopPropagation();

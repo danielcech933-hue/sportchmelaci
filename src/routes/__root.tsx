@@ -274,7 +274,7 @@ function AuthNav() {
   return (
     <div className="flex items-center gap-2">
       <Link to="/profile" aria-label="Profile" className="shrink-0">
-        <Avatar path={avatarPath} nickname={nickname} size={30} />
+        <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
       </Link>
       <span className="inline-flex items-center gap-1 rounded-md border border-accent/40 bg-accent/10 px-2 py-1 font-mono text-[11px] text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:text-xs">
         💰 ${balance.toFixed(0)}

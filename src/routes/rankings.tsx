@@ -4,6 +4,7 @@ import { fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { SPORT_LIST, type Match, type SportId } from "@/lib/matches";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar } from "@/lib/avatars";
 import heroImg from "@/assets/scoreboard-hero.jpg";
 import goldImg from "@/assets/rank-gold.jpg";
 import silverImg from "@/assets/rank-silver.jpg";
@@ -53,7 +54,7 @@ const PODIUM = [
 function RankingsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [profiles, setProfiles] = useState<{ nickname: string }[]>([]);
+  const [profiles, setProfiles] = useState<{ nickname: string; avatar_path: string | null }[]>([]);
   const [tab, setTab] = useState<"solo" | "teams">("solo");
   const [sport, setSport] = useState<SportId | "all">("all");
   const [err, setErr] = useState<string | null>(null);
@@ -64,7 +65,7 @@ function RankingsPage() {
         const [m, t, p] = await Promise.all([
           fetchAllMatches(),
           fetchAllTeams().catch(() => [] as Team[]),
-          supabase.from("profiles").select("nickname").then((r) => (r.data ?? []) as { nickname: string }[]),
+          supabase.from("profiles").select("nickname, avatar_path").then((r) => (r.data ?? []) as { nickname: string; avatar_path: string | null }[]),
         ]);
         setMatches(m);
         setTeams(t);
