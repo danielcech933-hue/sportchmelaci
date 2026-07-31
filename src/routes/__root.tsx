@@ -199,9 +199,9 @@ function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-primary/25 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
       <div className="relative mx-auto max-w-6xl px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex items-center justify-between gap-2">
-          <Link to="/" className="group flex shrink-0 items-center gap-2">
-            <span className="relative inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-primary/40 bg-primary/10">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <Link to="/" className="group flex min-w-0 items-center gap-2">
+            <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/40 bg-primary/10">
               <span aria-hidden className="sport-cycle text-base leading-none">
                 <span>⚽</span>
                 <span>🎾</span>
@@ -210,7 +210,7 @@ function SiteHeader() {
               </span>
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
             </span>
-            <span className="brand-shimmer font-display text-lg tracking-widest neon-text sm:text-2xl">
+            <span className="brand-shimmer truncate font-display text-base tracking-wide neon-text sm:text-2xl sm:tracking-widest">
               CHMELOVÍ SPORTOVCI
             </span>
           </Link>
@@ -224,7 +224,7 @@ function SiteHeader() {
             </div>
           )}
 
-          <div className="flex shrink-0 items-center gap-2"><DmBell /><NotificationsBell /><AuthNav /></div>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2"><DmBell /><NotificationsBell /><AuthNav /></div>
         </div>
 
         {current && (
@@ -277,11 +277,11 @@ function AuthNav() {
     );
   }
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-1 sm:gap-2">
       <Link to="/profile" aria-label="Profile" className="shrink-0">
         <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
       </Link>
-      <span className="inline-flex items-center gap-1 rounded-md border border-accent/40 bg-accent/10 px-2 py-1 font-mono text-[11px] text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:text-xs">
+      <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-accent/40 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:px-2 sm:text-xs">
         💰 ${balance.toFixed(0)}
       </span>
       {nickname && (
@@ -291,9 +291,11 @@ function AuthNav() {
       )}
       <button
         onClick={() => signOut()}
-        className="rounded-md border border-primary/25 px-2.5 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:text-sm"
+        aria-label="Sign out"
+        className="shrink-0 rounded-md border border-primary/25 px-2 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:px-2.5 sm:text-sm"
       >
-        Sign out
+        <span className="hidden sm:inline">Sign out</span>
+        <span className="sm:hidden" aria-hidden>⎋</span>
       </button>
     </div>
   );

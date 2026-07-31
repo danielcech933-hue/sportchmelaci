@@ -188,7 +188,11 @@
     touch-action: pan-y pinch-zoom;
   }
   /* Prevent horizontal page overflow without trapping vertical scroll */
-  html, body { max-width: 100%; overflow-x: clip; overflow-y: visible; }
+  html, body { max-width: 100%; overflow-x: hidden; overflow-y: visible; }
+  *, *::before, *::after { box-sizing: border-box; }
+  main, header, footer, section, article { max-width: 100%; }
+  /* Long words / URLs must not force horizontal overflow on small screens */
+  p, span, h1, h2, h3, h4, li, td, th, a { overflow-wrap: anywhere; }
   /* iOS zooms in when an input font-size < 16px */
   @media (max-width: 640px) {
     input, select, textarea { font-size: 16px; }
