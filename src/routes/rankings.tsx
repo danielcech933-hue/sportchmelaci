@@ -5,6 +5,7 @@ import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { SPORT_LIST, type Match, type SportId } from "@/lib/matches";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/lib/avatars";
+import { NickLink } from "@/lib/profile-links";
 import heroImg from "@/assets/scoreboard-hero.jpg";
 import goldImg from "@/assets/rank-gold.jpg";
 import silverImg from "@/assets/rank-silver.jpg";
@@ -223,7 +224,7 @@ function RankingsPage() {
                   )}
                   <div className="min-w-0">
                     <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70">{p.label}</div>
-                    <div className="truncate font-display text-2xl tracking-wider">{r.label}</div>
+                    <div className="truncate font-display text-2xl tracking-wider">{tab === "solo" ? <NickLink nickname={r.label} /> : r.label}</div>
                     <div className="mt-1 flex items-center gap-3 font-mono text-xs text-muted-foreground">
                       <span className="text-primary">{r.wins}W</span>
                       <span>{r.losses}L</span>
@@ -265,7 +266,7 @@ function RankingsPage() {
                       {tab === "solo" && avatarByNick.has(r.key) && (
                         <Avatar path={avatarByNick.get(r.key)} nickname={r.label} size={28} />
                       )}
-                      <span className="truncate">{r.label}</span>
+                      <span className="truncate">{tab === "solo" ? <NickLink nickname={r.label} /> : r.label}</span>
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-primary neon-text">{r.wins}</td>

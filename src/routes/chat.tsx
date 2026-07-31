@@ -4,6 +4,7 @@ import { MessagesSquare, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
+import { NickLink } from "@/lib/profile-links";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -164,7 +165,7 @@ function ChatPage() {
                     : "border-primary/20 bg-background/70"
                 }`}>
                   <div className="flex items-baseline gap-2">
-                    <span className="font-display text-sm tracking-wider text-primary neon-text">{m.nickname}</span>
+                    <span className="font-display text-sm tracking-wider text-primary neon-text"><NickLink nickname={m.nickname} userId={m.user_id} /></span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
                       {when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                     </span>
