@@ -224,7 +224,7 @@ function SiteHeader() {
             </div>
           )}
 
-          <div className="flex shrink-0 items-center gap-2"><NotificationsBell /><AuthNav /></div>
+          <div className="flex shrink-0 items-center gap-2"><DmBell /><NotificationsBell /><AuthNav /></div>
         </div>
 
         {current && (
