@@ -119,20 +119,20 @@ function SettledCard({ m }: { m: Match }) {
   const winners = m.bets.filter((b) => b.status === "won");
   const refunded = m.bets.some((b) => b.status === "refunded");
   return (
-    <Link to="/match" search={{ id: m.id }} className="panel block p-4 opacity-90 transition hover:brightness-110">
-      <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.3em]">
-        <span className="text-muted-foreground">{cfg.emoji} {cfg.name}</span>
-        <span className="text-accent">{refunded ? "REFUNDED" : "SETTLED"}</span>
+    <Link to="/match" search={{ id: m.id }} className="panel block max-w-full overflow-hidden p-3 opacity-90 transition hover:brightness-110 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[10px] font-mono uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+        <span className="min-w-0 truncate text-muted-foreground">{cfg.emoji} {cfg.name}</span>
+        <span className="shrink-0 text-accent">{refunded ? "REFUNDED" : "SETTLED"}</span>
       </div>
-      <div className="mt-2 flex items-baseline justify-between gap-2">
-        <span className="truncate font-display">{m.teamA}</span>
-        <span className="font-mono text-primary">{m.scoreA} : {m.scoreB}</span>
-        <span className="truncate text-right font-display">{m.teamB}</span>
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-2">
+        <span className="min-w-0 truncate font-display">{m.teamA}</span>
+        <span className="shrink-0 font-mono text-primary">{m.scoreA} : {m.scoreB}</span>
+        <span className="min-w-0 truncate text-right font-display">{m.teamB}</span>
       </div>
       {winners.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
           {winners.map((b) => (
-            <span key={b.id} className="rounded bg-accent/20 px-1.5 py-0.5 font-mono text-accent">
+            <span key={b.id} className="max-w-full truncate rounded bg-accent/20 px-1.5 py-0.5 font-mono text-accent">
               {b.bettor} +${b.payout?.toFixed(0) ?? 0}
             </span>
           ))}
