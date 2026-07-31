@@ -5,6 +5,8 @@ import { SPORTS, SPORT_LIST, type SportId, type Match } from "@/lib/matches";
 import { createMatch, fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { fetchTournaments, type Tournament } from "@/lib/tournaments-db";
+import { useMatchHistory } from "@/lib/odds";
+import { OddsPill } from "@/components/OddsBoard";
 import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/schedule-hero.jpg";
 import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
@@ -64,6 +66,7 @@ function SchedulePage() {
   const [nicknames, setNicknames] = useState<string[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const { history } = useMatchHistory();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -257,6 +260,7 @@ function SchedulePage() {
                   <div className="relative min-w-0 flex-1">
                     <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{cfg.emoji} {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span></p>
                     <p className="mt-1 truncate font-display text-base tracking-wide sm:text-lg">{m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}</p>
+                    <p className="mt-1"><OddsPill match={m} history={history} /></p>
                   </div>
                   <div className="relative shrink-0 text-right font-mono text-[10px] leading-tight text-primary neon-text sm:text-xs">
                     {m.scheduledAt ? new Date(m.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}

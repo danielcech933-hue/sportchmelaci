@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 import { useMatchesRealtime, LiveBadge } from "@/lib/live";
 import { NickLink } from "@/lib/profile-links";
+import { useMatchHistory } from "@/lib/odds";
+import { OddsBoard } from "@/components/OddsBoard";
 
 const searchSchema = z.object({ id: z.string() });
 
@@ -200,6 +202,9 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { history, loading: histLoading } = useMatchHistory();
+
+
 
   const bets = match.bets ?? [];
   const pool = betsPool(bets);
@@ -246,6 +251,14 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   }
 
   return (
+    <>
+    <OddsBoard
+      match={match}
+      history={history}
+      loading={histLoading}
+      betAmount={!myBet && !ended ? Number(amount) || 0 : 0}
+      betPick={pick}
+    />
     <section className="panel neon-border mt-6 p-4 md:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
@@ -360,6 +373,7 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
         </ul>
       )}
     </section>
+    </>
   );
 }
 

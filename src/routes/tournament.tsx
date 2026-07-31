@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { useNicknames } from "@/lib/nicknames";
 import { SPORTS, type Match, betsPool } from "@/lib/matches";
 import { useMatchesRealtime, LiveBadge } from "@/lib/live";
+import { useMatchHistory } from "@/lib/odds";
+import { OddsPill } from "@/components/OddsBoard";
 import {
   computeStandings,
   fetchTournament,
@@ -124,6 +126,7 @@ function TournamentDetail() {
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const { history } = useMatchHistory();
 
   useEffect(() => {
     let alive = true;
@@ -238,7 +241,7 @@ function TournamentDetail() {
             {rounds.map((r) => (
               <div key={r} className="flex w-64 flex-col justify-around gap-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Kolo {r}</p>
-                {matches.filter((m) => (m.round ?? 1) === r).map((m) => <MatchCard key={m.id} m={m} compact />)}
+                {matches.filter((m) => (m.round ?? 1) === r).map((m) => <MatchCard key={m.id} m={m} history={history} compact />)}
               </div>
             ))}
           </div>
@@ -251,7 +254,7 @@ function TournamentDetail() {
           <p className="text-sm text-muted-foreground">Zatím žádné zápasy.</p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {matches.map((m) => <MatchCard key={m.id} m={m} />)}
+            {matches.map((m) => <MatchCard key={m.id} m={m} history={history} />)}
           </div>
         )}
       </section>
@@ -259,7 +262,7 @@ function TournamentDetail() {
   );
 }
 
-function MatchCard({ m, compact }: { m: Match; compact?: boolean }) {
+function MatchCard({ m, compact, history }: { m: Match; compact?: boolean; history: Match[] }) {
   const pool = betsPool(m.bets ?? []);
   const ended = !!m.endedAt;
   const live = !ended && (m.scoreA > 0 || m.scoreB > 0 || m.sets.length > 0);
@@ -287,11 +290,14 @@ function MatchCard({ m, compact }: { m: Match; compact?: boolean }) {
         <span className="font-mono text-xl text-primary">{m.scoreA} : {m.scoreB}</span>
         <span className="truncate text-right font-display text-base">{m.teamB}</span>
       </div>
-      {!compact && (
-        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          Pool ${pool} · {(m.bets ?? []).length} sázek
-        </p>
-      )}
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <OddsPill match={m} history={history} />
+        {!compact && (
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            Pool ${pool} · {(m.bets ?? []).length} sázek
+          </p>
+        )}
+      </div>
 
     </Link>
   );
