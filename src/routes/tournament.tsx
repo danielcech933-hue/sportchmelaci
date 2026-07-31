@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useNicknames } from "@/lib/nicknames";
 import { SPORTS, type Match, betsPool } from "@/lib/matches";
+import { useMatchesRealtime, LiveBadge } from "@/lib/live";
 import {
   computeStandings,
   fetchTournament,
@@ -139,6 +140,13 @@ function TournamentDetail() {
     return () => { alive = false; };
   }, [id]);
 
+  useMatchesRealtime(
+    () => {
+      fetchTournament(id).then((r) => setMatches(r.matches)).catch(() => {});
+    },
+    { tournamentId: id, enabled: !!id },
+  );
+
   if (loading) return <main className="mx-auto max-w-5xl px-4 py-10 text-sm text-muted-foreground">Loading…</main>;
   if (!tournament)
     return (
@@ -254,13 +262,20 @@ function TournamentDetail() {
 function MatchCard({ m, compact }: { m: Match; compact?: boolean }) {
   const pool = betsPool(m.bets ?? []);
   const ended = !!m.endedAt;
+  const live = !ended && (m.scoreA > 0 || m.scoreB > 0 || m.sets.length > 0);
   return (
     <Link to="/match" search={{ id: m.id }} className="panel neon-border block p-3 transition hover:brightness-110">
       <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em]">
         <span className="text-muted-foreground">
           {m.round ? `R${m.round}` : ""}{m.slot != null ? `·${m.slot + 1}` : ""}
         </span>
-        <span className={ended ? "text-accent" : "text-primary"}>{ended ? "HOTOVO" : "SÁZKY OTEVŘENÉ"}</span>
+        {ended ? (
+          <span className="text-accent">HOTOVO</span>
+        ) : live ? (
+          <LiveBadge />
+        ) : (
+          <span className="text-primary">SÁZKY OTEVŘENÉ</span>
+        )}
       </div>
       {m.scheduledAt && !ended && (
         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">

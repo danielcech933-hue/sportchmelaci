@@ -18,6 +18,7 @@ import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchRouteImport } from './routes/match'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as BetsRouteImport } from './routes/bets'
@@ -71,6 +72,11 @@ const MatchRoute = MatchRouteImport.update({
   path: '/match',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRoute
   '/match': typeof MatchRoute
   '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/bets'
     | '/chat'
     | '/history'
+    | '/live'
     | '/match'
     | '/profile'
     | '/rankings'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/bets'
     | '/chat'
     | '/history'
+    | '/live'
     | '/match'
     | '/profile'
     | '/rankings'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/bets'
     | '/chat'
     | '/history'
+    | '/live'
     | '/match'
     | '/profile'
     | '/rankings'
@@ -226,6 +238,7 @@ export interface RootRouteChildren {
   BetsRoute: typeof BetsRoute
   ChatRoute: typeof ChatRoute
   HistoryRoute: typeof HistoryRoute
+  LiveRoute: typeof LiveRoute
   MatchRoute: typeof MatchRoute
   ProfileRoute: typeof ProfileRoute
   RankingsRoute: typeof RankingsRoute
@@ -302,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   BetsRoute: BetsRoute,
   ChatRoute: ChatRoute,
   HistoryRoute: HistoryRoute,
+  LiveRoute: LiveRoute,
   MatchRoute: MatchRoute,
   ProfileRoute: ProfileRoute,
   RankingsRoute: RankingsRoute,
