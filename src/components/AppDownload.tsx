@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Apple, Smartphone, Share, Plus, Check, Download } from "lucide-react";
 
+const APP_STORE_URL = "https://apps.apple.com/cz/search?term=Chmelov%C3%AD%20Sportovci";
+
+
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
