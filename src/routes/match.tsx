@@ -202,6 +202,9 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { history, loading: histLoading } = useMatchHistory();
+
+
 
   const bets = match.bets ?? [];
   const pool = betsPool(bets);
