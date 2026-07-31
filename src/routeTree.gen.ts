@@ -25,6 +25,7 @@ import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
 
 const TournamentsRoute = TournamentsRouteImport.update({
@@ -107,6 +108,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const SupportReturnRoute = SupportReturnRouteImport.update({
   id: '/return',
   path: '/return',
@@ -122,7 +128,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/support/return': typeof SupportReturnRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,7 +148,6 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
-  '/profile': typeof ProfileRoute
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -150,6 +156,7 @@ export interface FileRoutesByTo {
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/support/return': typeof SupportReturnRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -161,7 +168,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -170,6 +177,7 @@ export interface FileRoutesById {
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/support/return': typeof SupportReturnRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +199,7 @@ export interface FileRouteTypes {
     | '/tournament'
     | '/tournaments'
     | '/support/return'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -201,7 +210,6 @@ export interface FileRouteTypes {
     | '/history'
     | '/live'
     | '/match'
-    | '/profile'
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
@@ -210,6 +218,7 @@ export interface FileRouteTypes {
     | '/tournament'
     | '/tournaments'
     | '/support/return'
+    | '/profile'
   id:
     | '__root__'
     | '/'
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/tournament'
     | '/tournaments'
     | '/support/return'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,7 +250,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   LiveRoute: typeof LiveRoute
   MatchRoute: typeof MatchRoute
-  ProfileRoute: typeof ProfileRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   RankingsRoute: typeof RankingsRoute
   ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -364,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/support/return': {
       id: '/support/return'
       path: '/return'
@@ -373,6 +390,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface ProfileRouteChildren {
+  ProfileIndexRoute: typeof ProfileIndexRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileIndexRoute: ProfileIndexRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
 
 interface SupportRouteChildren {
   SupportReturnRoute: typeof SupportReturnRoute
@@ -394,7 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   LiveRoute: LiveRoute,
   MatchRoute: MatchRoute,
-  ProfileRoute: ProfileRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   RankingsRoute: RankingsRoute,
   ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
