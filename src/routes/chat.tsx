@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
+import { markLobbySeen } from "@/lib/dm";
+
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -105,7 +107,9 @@ function ChatPage() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    markLobbySeen();
   }, [messages]);
+
 
   useEffect(() => { inputRef.current?.focus(); }, [user]);
 
