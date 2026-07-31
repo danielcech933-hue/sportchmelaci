@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const cache = new Map<string, { url: string; expires: number }>();
