@@ -6,6 +6,7 @@ import { fetchMatch, saveMatch, removeMatch, placeBet, withdrawBet } from "@/lib
 import { useAuth } from "@/lib/auth";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 import { useMatchesRealtime, LiveBadge } from "@/lib/live";
+import { NickLink } from "@/lib/profile-links";
 
 const searchSchema = z.object({ id: z.string() });
 
