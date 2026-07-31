@@ -132,15 +132,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <div className="flex-1">
-            <Outlet />
+        <DmProvider>
+          <div className="flex min-h-screen flex-col">
+            <SiteHeader />
+            <div className="flex-1">
+              <Outlet />
+            </div>
+            <SiteFooter />
           </div>
-          <SiteFooter />
-        </div>
+        </DmProvider>
       </AuthProvider>
     </QueryClientProvider>
+
   );
 }
 
