@@ -276,7 +276,9 @@ function RankingsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
+
 
       <p className="mt-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
         // Manage rosters on the <Link to="/teams" className="text-primary underline">Teams</Link> grid
