@@ -4,6 +4,7 @@ import { fetchAllMatches } from "@/lib/matches-db";
 import { fetchAllTeams, type Team } from "@/lib/teams-db";
 import { SPORT_LIST, type Match, type SportId } from "@/lib/matches";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar } from "@/lib/avatars";
 import heroImg from "@/assets/scoreboard-hero.jpg";
 import goldImg from "@/assets/rank-gold.jpg";
 import silverImg from "@/assets/rank-silver.jpg";
@@ -53,7 +54,7 @@ const PODIUM = [
 function RankingsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [profiles, setProfiles] = useState<{ nickname: string }[]>([]);
+  const [profiles, setProfiles] = useState<{ nickname: string; avatar_path: string | null }[]>([]);
   const [tab, setTab] = useState<"solo" | "teams">("solo");
   const [sport, setSport] = useState<SportId | "all">("all");
   const [err, setErr] = useState<string | null>(null);
@@ -64,7 +65,7 @@ function RankingsPage() {
         const [m, t, p] = await Promise.all([
           fetchAllMatches(),
           fetchAllTeams().catch(() => [] as Team[]),
-          supabase.from("profiles").select("nickname").then((r) => (r.data ?? []) as { nickname: string }[]),
+          supabase.from("profiles").select("nickname, avatar_path").then((r) => (r.data ?? []) as { nickname: string; avatar_path: string | null }[]),
         ]);
         setMatches(m);
         setTeams(t);
@@ -74,6 +75,12 @@ function RankingsPage() {
       }
     })();
   }, []);
+
+  const avatarByNick = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const p of profiles) if (p.nickname) m.set(p.nickname.trim().toLowerCase(), p.avatar_path);
+    return m;
+  }, [profiles]);
 
   const finished = useMemo(
     () => matches.filter((m) => m.endedAt && (sport === "all" || m.sport === sport)),
@@ -211,6 +218,9 @@ function RankingsPage() {
                       #{i + 1}
                     </div>
                   </div>
+                  {tab === "solo" && avatarByNick.has(r.key) && (
+                    <Avatar path={avatarByNick.get(r.key)} nickname={r.label} size={48} />
+                  )}
                   <div className="min-w-0">
                     <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70">{p.label}</div>
                     <div className="truncate font-display text-2xl tracking-wider">{r.label}</div>
@@ -250,7 +260,14 @@ function RankingsPage() {
               return (
                 <tr key={r.key} className="border-t border-primary/10 transition-colors hover:bg-primary/5">
                   <td className="px-4 py-3 font-mono text-muted-foreground">{rank.toString().padStart(2, "0")}</td>
-                  <td className="px-4 py-3 font-medium">{r.label}</td>
+                  <td className="px-4 py-3 font-medium">
+                    <span className="inline-flex items-center gap-2">
+                      {tab === "solo" && avatarByNick.has(r.key) && (
+                        <Avatar path={avatarByNick.get(r.key)} nickname={r.label} size={28} />
+                      )}
+                      <span className="truncate">{r.label}</span>
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-right font-mono text-primary neon-text">{r.wins}</td>
                   <td className="px-4 py-3 text-right font-mono text-muted-foreground">{r.losses}</td>
                   <td className="px-4 py-3 text-right font-mono hidden sm:table-cell">{r.played}</td>

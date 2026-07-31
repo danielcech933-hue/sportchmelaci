@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const cache = new Map<string, { url: string; expires: number }>();
@@ -102,7 +102,16 @@ export function Avatar({
     <>
       <Tag
         type={canZoom ? "button" : undefined}
-        onClick={canZoom ? () => setOpen(true) : undefined}
+        onClick={
+          canZoom
+            ? (e: ReactMouseEvent) => {
+                // zoom only — never bubble into a parent <Link>/row click
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(true);
+              }
+            : undefined
+        }
         style={s}
         className={`relative inline-flex shrink-0 overflow-hidden rounded-full border border-primary/40 bg-primary/10 ${canZoom ? "cursor-zoom-in transition hover:border-primary hover:shadow-[0_0_16px_-4px_var(--color-primary)]" : ""} ${className}`}
         aria-label={canZoom ? `Zvětšit avatar ${nickname ?? ""}`.trim() : (nickname ?? "avatar")}
