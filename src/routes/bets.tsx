@@ -84,15 +84,15 @@ function LiveCard({ m }: { m: Match }) {
   };
   const pctA = pool ? (totals.a / pool) * 100 : 50;
   return (
-    <Link to="/match" search={{ id: m.id }} className="panel neon-border block p-4 transition hover:brightness-110">
-      <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.3em]">
-        <span className="text-primary">{cfg.emoji} {cfg.name}</span>
-        <span className="text-accent">🔴 OPEN · {nB} sázejících</span>
+    <Link to="/match" search={{ id: m.id }} className="panel neon-border block max-w-full overflow-hidden p-3 transition hover:brightness-110 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[10px] font-mono uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+        <span className="min-w-0 truncate text-primary">{cfg.emoji} {cfg.name}</span>
+        <span className="shrink-0 text-accent">🔴 OPEN · {nB}</span>
       </div>
-      <div className="mt-2 flex items-baseline justify-between gap-2">
-        <span className="truncate font-display text-lg">{m.teamA}</span>
-        <span className="font-mono text-2xl text-primary">{m.scoreA} : {m.scoreB}</span>
-        <span className="truncate text-right font-display text-lg">{m.teamB}</span>
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-2">
+        <span className="min-w-0 truncate font-display text-base sm:text-lg">{m.teamA}</span>
+        <span className="shrink-0 font-mono text-xl text-primary sm:text-2xl">{m.scoreA} : {m.scoreB}</span>
+        <span className="min-w-0 truncate text-right font-display text-base sm:text-lg">{m.teamB}</span>
       </div>
       <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-background/60">
         <div className="bg-primary" style={{ width: `${pctA}%` }} />
@@ -105,7 +105,7 @@ function LiveCard({ m }: { m: Match }) {
       </div>
       <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
         {m.bets.map((b) => (
-          <span key={b.id} className={`rounded px-1.5 py-0.5 font-mono ${b.pick === "a" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent"}`}>
+          <span key={b.id} className={`max-w-full truncate rounded px-1.5 py-0.5 font-mono ${b.pick === "a" ? "bg-primary/15 text-primary" : "bg-accent/15 text-accent"}`}>
             {b.bettor} ${b.amount}
           </span>
         ))}
