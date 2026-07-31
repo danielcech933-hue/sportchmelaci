@@ -230,7 +230,9 @@ function RankingsPage() {
       {/* TABLE */}
       <div className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/50 backdrop-blur">
         <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-        <table className="relative w-full text-sm">
+        <div className="no-scrollbar relative overflow-x-auto">
+        <table className="relative w-full min-w-[420px] text-sm">
+
           <thead className="bg-primary/5 text-[10px] uppercase tracking-[0.25em] text-primary/70">
             <tr>
               <th className="px-4 py-3 text-left">Rank</th>
