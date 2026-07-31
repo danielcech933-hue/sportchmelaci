@@ -88,6 +88,21 @@ function InstallButton({
 
 export function AppDownload() {
   const { canInstall, installed, isIOS, install } = useInstallPrompt();
+  const [standalone, setStandalone] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(display-mode: standalone)");
+    const update = () =>
+      setStandalone(
+        mq.matches || (window.navigator as unknown as { standalone?: boolean }).standalone === true,
+      );
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Already installed & launched as an app — no need for instructions.
+  if (standalone) return null;
 
   return (
     <section
