@@ -6,7 +6,9 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, invalidateAvatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
-import { Upload, Trash2, Swords, MessageSquare, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown } from "lucide-react";
+import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown } from "lucide-react";
+import { useDm } from "@/lib/dm";
+
 import heroImg from "@/assets/profile-hero.jpg";
 
 type BetStatus = "won" | "lost" | "open";
@@ -49,8 +51,10 @@ function matchOutcome(nickname: string | null, m: Match): "win" | "loss" | null 
 
 export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
+  const { openChat } = useDm();
   const targetId = userId ?? user?.id ?? null;
   const isSelf = !!targetId && targetId === user?.id;
+
 
   const [profile, setProfile] = useState<{ nickname: string; avatar_path: string | null } | null>(null);
   const [profileMissing, setProfileMissing] = useState(false);
