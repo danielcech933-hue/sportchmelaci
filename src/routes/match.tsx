@@ -5,6 +5,7 @@ import { SPORTS, type Match, MAX_BET, MIN_BET, betsPool, uniqueBettors } from "@
 import { fetchMatch, saveMatch, removeMatch, placeBet, withdrawBet } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
+import { useMatchesRealtime, LiveBadge } from "@/lib/live";
 
 const searchSchema = z.object({ id: z.string() });
 
@@ -35,6 +36,14 @@ function MatchPage() {
       else setMatch(m);
     });
   }, [id]);
+
+  useMatchesRealtime(
+    () => {
+      if (dirty.current) return;
+      fetchMatch(id).then((m) => m && setMatch(m));
+    },
+    { matchId: id },
+  );
 
   // Debounced persistence for owner edits
   useEffect(() => {
@@ -96,7 +105,8 @@ function MatchPage() {
     <main className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-4 flex items-center justify-between text-sm">
         <Link to="/" className="text-muted-foreground hover:text-foreground">← Lobby</Link>
-        <span className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
+        <span className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-primary">
+          {!match.endedAt && <LiveBadge />}
           {cfg.emoji} {cfg.name} · by {match.ownerNickname}
         </span>
       </div>
@@ -172,6 +182,7 @@ function MatchPage() {
             <button onClick={resetScore} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-2">Reset score</button>
             <button onClick={finishMatch} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Finish match</button>
             <button onClick={remove} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Delete</button>
+            <Link to="/live" search={{ id: match.id }} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">📱 Live rozhodčí</Link>
           </div>
         )}
       </div>
