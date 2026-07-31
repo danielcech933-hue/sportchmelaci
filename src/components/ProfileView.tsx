@@ -6,7 +6,9 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, invalidateAvatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
-import { Upload, Trash2, Swords, MessageSquare, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown } from "lucide-react";
+import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown } from "lucide-react";
+import { useDm } from "@/lib/dm";
+
 import heroImg from "@/assets/profile-hero.jpg";
 
 type BetStatus = "won" | "lost" | "open";
@@ -49,8 +51,10 @@ function matchOutcome(nickname: string | null, m: Match): "win" | "loss" | null 
 
 export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
+  const { openChat } = useDm();
   const targetId = userId ?? user?.id ?? null;
   const isSelf = !!targetId && targetId === user?.id;
+
 
   const [profile, setProfile] = useState<{ nickname: string; avatar_path: string | null } | null>(null);
   const [profileMissing, setProfileMissing] = useState(false);
@@ -192,21 +196,28 @@ export function ProfileView({ userId }: { userId?: string }) {
       {isSelf ? (
         <AvatarSection userId={targetId} avatarPath={avatarPath} onChange={refreshProfile} />
       ) : (
-        <section className="mt-6 grid gap-2 sm:grid-cols-2">
+        <section className="mt-6 grid gap-2 sm:grid-cols-3">
           <Link
             to="/schedule"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-6px_var(--color-primary)]"
           >
             <Swords className="h-4 w-4" /> Vyzvat na zápas
           </Link>
+          <button
+            onClick={() => targetId && openChat(targetId)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
+          >
+            <MessageSquare className="h-4 w-4" /> Soukromá zpráva
+          </button>
           <Link
             to="/chat"
             search={{ to: nickname ?? undefined }}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 px-4 py-3 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
           >
-            <MessageSquare className="h-4 w-4" /> Poslat zprávu
+            <AtSign className="h-4 w-4" /> Zmínit v Lobby
           </Link>
         </section>
+
       )}
 
       <section className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">

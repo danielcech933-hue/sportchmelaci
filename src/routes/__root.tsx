@@ -29,6 +29,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { NotificationsBell } from "@/lib/notifications";
+import { DmProvider, DmBell } from "@/lib/dm";
+
 import { SiteFooter } from "@/components/SiteFooter";
 
 
@@ -130,15 +132,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <div className="flex-1">
-            <Outlet />
+        <DmProvider>
+          <div className="flex min-h-screen flex-col">
+            <SiteHeader />
+            <div className="flex-1">
+              <Outlet />
+            </div>
+            <SiteFooter />
           </div>
-          <SiteFooter />
-        </div>
+        </DmProvider>
       </AuthProvider>
     </QueryClientProvider>
+
   );
 }
 
@@ -219,7 +224,7 @@ function SiteHeader() {
             </div>
           )}
 
-          <div className="flex shrink-0 items-center gap-2"><NotificationsBell /><AuthNav /></div>
+          <div className="flex shrink-0 items-center gap-2"><DmBell /><NotificationsBell /><AuthNav /></div>
         </div>
 
         {current && (
