@@ -123,6 +123,8 @@ export function DmProvider({ children }: { children: ReactNode }) {
 export function DmBell() {
   const { user } = useAuth();
   const { unread, openInbox } = useDm();
+  const mentions = useLobbyMentions();
+  const total = unread + mentions;
   if (!user) return null;
   return (
     <button
@@ -131,14 +133,15 @@ export function DmBell() {
       className="relative shrink-0 rounded-md border border-primary/25 p-1.5 text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
     >
       <MessageCircle className="h-4 w-4" />
-      {unread > 0 && (
+      {total > 0 && (
         <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[9px] font-bold text-background shadow-[0_0_10px_-2px_var(--color-accent)]">
-          {unread > 9 ? "9+" : unread}
+          {total > 9 ? "9+" : total}
         </span>
       )}
     </button>
   );
 }
+
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString("cs-CZ", {
