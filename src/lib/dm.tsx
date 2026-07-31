@@ -77,17 +77,72 @@ export function DmProvider({ children }: { children: ReactNode }) {
     setMessages(((data ?? []) as Row[]).map(toDm));
   }, [user]);
 
+  const upsert = useCallback((row: Row) => {
+    setMessages((prev) => {
+      const dm = toDm(row);
+      const i = prev.findIndex((m) => m.id === dm.id);
+      if (i === -1) return [...prev, dm].sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      const next = [...prev];
+      next[i] = dm;
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     load();
     if (!user) return;
-    const ch = supabase
-      .channel("dm-" + user.id)
-      .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, () => load())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
+
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    const subscribe = async () => {
+      // Realtime needs the current access token, otherwise RLS blocks every event
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) supabase.realtime.setAuth(token);
+      if (cancelled) return;
+
+      ch = supabase
+        .channel(`dm-${user.id}-${Math.random().toString(36).slice(2)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "direct_messages" },
+          (payload) => {
+            if (payload.eventType === "DELETE") {
+              const old = payload.old as Partial<Row>;
+              if (old?.id) setMessages((prev) => prev.filter((m) => m.id !== old.id));
+              return;
+            }
+            upsert(payload.new as Row);
+          },
+        )
+        .subscribe((status) => {
+          // If the socket cannot establish, fall back to the polling interval below
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") load();
+        });
     };
-  }, [user, load]);
+
+    subscribe();
+
+    // Safety net: keep inbox fresh even if the websocket drops
+    const iv = setInterval(load, 15000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED" && session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+      window.removeEventListener("focus", onFocus);
+      sub.subscription.unsubscribe();
+      if (ch) supabase.removeChannel(ch);
+    };
+  }, [user, load, upsert]);
 
   const unread = useMemo(
     () => messages.filter((m) => m.recipientId === user?.id && !m.readAt).length,
