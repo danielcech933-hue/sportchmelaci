@@ -353,3 +353,55 @@ function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => v
     </>
   );
 }
+
+const LOBBY_SEEN_KEY = "lobby-chat-seen-at";
+
+/** Marks the public lobby chat as seen (clears mention badge). */
+export function markLobbySeen() {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LOBBY_SEEN_KEY, new Date().toISOString());
+  window.dispatchEvent(new Event("lobby-seen"));
+}
+
+/** Count of unseen public-lobby messages that @mention the current user. */
+export function useLobbyMentions(): number {
+  const { user, nickname } = useAuth();
+  const [count, setCount] = useState(0);
+
+  const load = useCallback(async () => {
+    if (!user || !nickname) {
+      setCount(0);
+      return;
+    }
+    const since = (typeof window !== "undefined" && localStorage.getItem(LOBBY_SEEN_KEY)) || new Date(0).toISOString();
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("id,content,user_id,created_at")
+      .gt("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const needle = "@" + nickname.toLowerCase();
+    setCount(
+      ((data ?? []) as Array<{ content: string; user_id: string }>).filter(
+        (m) => m.user_id !== user.id && m.content.toLowerCase().includes(needle),
+      ).length,
+    );
+  }, [user, nickname]);
+
+  useEffect(() => {
+    load();
+    if (!user) return;
+    const ch = supabase
+      .channel("lobby-mentions-" + user.id)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => load())
+      .subscribe();
+    const onSeen = () => load();
+    window.addEventListener("lobby-seen", onSeen);
+    return () => {
+      supabase.removeChannel(ch);
+      window.removeEventListener("lobby-seen", onSeen);
+    };
+  }, [user, load]);
+
+  return count;
+}
