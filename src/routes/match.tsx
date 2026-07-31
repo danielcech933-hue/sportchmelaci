@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
 import { useMatchesRealtime, LiveBadge } from "@/lib/live";
 import { NickLink } from "@/lib/profile-links";
+import { useMatchHistory } from "@/lib/odds";
+import { OddsBoard } from "@/components/OddsBoard";
 
 const searchSchema = z.object({ id: z.string() });
 
