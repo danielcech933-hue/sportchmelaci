@@ -432,7 +432,7 @@ function Lineup({ teamA, teamB, canEdit, onChange }: { teamA: string; teamB: str
                     <button onClick={() => removePlayer(side.key, i)} className="text-muted-foreground hover:text-foreground" aria-label="Remove player">×</button>
                   </>
                 ) : (
-                  <span className="truncate">{p}</span>
+                  <span className="truncate"><NickLink nickname={p} /></span>
                 )}
               </li>
             ))}

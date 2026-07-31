@@ -15,6 +15,9 @@ export const Route = createFileRoute("/chat")({
       { property: "og:description", content: "Chat live with other Chmeloví Sportovci players." },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    to: typeof search.to === "string" ? search.to : undefined,
+  }),
   component: ChatPage,
 });
 
@@ -27,6 +30,7 @@ type ChatRow = {
 };
 
 function ChatPage() {
+  const { to } = Route.useSearch();
   const { user, nickname, isAdmin, loading } = useAuth();
   const [messages, setMessages] = useState<ChatRow[]>([]);
   const [avatars, setAvatars] = useState<Record<string, string | null>>({});
@@ -104,6 +108,10 @@ function ChatPage() {
   }, [messages]);
 
   useEffect(() => { inputRef.current?.focus(); }, [user]);
+
+  useEffect(() => {
+    if (to) setInput((v) => (v ? v : `@${to} `));
+  }, [to]);
 
   async function send(e: FormEvent) {
     e.preventDefault();
