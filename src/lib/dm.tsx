@@ -49,6 +49,7 @@ type DmCtx = {
   openInbox: () => void;
   close: () => void;
   reload: () => void;
+  applyRow: (row: Row) => void;
 };
 
 const Ctx = createContext<DmCtx | null>(null);
@@ -77,17 +78,72 @@ export function DmProvider({ children }: { children: ReactNode }) {
     setMessages(((data ?? []) as Row[]).map(toDm));
   }, [user]);
 
+  const upsert = useCallback((row: Row) => {
+    setMessages((prev) => {
+      const dm = toDm(row);
+      const i = prev.findIndex((m) => m.id === dm.id);
+      if (i === -1) return [...prev, dm].sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      const next = [...prev];
+      next[i] = dm;
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     load();
     if (!user) return;
-    const ch = supabase
-      .channel("dm-" + user.id)
-      .on("postgres_changes", { event: "*", schema: "public", table: "direct_messages" }, () => load())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
+
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    const subscribe = async () => {
+      // Realtime needs the current access token, otherwise RLS blocks every event
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) supabase.realtime.setAuth(token);
+      if (cancelled) return;
+
+      ch = supabase
+        .channel(`dm-${user.id}-${Math.random().toString(36).slice(2)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "direct_messages" },
+          (payload) => {
+            if (payload.eventType === "DELETE") {
+              const old = payload.old as Partial<Row>;
+              if (old?.id) setMessages((prev) => prev.filter((m) => m.id !== old.id));
+              return;
+            }
+            upsert(payload.new as Row);
+          },
+        )
+        .subscribe((status) => {
+          // If the socket cannot establish, fall back to the polling interval below
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") load();
+        });
     };
-  }, [user, load]);
+
+    subscribe();
+
+    // Safety net: keep inbox fresh even if the websocket drops
+    const iv = setInterval(load, 15000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED" && session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+      window.removeEventListener("focus", onFocus);
+      sub.subscription.unsubscribe();
+      if (ch) supabase.removeChannel(ch);
+    };
+  }, [user, load, upsert]);
 
   const unread = useMemo(
     () => messages.filter((m) => m.recipientId === user?.id && !m.readAt).length,
@@ -102,6 +158,7 @@ export function DmProvider({ children }: { children: ReactNode }) {
     openInbox: () => setView({ kind: "inbox" }),
     close: () => setView(null),
     reload: load,
+    applyRow: upsert,
   };
 
   return (
@@ -246,7 +303,7 @@ function InboxPane({ onClose, onOpenChat }: { onClose: () => void; onOpenChat: (
 
 function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => void; onClose: () => void }) {
   const { user } = useAuth();
-  const { messages, reload } = useDm();
+  const { messages, reload, applyRow } = useDm();
   const { profiles } = useProfileDirectory();
   const peer = profiles.find((p) => p.id === peerId);
   const [text, setText] = useState("");
@@ -277,12 +334,19 @@ function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => v
     if (!content || !user || sending) return;
     setSending(true);
     setText("");
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("direct_messages")
-      .insert({ sender_id: user.id, recipient_id: peerId, content });
-    if (error) setText(content);
+      .insert({ sender_id: user.id, recipient_id: peerId, content })
+      .select("id,sender_id,recipient_id,content,read_at,created_at")
+      .single();
     setSending(false);
-    reload();
+    if (error) {
+      setText(content);
+      return;
+    }
+    // Show instantly for the sender; realtime dedupes by id for the recipient
+    if (data) applyRow(data as Row);
+    else reload();
   };
 
   return (
@@ -394,15 +458,28 @@ export function useLobbyMentions(): number {
   useEffect(() => {
     load();
     if (!user) return;
-    const ch = supabase
-      .channel("lobby-mentions-" + user.id)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => load())
-      .subscribe();
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) supabase.realtime.setAuth(token);
+      if (cancelled) return;
+      ch = supabase
+        .channel(`lobby-mentions-${user.id}-${Math.random().toString(36).slice(2)}`)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => load())
+        .subscribe();
+    })();
     const onSeen = () => load();
     window.addEventListener("lobby-seen", onSeen);
+    window.addEventListener("focus", onSeen);
+    const iv = setInterval(load, 20000);
     return () => {
-      supabase.removeChannel(ch);
+      cancelled = true;
+      clearInterval(iv);
+      if (ch) supabase.removeChannel(ch);
       window.removeEventListener("lobby-seen", onSeen);
+      window.removeEventListener("focus", onSeen);
     };
   }, [user, load]);
 
