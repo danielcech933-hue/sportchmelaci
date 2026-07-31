@@ -29,6 +29,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { NotificationsBell } from "@/lib/notifications";
+import { SiteFooter } from "@/components/SiteFooter";
+
 
 
 function NotFoundComponent() {
@@ -128,14 +130,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
           <SiteHeader />
-          <Outlet />
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <SiteFooter />
         </div>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
 
 type NavItem = {
   to: string;
