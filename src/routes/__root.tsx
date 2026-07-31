@@ -29,6 +29,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { NotificationsBell } from "@/lib/notifications";
+import { SiteFooter } from "@/components/SiteFooter";
+
 
 
 function NotFoundComponent() {
@@ -73,7 +75,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0a0a12" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Chmeloví Sportovci" },
+      { name: "format-detection", content: "telephone=no" },
       { title: "Courtside — Pick a Sport" },
       { name: "description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
       { property: "og:title", content: "Courtside — Pick a Sport" },
@@ -87,7 +95,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -95,6 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap",
       },
     ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -119,14 +130,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
           <SiteHeader />
-          <Outlet />
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <SiteFooter />
         </div>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
 
 type NavItem = {
   to: string;
@@ -217,7 +232,7 @@ function SiteHeader() {
         )}
 
         {!loading && (
-          <nav className="-mx-3 mt-2 flex items-center gap-1 overflow-x-auto px-3 text-sm sm:mx-0 sm:gap-1.5 sm:px-0">
+          <nav className="no-scrollbar -mx-3 mt-2 flex snap-x snap-mandatory items-center gap-1 overflow-x-auto px-3 text-sm sm:mx-0 sm:flex-wrap sm:gap-1.5 sm:px-0">
             {visible.map((item) => {
               const active = matchesRoute(pathname, item);
               const Icon = item.icon;
@@ -226,7 +241,7 @@ function SiteHeader() {
                   key={item.to}
                   to={item.to}
                   activeOptions={item.exact ? { exact: true } : undefined}
-                  className={`group inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition sm:px-3 ${
+                  className={`group inline-flex shrink-0 snap-start items-center gap-1.5 rounded-md border px-2.5 py-2 transition active:scale-95 sm:px-3 sm:py-1.5 ${
                     active
                       ? "border-primary/60 bg-primary/10 text-foreground shadow-[0_0_18px_-8px_var(--color-primary)]"
                       : `border-transparent text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground ${item.admin ? "text-accent" : ""}`
