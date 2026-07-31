@@ -29,6 +29,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { NotificationsBell } from "@/lib/notifications";
+import { DmProvider, DmBell } from "@/lib/dm";
+
 import { SiteFooter } from "@/components/SiteFooter";
 
 
