@@ -332,12 +332,19 @@ function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => v
     if (!content || !user || sending) return;
     setSending(true);
     setText("");
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("direct_messages")
-      .insert({ sender_id: user.id, recipient_id: peerId, content });
-    if (error) setText(content);
+      .insert({ sender_id: user.id, recipient_id: peerId, content })
+      .select("id,sender_id,recipient_id,content,read_at,created_at")
+      .single();
     setSending(false);
-    reload();
+    if (error) {
+      setText(content);
+      return;
+    }
+    // Show instantly for the sender; realtime dedupes by id for the recipient
+    if (data) applyRow(data as Row);
+    else reload();
   };
 
   return (
@@ -449,15 +456,28 @@ export function useLobbyMentions(): number {
   useEffect(() => {
     load();
     if (!user) return;
-    const ch = supabase
-      .channel("lobby-mentions-" + user.id)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => load())
-      .subscribe();
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) supabase.realtime.setAuth(token);
+      if (cancelled) return;
+      ch = supabase
+        .channel(`lobby-mentions-${user.id}-${Math.random().toString(36).slice(2)}`)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => load())
+        .subscribe();
+    })();
     const onSeen = () => load();
     window.addEventListener("lobby-seen", onSeen);
+    window.addEventListener("focus", onSeen);
+    const iv = setInterval(load, 20000);
     return () => {
-      supabase.removeChannel(ch);
+      cancelled = true;
+      clearInterval(iv);
+      if (ch) supabase.removeChannel(ch);
       window.removeEventListener("lobby-seen", onSeen);
+      window.removeEventListener("focus", onSeen);
     };
   }, [user, load]);
 
