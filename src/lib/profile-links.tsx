@@ -11,14 +11,13 @@ const listeners = new Set<(d: DirectoryEntry[]) => void>();
 export async function loadProfileDirectory(): Promise<DirectoryEntry[]> {
   if (cache) return cache;
   if (!inflight) {
-    inflight = supabase
-      .from("profiles")
-      .select("id,nickname,avatar_path")
-      .then(({ data }) => {
-        cache = ((data ?? []) as DirectoryEntry[]).filter((p) => !!p.nickname);
-        listeners.forEach((l) => l(cache!));
-        return cache;
-      });
+    inflight = (async () => {
+      const { data } = await supabase.from("profiles").select("id,nickname,avatar_path");
+      const rows = ((data ?? []) as DirectoryEntry[]).filter((p) => !!p.nickname);
+      cache = rows;
+      listeners.forEach((l) => l(rows));
+      return rows;
+    })();
   }
   return inflight;
 }
