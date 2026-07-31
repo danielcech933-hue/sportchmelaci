@@ -66,6 +66,7 @@ function SchedulePage() {
   const [nicknames, setNicknames] = useState<string[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const { history } = useMatchHistory();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
