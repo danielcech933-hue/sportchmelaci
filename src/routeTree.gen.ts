@@ -27,6 +27,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
+import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 
 const TournamentsRoute = TournamentsRouteImport.update({
   id: '/tournaments',
@@ -118,6 +119,11 @@ const SupportReturnRoute = SupportReturnRouteImport.update({
   path: '/return',
   getParentRoute: () => SupportRoute,
 } as any)
+const ProfileIdRoute = ProfileIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ProfileRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
 }
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
   '/profile': typeof ProfileIndexRoute
 }
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
 }
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/profile/$id'
     | '/support/return'
     | '/profile/'
   fileRoutesByTo: FileRoutesByTo
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/profile/$id'
     | '/support/return'
     | '/profile'
   id:
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/profile/$id'
     | '/support/return'
     | '/profile/'
   fileRoutesById: FileRoutesById
@@ -388,14 +400,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportReturnRouteImport
       parentRoute: typeof SupportRoute
     }
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdRouteImport
+      parentRoute: typeof ProfileRoute
+    }
   }
 }
 
 interface ProfileRouteChildren {
+  ProfileIdRoute: typeof ProfileIdRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileIdRoute: ProfileIdRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
 
