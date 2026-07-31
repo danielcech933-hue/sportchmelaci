@@ -251,6 +251,14 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
   }
 
   return (
+    <>
+    <OddsBoard
+      match={match}
+      history={history}
+      loading={histLoading}
+      betAmount={!myBet && !ended ? Number(amount) || 0 : 0}
+      betPick={pick}
+    />
     <section className="panel neon-border mt-6 p-4 md:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
