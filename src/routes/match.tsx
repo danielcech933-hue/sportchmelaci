@@ -373,6 +373,7 @@ function BetsPanel({ match, onRefresh }: { match: Match; onRefresh: () => Promis
         </ul>
       )}
     </section>
+    </>
   );
 }
 
