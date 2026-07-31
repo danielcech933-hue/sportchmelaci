@@ -178,14 +178,17 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    /* one-finger vertical scrolling + native pinch zoom */
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
   }
   body {
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior-y: none;
     text-rendering: optimizeLegibility;
+    touch-action: pan-y pinch-zoom;
   }
-  /* Prevent horizontal page overflow on small screens */
-  html, body { max-width: 100%; overflow-x: hidden; }
+  /* Prevent horizontal page overflow without trapping vertical scroll */
+  html, body { max-width: 100%; overflow-x: clip; overflow-y: visible; }
   /* iOS zooms in when an input font-size < 16px */
   @media (max-width: 640px) {
     input, select, textarea { font-size: 16px; }
