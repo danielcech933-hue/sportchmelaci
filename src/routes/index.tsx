@@ -241,6 +241,13 @@ function Lobby() {
         </section>
       )}
     </main>
+    {modalSport && (
+      <SportActionModal
+        sport={modalSport}
+        image={SPORT_BG[modalSport]}
+        onClose={() => { setModalSport(null); setHoveredSport(null); }}
+      />
+    )}
     </>
   );
 }
