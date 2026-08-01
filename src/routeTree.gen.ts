@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VenuesRouteImport } from './routes/venues'
 import { Route as TournamentsRouteImport } from './routes/tournaments'
 import { Route as TournamentRouteImport } from './routes/tournament'
 import { Route as TeamsRouteImport } from './routes/teams'
@@ -28,6 +29,11 @@ import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 
+const VenuesRoute = VenuesRouteImport.update({
+  id: '/venues',
+  path: '/venues',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TournamentsRoute = TournamentsRouteImport.update({
   id: '/tournaments',
   path: '/tournaments',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
   '/profile': typeof ProfileIndexRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/venues'
     | '/profile/$id'
     | '/support/return'
     | '/profile/'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/venues'
     | '/profile/$id'
     | '/support/return'
     | '/profile'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/venues'
     | '/profile/$id'
     | '/support/return'
     | '/profile/'
@@ -259,12 +271,20 @@ export interface RootRouteChildren {
   TeamsRoute: typeof TeamsRoute
   TournamentRoute: typeof TournamentRoute
   TournamentsRoute: typeof TournamentsRoute
+  VenuesRoute: typeof VenuesRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/venues': {
+      id: '/venues'
+      path: '/venues'
+      fullPath: '/venues'
+      preLoaderRoute: typeof VenuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tournaments': {
       id: '/tournaments'
       path: '/tournaments'
@@ -421,6 +441,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamsRoute: TeamsRoute,
   TournamentRoute: TournamentRoute,
   TournamentsRoute: TournamentsRoute,
+  VenuesRoute: VenuesRoute,
   ProfileIdRoute: ProfileIdRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
