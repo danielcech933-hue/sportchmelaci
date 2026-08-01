@@ -21,6 +21,8 @@ import {
   Coins,
   MessagesSquare,
   HeartHandshake,
+  MapPin,
+
 
 } from "lucide-react";
 
