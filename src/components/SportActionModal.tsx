@@ -141,11 +141,10 @@ export function SportActionModal({
           {image && (
             <img
               src={image}
-              alt={`${cfg.name}`}
-              className="h-44 w-full object-cover object-center sm:h-56"
+              alt={cfg.name}
+              className="h-48 w-full object-cover object-center saturate-125 contrast-110 sm:h-64"
             />
           )}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
           <button
             onClick={onClose}
             aria-label="Zavřít"
@@ -153,13 +152,15 @@ export function SportActionModal({
           >
             <X className="h-4 w-4" />
           </button>
-          <div className="absolute bottom-3 left-4 right-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-primary/80">// {cfg.name}</p>
-            <h2 className="font-display text-3xl tracking-widest neon-text sm:text-4xl">
-              {cfg.emoji} {cfg.name.toUpperCase()}
-            </h2>
-          </div>
         </div>
+
+        <div className="border-b border-primary/20 bg-primary/5 px-4 py-3 sm:px-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-primary/80">// {cfg.name}</p>
+          <h2 className="font-display text-3xl tracking-widest neon-text sm:text-4xl">
+            {cfg.emoji} {cfg.name.toUpperCase()}
+          </h2>
+        </div>
+
 
         <div className="px-4 pb-5 pt-4 sm:px-5">
           <div className="grid grid-cols-2 gap-2">
