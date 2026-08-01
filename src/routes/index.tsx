@@ -197,9 +197,6 @@ function Lobby() {
                 </span>
               </button>
             );
-
-              </button>
-            );
           })}
         </div>
       </section>
