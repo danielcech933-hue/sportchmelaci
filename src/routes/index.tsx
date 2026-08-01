@@ -1,8 +1,9 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORT_LIST, SPORTS, type Match } from "@/lib/matches";
-import { fetchAllMatches, createMatch } from "@/lib/matches-db";
+import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
+import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { SportActionModal } from "@/components/SportActionModal";
 import heroImg from "@/assets/lobby-hero.jpg";
 import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
 import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
@@ -43,11 +44,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Lobby() {
-  const navigate = useNavigate();
   const { user, nickname, loading } = useAuth();
   const [recent, setRecent] = useState<Match[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [hoveredSport, setHoveredSport] = useState<string | null>(null);
+  const [modalSport, setModalSport] = useState<SportId | null>(null);
 
   useEffect(() => {
     if (!user) { setRecent([]); setUpcoming([]); return; }
@@ -61,7 +62,7 @@ function Lobby() {
   }, [user]);
 
   useEffect(() => {
-    if (!hoveredSport) return;
+    if (!hoveredSport || modalSport) return;
     const onDown = (e: PointerEvent) => {
       const t = e.target as HTMLElement | null;
       if (!t?.closest("[data-sport-tile]") && !t?.closest("[data-sport-close]")) {
@@ -70,19 +71,8 @@ function Lobby() {
     };
     window.addEventListener("pointerdown", onDown);
     return () => window.removeEventListener("pointerdown", onDown);
-  }, [hoveredSport]);
+  }, [hoveredSport, modalSport]);
 
-  async function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
-    if (!user) { navigate({ to: "/auth" }); return; }
-    const cfg = SPORTS[sportId];
-    const id = await createMatch({
-      ownerId: user.id,
-      sport: sportId,
-      teamA: cfg.defaultTeams[0],
-      teamB: cfg.defaultTeams[1],
-    });
-    navigate({ to: "/match", search: { id } });
-  }
 
   return (
     <>
@@ -182,12 +172,8 @@ function Lobby() {
           {SPORT_LIST.map((s) => {
             const active = hoveredSport === s.id;
             const handleClick = () => {
-              const coarse = typeof window !== "undefined" && window.matchMedia?.("(hover: none)").matches;
-              if (coarse && hoveredSport !== s.id) {
-                setHoveredSport(s.id);
-                return;
-              }
-              start(s.id);
+              setHoveredSport(s.id);
+              setModalSport(s.id);
             };
             return (
               <button
@@ -207,7 +193,7 @@ function Lobby() {
                 <span className={`relative text-4xl transition ${active ? "drop-shadow-[0_0_12px_hsl(45_100%_60%/0.9)] scale-110" : ""}`}>{s.emoji}</span>
                 <span className={`relative font-display text-xl tracking-wider transition ${active ? "neon-text text-primary" : ""}`}>{s.name}</span>
                 <span className="relative mt-auto text-xs uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary">
-                  {active ? (user ? "Tap again to start →" : "Tap again to sign in →") : (user ? "Start match →" : "Sign in →")}
+                  Naplánovat →
                 </span>
               </button>
             );
@@ -255,6 +241,13 @@ function Lobby() {
         </section>
       )}
     </main>
+    {modalSport && (
+      <SportActionModal
+        sport={modalSport}
+        image={SPORT_BG[modalSport]}
+        onClose={() => { setModalSport(null); setHoveredSport(null); }}
+      />
+    )}
     </>
   );
 }

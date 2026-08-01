@@ -21,6 +21,8 @@ import {
   Coins,
   MessagesSquare,
   HeartHandshake,
+  MapPin,
+
 
 } from "lucide-react";
 
@@ -160,17 +162,18 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Lobby", icon: Home, exact: true },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
-  { to: "/teams", label: "Teams", icon: Users },
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
-  { to: "/bets", label: "Bets", icon: Coins },
   { to: "/rankings", label: "Scoreboard", icon: Trophy },
+  { to: "/teams", label: "Teams", icon: Users },
+  { to: "/venues", label: "Sportoviště", icon: MapPin },
+  { to: "/bets", label: "Bets", icon: Coins },
   { to: "/chat", label: "Chat", icon: MessagesSquare },
   { to: "/history", label: "History", icon: HistoryIcon },
   { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
-
   { to: "/profile", label: "Profile", icon: UserRound, authOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
 ];
+
 
 function matchesRoute(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.to;
