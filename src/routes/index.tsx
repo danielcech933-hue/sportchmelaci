@@ -1,8 +1,9 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORT_LIST, SPORTS, type Match } from "@/lib/matches";
-import { fetchAllMatches, createMatch } from "@/lib/matches-db";
+import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
+import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { SportActionModal } from "@/components/SportActionModal";
 import heroImg from "@/assets/lobby-hero.jpg";
 import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
 import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
