@@ -44,11 +44,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Lobby() {
-  const navigate = useNavigate();
   const { user, nickname, loading } = useAuth();
   const [recent, setRecent] = useState<Match[]>([]);
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [hoveredSport, setHoveredSport] = useState<string | null>(null);
+  const [modalSport, setModalSport] = useState<SportId | null>(null);
 
   useEffect(() => {
     if (!user) { setRecent([]); setUpcoming([]); return; }
@@ -62,7 +62,7 @@ function Lobby() {
   }, [user]);
 
   useEffect(() => {
-    if (!hoveredSport) return;
+    if (!hoveredSport || modalSport) return;
     const onDown = (e: PointerEvent) => {
       const t = e.target as HTMLElement | null;
       if (!t?.closest("[data-sport-tile]") && !t?.closest("[data-sport-close]")) {
@@ -71,19 +71,8 @@ function Lobby() {
     };
     window.addEventListener("pointerdown", onDown);
     return () => window.removeEventListener("pointerdown", onDown);
-  }, [hoveredSport]);
+  }, [hoveredSport, modalSport]);
 
-  async function start(sportId: (typeof SPORT_LIST)[number]["id"]) {
-    if (!user) { navigate({ to: "/auth" }); return; }
-    const cfg = SPORTS[sportId];
-    const id = await createMatch({
-      ownerId: user.id,
-      sport: sportId,
-      teamA: cfg.defaultTeams[0],
-      teamB: cfg.defaultTeams[1],
-    });
-    navigate({ to: "/match", search: { id } });
-  }
 
   return (
     <>
