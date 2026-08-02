@@ -34,6 +34,8 @@ import { NotificationsBell } from "@/lib/notifications";
 import { DmProvider, DmBell } from "@/lib/dm";
 
 import { SiteFooter } from "@/components/SiteFooter";
+import { FloatingNav } from "@/components/FloatingNav";
+import { WinCelebrations } from "@/lib/win-toasts";
 
 
 
@@ -141,6 +143,8 @@ function RootComponent() {
               <Outlet />
             </div>
             <SiteFooter />
+            <FloatingNav />
+            <WinCelebrations />
           </div>
         </DmProvider>
       </AuthProvider>
