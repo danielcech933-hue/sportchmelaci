@@ -23,6 +23,7 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
@@ -99,6 +100,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArcadeRoute = ArcadeRouteImport.update({
+  id: '/arcade',
+  path: '/arcade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -128,6 +134,7 @@ const ProfileIdRoute = ProfileIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/arcade': typeof ArcadeRoute
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/arcade': typeof ArcadeRoute
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/arcade': typeof ArcadeRoute
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/arcade'
     | '/auth'
     | '/bets'
     | '/chat'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/arcade'
     | '/auth'
     | '/bets'
     | '/chat'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/arcade'
     | '/auth'
     | '/bets'
     | '/chat'
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  ArcadeRoute: typeof ArcadeRoute
   AuthRoute: typeof AuthRoute
   BetsRoute: typeof BetsRoute
   ChatRoute: typeof ChatRoute
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/arcade': {
+      id: '/arcade'
+      path: '/arcade'
+      fullPath: '/arcade'
+      preLoaderRoute: typeof ArcadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -428,6 +448,7 @@ const SupportRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  ArcadeRoute: ArcadeRoute,
   AuthRoute: AuthRoute,
   BetsRoute: BetsRoute,
   ChatRoute: ChatRoute,
