@@ -14,6 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
+      arcade_inventory: {
+        Row: {
+          created_at: string
+          equipped: boolean
+          id: string
+          item_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipped?: boolean
+          id?: string
+          item_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          equipped?: boolean
+          id?: string
+          item_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_items: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          key: string
+          name: string
+          rarity: string
+          slot: string
+          value_points: number
+        }
+        Insert: {
+          created_at?: string
+          icon?: string
+          id?: string
+          key: string
+          name: string
+          rarity: string
+          slot: string
+          value_points?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          key?: string
+          name?: string
+          rarity?: string
+          slot?: string
+          value_points?: number
+        }
+        Relationships: []
+      }
+      arcade_listings: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          inventory_id: string
+          item_id: string
+          price: number
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          inventory_id: string
+          item_id: string
+          price: number
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          inventory_id?: string
+          item_id?: string
+          price?: number
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_listings_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_listings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_matches: {
+        Row: {
+          crate_opened: boolean
+          created_at: string
+          id: string
+          player_a: string
+          player_b: string | null
+          score_a: number
+          score_b: number
+          winner_id: string | null
+        }
+        Insert: {
+          crate_opened?: boolean
+          created_at?: string
+          id?: string
+          player_a: string
+          player_b?: string | null
+          score_a?: number
+          score_b?: number
+          winner_id?: string | null
+        }
+        Update: {
+          crate_opened?: boolean
+          created_at?: string
+          id?: string
+          player_a?: string
+          player_b?: string | null
+          score_a?: number
+          score_b?: number
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -227,25 +379,31 @@ export type Database = {
       }
       profiles: {
         Row: {
+          arcade_points: number
           avatar_path: string | null
           balance: number
           created_at: string
+          elo: number
           id: string
           nickname: string
           updated_at: string
         }
         Insert: {
+          arcade_points?: number
           avatar_path?: string | null
           balance?: number
           created_at?: string
+          elo?: number
           id: string
           nickname: string
           updated_at?: string
         }
         Update: {
+          arcade_points?: number
           avatar_path?: string | null
           balance?: number
           created_at?: string
+          elo?: number
           id?: string
           nickname?: string
           updated_at?: string
@@ -407,6 +565,24 @@ export type Database = {
         Returns: undefined
       }
       advance_bracket_from: { Args: { _match_id: string }; Returns: undefined }
+      arcade_buy_listing: { Args: { _listing_id: string }; Returns: Json }
+      arcade_cancel_listing: {
+        Args: { _listing_id: string }
+        Returns: undefined
+      }
+      arcade_equip: {
+        Args: { _equip: boolean; _inventory_id: string }
+        Returns: undefined
+      }
+      arcade_list_item: {
+        Args: { _inventory_id: string; _price: number }
+        Returns: string
+      }
+      arcade_open_crate: { Args: { _match_id: string }; Returns: Json }
+      arcade_report_match: {
+        Args: { _opponent: string; _score_a: number; _score_b: number }
+        Returns: string
+      }
       confirm_match: {
         Args: { _confirm: boolean; _match_id: string }
         Returns: undefined
@@ -450,6 +626,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify_win: {
+        Args: { _body: string; _kind: string; _title: string; _user_id: string }
+        Returns: undefined
+      }
       place_bet: {
         Args: {
           _amount: number
@@ -464,6 +644,7 @@ export type Database = {
         Returns: undefined
       }
       settle_match: { Args: { _match_id: string }; Returns: undefined }
+      sync_match_elo: { Args: { _match_id: string }; Returns: undefined }
       withdraw_bet: { Args: { _match_id: string }; Returns: Json }
       write_audit: {
         Args: {
