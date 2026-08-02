@@ -34,6 +34,8 @@ import { NotificationsBell } from "@/lib/notifications";
 import { DmProvider, DmBell } from "@/lib/dm";
 
 import { SiteFooter } from "@/components/SiteFooter";
+import { FloatingNav } from "@/components/FloatingNav";
+import { WinCelebrations } from "@/lib/win-toasts";
 
 
 
@@ -141,6 +143,8 @@ function RootComponent() {
               <Outlet />
             </div>
             <SiteFooter />
+            <FloatingNav />
+            <WinCelebrations />
           </div>
         </DmProvider>
       </AuthProvider>
@@ -239,31 +243,8 @@ function SiteHeader() {
           </div>
         )}
 
-        {!loading && (
-          <nav className="no-scrollbar -mx-3 mt-2 flex snap-x snap-mandatory items-center gap-1 overflow-x-auto px-3 text-sm sm:mx-0 sm:flex-wrap sm:gap-1.5 sm:px-0">
-            {visible.map((item) => {
-              const active = matchesRoute(pathname, item);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  activeOptions={item.exact ? { exact: true } : undefined}
-                  className={`group inline-flex shrink-0 snap-start items-center gap-1.5 rounded-md border px-2.5 py-2 transition active:scale-95 sm:px-3 sm:py-1.5 ${
-                    active
-                      ? "border-primary/60 bg-primary/10 text-foreground shadow-[0_0_18px_-8px_var(--color-primary)]"
-                      : `border-transparent text-muted-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-foreground ${item.admin ? "text-accent" : ""}`
-                  }`}
-                >
-                  <Icon className={`h-3.5 w-3.5 ${active ? "text-primary" : "opacity-80 group-hover:text-primary"}`} />
-                  <span className="text-xs font-medium uppercase tracking-[0.15em] sm:text-[13px]">
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+        {null}
+
       </div>
     </header>
   );

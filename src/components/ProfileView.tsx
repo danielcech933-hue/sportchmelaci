@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, invalidateAvatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
-import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown } from "lucide-react";
+import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown, Gamepad2 } from "lucide-react";
 import { useDm } from "@/lib/dm";
+import { ArcadeProfile } from "@/components/ArcadeProfile";
+
 
 import heroImg from "@/assets/profile-hero.jpg";
 
@@ -54,6 +56,8 @@ export function ProfileView({ userId }: { userId?: string }) {
   const { openChat } = useDm();
   const targetId = userId ?? user?.id ?? null;
   const isSelf = !!targetId && targetId === user?.id;
+  const [mode, setMode] = useState<"real" | "arcade">("real");
+
 
 
   const [profile, setProfile] = useState<{ nickname: string; avatar_path: string | null } | null>(null);
@@ -193,7 +197,36 @@ export function ProfileView({ userId }: { userId?: string }) {
         </div>
       </section>
 
+      <section className="mt-5 flex justify-center">
+        <div className="relative inline-flex rounded-full border border-primary/30 bg-background/60 p-1 backdrop-blur">
+          <span
+            aria-hidden
+            className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/15 shadow-[0_0_20px_-6px_var(--color-primary)] transition-transform duration-300 ease-out ${
+              mode === "arcade" ? "translate-x-full" : "translate-x-0"
+            }`}
+            style={{ left: "0.25rem", right: "0.25rem", width: "calc(50% - 0.25rem)" }}
+          />
+          {(["real", "arcade"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-300 sm:text-sm ${
+                mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}
+              {m === "real" ? "Sport" : "Arcade"}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {mode === "arcade" && targetId ? (
+        <ArcadeProfile userId={targetId} isSelf={isSelf} />
+      ) : (
+      <>
       {isSelf ? (
+
         <AvatarSection userId={targetId} avatarPath={avatarPath} onChange={refreshProfile} />
       ) : (
         <section className="mt-6 grid gap-2 sm:grid-cols-3">
@@ -381,7 +414,10 @@ export function ProfileView({ userId }: { userId?: string }) {
           </ul>
         )}
       </section>
+      </>
+      )}
     </main>
+
   );
 }
 
