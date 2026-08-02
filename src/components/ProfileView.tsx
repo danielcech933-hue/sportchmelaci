@@ -381,7 +381,10 @@ export function ProfileView({ userId }: { userId?: string }) {
           </ul>
         )}
       </section>
+      </>
+      )}
     </main>
+
   );
 }
 
