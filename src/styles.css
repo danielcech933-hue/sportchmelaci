@@ -308,3 +308,5 @@
   0% { transform: scale(0.6) rotate(-10deg); opacity: 0; }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
+
+body { padding-bottom: 5.5rem; }
