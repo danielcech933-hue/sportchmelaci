@@ -214,3 +214,97 @@
 @utility safe-bottom {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
+
+/* ===== Floating futuristic navigation dock ===== */
+.nav-dock {
+  background: color-mix(in oklab, var(--color-background) 78%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 28%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 10px 40px -18px color-mix(in oklab, var(--color-primary) 60%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
+  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.nav-dock:hover {
+  border-color: color-mix(in oklab, var(--color-primary) 48%, transparent);
+  box-shadow: 0 14px 55px -16px color-mix(in oklab, var(--color-primary) 75%, transparent);
+}
+.nav-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(circle at 50% 120%, color-mix(in oklab, var(--color-primary) 35%, transparent), transparent 70%);
+}
+.nav-chip:hover::after { opacity: 1; }
+.nav-chip-active {
+  background: color-mix(in oklab, var(--color-primary) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+@utility trophy-pop {
+  animation: trophy-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) infinite alternate;
+  filter: drop-shadow(0 0 8px color-mix(in oklab, var(--color-primary) 80%, transparent));
+}
+@keyframes trophy-pop {
+  0% { transform: translateY(0) rotate(-8deg) scale(1.1); }
+  100% { transform: translateY(-5px) rotate(8deg) scale(1.35); }
+}
+
+.spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  animation: spark-fly 0.9s ease-out infinite;
+}
+.spark-0 { --sx: -14px; --sy: -16px; animation-delay: 0s; }
+.spark-1 { --sx: 15px; --sy: -14px; animation-delay: 0.1s; background: var(--color-accent); box-shadow: 0 0 8px var(--color-accent); }
+.spark-2 { --sx: -18px; --sy: 8px; animation-delay: 0.2s; }
+.spark-3 { --sx: 18px; --sy: 10px; animation-delay: 0.3s; background: var(--color-accent); box-shadow: 0 0 8px var(--color-accent); }
+.spark-4 { --sx: 0px; --sy: -22px; animation-delay: 0.15s; }
+.spark-5 { --sx: 6px; --sy: 18px; animation-delay: 0.35s; }
+@keyframes spark-fly {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translate(var(--sx), var(--sy)) scale(1.1); opacity: 0; }
+}
+
+/* ===== Win celebration toast ===== */
+.win-pop { animation: win-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes win-pop {
+  0% { transform: translateY(-24px) scale(0.9); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.confetti {
+  position: absolute;
+  top: -8px;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-fall 2.4s linear infinite;
+}
+.confetti-0 { background: var(--color-primary); }
+.confetti-1 { background: var(--color-accent); }
+.confetti-2 { background: #7dd3fc; }
+.confetti-3 { background: #f0abfc; }
+.confetti-4 { background: #fca5a5; }
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  15% { opacity: 0.95; }
+  100% { transform: translateY(150px) rotate(420deg); opacity: 0; }
+}
+
+/* ===== Arcade / loot ===== */
+.loot-reveal { animation: loot-reveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes loot-reveal {
+  0% { transform: scale(0.6) rotate(-10deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
