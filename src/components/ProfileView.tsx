@@ -55,7 +55,7 @@ export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
   const { openChat } = useDm();
   const targetId = userId ?? user?.id ?? null;
-  const isSelf = !!targetId && targetId === user?.id;
+  const [mode, setMode] = useState<"real" | "arcade">("real");
 
 
   const [profile, setProfile] = useState<{ nickname: string; avatar_path: string | null } | null>(null);
