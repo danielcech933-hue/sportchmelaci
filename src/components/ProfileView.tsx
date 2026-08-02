@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, invalidateAvatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
-import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown } from "lucide-react";
+import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown, Gamepad2 } from "lucide-react";
 import { useDm } from "@/lib/dm";
+import { ArcadeProfile } from "@/components/ArcadeProfile";
+
 
 import heroImg from "@/assets/profile-hero.jpg";
 
