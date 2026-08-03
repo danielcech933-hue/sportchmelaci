@@ -52,6 +52,8 @@ function LiveRefereePage() {
     { matchId: id },
   );
 
+  const isParticipant = useIsParticipant(match);
+
   if (notFound)
     return (
       <main className="mx-auto max-w-xl px-4 py-10 text-center">
@@ -62,7 +64,11 @@ function LiveRefereePage() {
   if (!match || authLoading) return null;
 
   const cfg = SPORTS[match.sport];
-  const canScore = !!user && (user.id === match.ownerId || isAdmin) && !match.endedAt;
+  const finished = !!match.endedAt;
+  // Participants (1v1, 2v2, tournament team members) and the admin may score.
+  const canScore = (isParticipant || isAdmin) && !finished;
+  const canOverride = isAdmin;
+
 
   async function commit(next: Match, snapshot?: Snapshot) {
     if (snapshot) {
