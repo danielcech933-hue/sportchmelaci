@@ -139,9 +139,41 @@ function LiveRefereePage() {
 
       {!canScore && (
         <p className="panel mt-3 p-3 text-center text-xs text-muted-foreground">
-          {match.endedAt ? "Zápas je ukončený." : "Zapisovat může jen zakladatel zápasu nebo admin."}
+          {finished
+            ? canOverride
+              ? "Zápas je ukončený — jako admin můžeš skóre resetovat."
+              : "Zápas je ukončený — zamčeno."
+            : user
+            ? "Režim pouze pro čtení — zapisovat mohou jen hráči tohoto zápasu nebo admin."
+            : "Přihlas se, pokud jsi hráč tohoto zápasu."}
         </p>
       )}
+
+      {finished && canOverride && (
+        <button
+          onClick={async () => {
+            if (!confirm("Resetovat skóre a znovu otevřít zápas?")) return;
+            setBusy(true);
+            try {
+              await reopenMatch(match.id);
+              const fresh = await fetchMatch(match.id);
+              if (fresh) setMatch(fresh);
+              history.current = [];
+              setCanUndo(false);
+            } catch (e) {
+              setErr((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+          disabled={busy}
+          className="mt-3 h-12 w-full rounded-xl border border-destructive/50 bg-destructive/10 text-sm font-semibold text-destructive disabled:opacity-40"
+        >
+          ♻︎ Admin: reset a znovu otevřít
+        </button>
+      )}
+
+
 
       {cfg.hasSets && (
         <p className="mt-3 text-center font-mono text-xs text-muted-foreground">
