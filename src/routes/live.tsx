@@ -2,9 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { SPORTS, type Match } from "@/lib/matches";
-import { fetchMatch, saveMatch } from "@/lib/matches-db";
+import { fetchMatch, saveMatch, reopenMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useMatchesRealtime, LiveBadge } from "@/lib/live";
+import { useIsParticipant } from "@/lib/participants";
+
 
 const searchSchema = z.object({ id: z.string() });
 
