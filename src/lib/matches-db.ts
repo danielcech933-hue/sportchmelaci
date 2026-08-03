@@ -148,3 +148,24 @@ export async function removeBetFromMatch(matchId: string, betId: string): Promis
   if (error) throw error;
 }
 
+
+export async function updateMatchFixture(
+  id: string,
+  input: { teamA?: string; teamB?: string; scheduledAt?: number | null },
+): Promise<void> {
+  const payload: Record<string, unknown> = {};
+  if (input.teamA !== undefined) payload.team_a = input.teamA;
+  if (input.teamB !== undefined) payload.team_b = input.teamB;
+  if (input.scheduledAt !== undefined)
+    payload.scheduled_at = input.scheduledAt ? new Date(input.scheduledAt).toISOString() : null;
+  const { error } = await supabase.from("matches").update(payload as never).eq("id", id);
+  if (error) throw error;
+}
+
+export async function reopenMatch(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("matches")
+    .update({ ended_at: null, score_a: 0, score_b: 0, sets: [] as unknown as never })
+    .eq("id", id);
+  if (error) throw error;
+}
