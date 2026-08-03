@@ -1,90 +1,59 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
+import { CalendarDays, Pencil, Trash2, Clock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { SPORTS, SPORT_LIST, type SportId, type Match } from "@/lib/matches";
-import { createMatch, fetchAllMatches } from "@/lib/matches-db";
-import { fetchAllTeams, type Team } from "@/lib/teams-db";
+import { SPORTS, type Match } from "@/lib/matches";
+import { fetchAllMatches, removeMatch, updateMatchFixture } from "@/lib/matches-db";
 import { fetchTournaments, type Tournament } from "@/lib/tournaments-db";
 import { useMatchHistory } from "@/lib/odds";
 import { OddsPill } from "@/components/OddsBoard";
-import { supabase } from "@/integrations/supabase/client";
+import { useMatchesRealtime } from "@/lib/live";
 import heroImg from "@/assets/schedule-hero.jpg";
-import nohejbalLegendsAsset from "@/assets/nohejbal-legends.png.asset.json";
-import tennisLegendsAsset from "@/assets/tennis-legends.png.asset.json";
-import volleyballLegendsAsset from "@/assets/volleyball-legends.png.asset.json";
-import footballLegendsAsset from "@/assets/football-legends.png.asset.json";
-import padelLegendsAsset from "@/assets/padel-legends.png.asset.json";
-import foosballLegendsAsset from "@/assets/foosball-legends.png.asset.json";
-import pingpongLegendsAsset from "@/assets/pingpong-legends.png.asset.json";
-import basketballLegendsAsset from "@/assets/basketball-legends.png.asset.json";
-import dartsLegendsAsset from "@/assets/darts-legends.png.asset.json";
-import beerpongLegendsAsset from "@/assets/beerpong-legends.png.asset.json";
-import beerraceLegendsAsset from "@/assets/beerrace-legends.png.asset.json";
-
-const SPORT_BG: Record<string, string> = {
-  tennis: tennisLegendsAsset.url,
-  volleyball: volleyballLegendsAsset.url,
-  nohejball: nohejbalLegendsAsset.url,
-  football: footballLegendsAsset.url,
-  padel: padelLegendsAsset.url,
-  foosball: foosballLegendsAsset.url,
-  pingpong: pingpongLegendsAsset.url,
-  basketball: basketballLegendsAsset.url,
-  darts: dartsLegendsAsset.url,
-  beerpong: beerpongLegendsAsset.url,
-  beerrace: beerraceLegendsAsset.url,
-};
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
     meta: [
-      { title: "Courtside — Schedule a match" },
-      { name: "description", content: "Plan upcoming matches with a date, time, and teams from your roster." },
-      { property: "og:title", content: "Courtside — Schedule a match" },
-      { property: "og:description", content: "Plan upcoming matches with a date, time, and teams from your roster." },
+      { title: "Plán zápasů — Chmeloví Sportovci" },
+      { name: "description", content: "Přehled všech naplánovaných zápasů a turnajů — sport, hráči a čas výkopu." },
+      { property: "og:title", content: "Plán zápasů — Chmeloví Sportovci" },
+      { property: "og:description", content: "Přehled všech naplánovaných zápasů a turnajů — sport, hráči a čas výkopu." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: SchedulePage,
 });
 
-function toLocalInput(d: Date): string {
+function toLocalInput(ms: number): string {
+  const d = new Date(ms);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 function SchedulePage() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  const [sport, setSport] = useState<SportId>("tennis");
-  const [playersA, setPlayersA] = useState<string[]>([""]);
-  const [playersB, setPlayersB] = useState<string[]>([""]);
-  const [when, setWhen] = useState(() => {
-    const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0);
-    return toLocalInput(d);
-  });
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [nicknames, setNicknames] = useState<string[]>([]);
+  const { user, isAdmin, loading } = useAuth();
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const { history } = useMatchHistory();
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
 
-  useEffect(() => {
-    const cfg = SPORTS[sport];
-    setPlayersA((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[0]]));
-    setPlayersB((v) => (v.some((p) => p.trim()) ? v : [cfg.defaultTeams[1]]));
-  }, [sport]);
-
-  useEffect(() => {
-    if (!user) return;
-    fetchAllTeams().then(setTeams).catch(() => {});
-    supabase.from("profiles").select("nickname").order("nickname", { ascending: true })
-      .then(({ data }) => setNicknames((data ?? []).map((p) => p.nickname).filter(Boolean)));
-    fetchAllMatches().then((all) =>
-      setUpcoming(all.filter((m) => m.scheduledAt && (m.scheduledAt > Date.now() || !m.endedAt) && m.sets.length === 0 && m.scoreA === 0 && m.scoreB === 0)
-        .sort((a, b) => (a.scheduledAt! - b.scheduledAt!)))
-    ).catch(() => {});
+  const load = useCallback(() => {
+    fetchAllMatches()
+      .then((all) =>
+        setUpcoming(
+          all
+            .filter(
+              (m) =>
+                m.scheduledAt &&
+                !m.endedAt &&
+                m.sets.length === 0 &&
+                m.scoreA === 0 &&
+                m.scoreB === 0,
+            )
+            .sort((a, b) => a.scheduledAt! - b.scheduledAt!),
+        ),
+      )
+      .catch(() => {});
     fetchTournaments()
       .then((all) =>
         setTournaments(
@@ -94,136 +63,130 @@ function SchedulePage() {
         ),
       )
       .catch(() => {});
-  }, [user]);
+  }, []);
 
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const playerOptions = useMemo(() => {
-    const set = new Set<string>([...nicknames, ...teams.map((t) => t.name)]);
-    return Array.from(set);
-  }, [teams, nicknames]);
+  useMatchesRealtime(() => load());
 
   if (loading) return null;
-  if (!user) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <p className="text-muted-foreground">Please <Link to="/auth" className="text-primary underline">sign in</Link> to schedule matches.</p>
-      </main>
-    );
-  }
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true); setErr(null);
-    try {
-      const ts = new Date(when).getTime();
-      if (!ts || isNaN(ts)) throw new Error("Pick a valid date");
-      const joinPlayers = (list: string[], fallback: string) => {
-        const cleaned = list.map((p) => p.trim()).filter(Boolean);
-        return cleaned.length ? cleaned.join(" & ") : fallback;
-      };
-      const id = await createMatch({
-        ownerId: user!.id,
-        sport,
-        teamA: joinPlayers(playersA, SPORTS[sport].defaultTeams[0]),
-        teamB: joinPlayers(playersB, SPORTS[sport].defaultTeams[1]),
-        scheduledAt: ts,
-      });
-      navigate({ to: "/match", search: { id } });
-    } catch (e) { setErr((e as Error).message); }
-    finally { setBusy(false); }
-  }
-
-  const chipBase = "rounded-md px-3 py-1.5 text-xs uppercase tracking-widest transition-all";
-  const chipOn = "bg-primary text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]";
-  const chipOff = "text-muted-foreground hover:text-foreground";
 
   return (
-    <main className="relative mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
-      {/* Fixed sport background reacting to selected sport */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        {Object.entries(SPORT_BG).map(([id, url]) => (
-          <img
-            key={id}
-            src={url}
-            alt=""
-            className={`absolute inset-0 h-full w-full object-cover saturate-125 contrast-110 transition-all duration-700 ease-out ${
-              sport === id ? "opacity-40 scale-105" : "opacity-0 scale-110"
-            }`}
-          />
-        ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/60" />
-        <div className="absolute inset-0 grid-bg opacity-30" />
-        <div className="absolute inset-0 mix-blend-screen bg-[radial-gradient(circle_at_30%_20%,hsl(45_100%_60%/0.25),transparent_60%)]" />
-      </div>
-      <div className="relative z-10">
+    <main className="relative mx-auto max-w-3xl px-3 py-6 pb-32 sm:px-4 sm:py-10">
       <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-60" />
+        <img src={heroImg} alt="" width={1600} height={720} className="h-36 w-full object-cover opacity-60 sm:h-56" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
         <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6">
           <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
             <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
-            Fixture control
+            Fixture feed
           </div>
-          <h1 className="mt-2 font-display text-3xl tracking-wider neon-text sm:text-6xl">SCHEDULE <span className="text-primary">MATCH</span></h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Plan ahead and share the fixture</p>
+          <h1 className="mt-2 font-display text-3xl tracking-wider neon-text sm:text-5xl">
+            PLÁN <span className="text-primary">ZÁPASŮ</span>
+          </h1>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">
+            // Nový zápas i turnaj se plánuje v Lobby
+          </p>
         </div>
       </section>
 
-      <form onSubmit={submit} className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-4 backdrop-blur sm:p-5">
-        <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-        <div className="relative space-y-5">
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Sport</label>
-            <div className="mt-2 flex flex-wrap gap-1 rounded-md border border-primary/30 bg-background/40 p-1 backdrop-blur">
-              {SPORT_LIST.map((s) => (
-                <button
-                  type="button"
-                  key={s.id}
-                  onClick={() => setSport(s.id)}
-                  className={`${chipBase} ${sport === s.id ? chipOn : chipOff}`}
-                >{s.emoji} {s.name}</button>
-              ))}
-            </div>
-          </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-background/50 px-3 py-2 backdrop-blur">
+        <p className="text-xs text-muted-foreground">
+          {isAdmin ? "Admin režim — můžeš upravovat a mazat fixtury." : "Pouze pro čtení."}
+        </p>
+        <Link to="/" className="text-xs uppercase tracking-[0.25em] text-primary hover:underline">
+          // Naplánovat v Lobby →
+        </Link>
+      </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <PlayersInput label="Team A" players={playersA} onChange={setPlayersA} options={playerOptions} />
-            <PlayersInput label="Team B" players={playersB} onChange={setPlayersB} options={playerOptions} />
-          </div>
+      <section className="mt-8">
+        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">NAPLÁNOVANÉ ZÁPASY</h2>
+        <ul className="mt-3 space-y-2">
+          {upcoming.map((m) => {
+            const cfg = SPORTS[m.sport];
+            return (
+              <li
+                key={m.id}
+                className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 backdrop-blur transition hover:border-primary/60"
+              >
+                <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+                <div className="relative flex items-start gap-3 p-3 sm:p-4">
+                  <Link to="/match" search={{ id: m.id }} className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
+                      {cfg.emoji} {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span>
+                    </p>
+                    <p className="mt-1 truncate font-display text-base tracking-wide sm:text-lg">
+                      {m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}
+                    </p>
+                    <p className="mt-1"><OddsPill match={m} history={history} /></p>
+                  </Link>
+                  <div className="shrink-0 text-right">
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] leading-tight text-primary neon-text sm:text-xs">
+                      <CalendarDays className="h-3 w-3" />
+                      {new Date(m.scheduledAt!).toLocaleString("cs-CZ", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    {isAdmin && (
+                      <div className="mt-2 flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditing(editing === m.id ? null : m.id)}
+                          aria-label="Upravit zápas"
+                          className="rounded-md border border-primary/30 p-1.5 text-muted-foreground hover:border-primary hover:text-primary"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm("Smazat naplánovaný zápas?")) return;
+                            await removeMatch(m.id);
+                            load();
+                          }}
+                          aria-label="Smazat zápas"
+                          className="rounded-md border border-destructive/40 p-1.5 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Kick-off</label>
-            <input
-              type="datetime-local"
-              value={when}
-              onChange={(e) => setWhen(e.target.value)}
-              className="mt-2 w-full rounded-md border border-primary/30 bg-background/40 px-3 py-2 font-mono text-sm text-primary neon-text focus:border-primary focus:outline-none focus:shadow-[0_0_20px_-8px_var(--color-primary)]"
-            />
-          </div>
-
-          {err && <p className="text-sm text-destructive">{err}</p>}
-
-          <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Link to="/teams" className="text-center text-xs uppercase tracking-[0.25em] text-primary hover:underline sm:text-left">// Manage teams →</Link>
-            <button disabled={busy} className="w-full rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] disabled:opacity-50 sm:w-auto">
-              Schedule match
-            </button>
-          </div>
-        </div>
-      </form>
+                {isAdmin && editing === m.id && (
+                  <EditFixture
+                    match={m}
+                    onClose={() => setEditing(null)}
+                    onSaved={() => {
+                      setEditing(null);
+                      load();
+                    }}
+                  />
+                )}
+              </li>
+            );
+          })}
+          {upcoming.length === 0 && <Empty label="Žádný naplánovaný zápas" />}
+        </ul>
+      </section>
 
       <section className="mt-10">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">PLÁNOVANÉ TURNAJE</h2>
-          <Link to="/tournaments" className="text-xs uppercase tracking-[0.25em] text-primary hover:underline">// Nový turnaj →</Link>
-        </div>
+        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">PLÁNOVANÉ TURNAJE</h2>
         <ul className="mt-3 space-y-2">
           {tournaments.map((t) => {
             const cfg = SPORTS[t.sport];
             return (
               <li key={t.id}>
-                <Link to="/tournament" search={{ id: t.id }} className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl border border-accent/30 bg-background/60 p-3 backdrop-blur transition hover:border-accent hover:shadow-[0_0_20px_-10px_var(--color-accent)] sm:p-4">
+                <Link
+                  to="/tournament"
+                  search={{ id: t.id }}
+                  className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl border border-accent/30 bg-background/60 p-3 backdrop-blur transition hover:border-accent sm:p-4"
+                >
                   <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
                   <div className="relative min-w-0 flex-1">
                     <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
@@ -232,95 +195,95 @@ function SchedulePage() {
                     <p className="mt-1 truncate font-display text-base tracking-wide sm:text-lg">{t.name}</p>
                   </div>
                   <div className="relative shrink-0 text-right font-mono text-[10px] leading-tight text-accent sm:text-xs">
-                    {new Date(t.scheduledAt!).toLocaleString("cs-CZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(t.scheduledAt!).toLocaleString("cs-CZ", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </div>
                 </Link>
               </li>
             );
           })}
-          {tournaments.length === 0 && (
-            <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-background/40 px-4 py-6 text-center backdrop-blur">
-              <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-              <p className="relative text-xs uppercase tracking-[0.25em] text-muted-foreground">Žádný naplánovaný turnaj</p>
-            </div>
-          )}
+          {tournaments.length === 0 && <Empty label="Žádný naplánovaný turnaj" />}
         </ul>
       </section>
 
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">UPCOMING</h2>
-        <ul className="mt-3 space-y-2">
-          {upcoming.map((m) => {
-            const cfg = SPORTS[m.sport];
-            return (
-              <li key={m.id}>
-                <Link to="/match" search={{ id: m.id }} className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition hover:border-primary hover:shadow-[0_0_20px_-10px_var(--color-primary)] sm:p-4">
-                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                  <div className="relative min-w-0 flex-1">
-                    <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{cfg.emoji} {cfg.name} · by <span className="text-primary">{m.ownerNickname}</span></p>
-                    <p className="mt-1 truncate font-display text-base tracking-wide sm:text-lg">{m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}</p>
-                    <p className="mt-1"><OddsPill match={m} history={history} /></p>
-                  </div>
-                  <div className="relative shrink-0 text-right font-mono text-[10px] leading-tight text-primary neon-text sm:text-xs">
-                    {m.scheduledAt ? new Date(m.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-          {upcoming.length === 0 && (
-            <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-background/40 px-4 py-8 text-center backdrop-blur">
-              <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-              <div className="relative font-display text-xl tracking-widest text-muted-foreground neon-text">NO FIXTURES</div>
-              <p className="relative mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">No upcoming matches scheduled</p>
-            </div>
-          )}
-        </ul>
-      </section>
-      </div>
+      {!user && (
+        <p className="mt-8 text-center text-xs text-muted-foreground">
+          <Link to="/auth" className="text-primary underline">Přihlas se</Link> pro sázky a zapisování skóre.
+        </p>
+      )}
     </main>
   );
 }
 
-function PlayersInput({ label, players, onChange, options }: { label: string; players: string[]; onChange: (v: string[]) => void; options: string[] }) {
-  const listId = `teams-${label.replace(/\s/g, "")}`;
-  const update = (i: number, v: string) => onChange(players.map((p, idx) => (idx === i ? v : p)));
-  const add = () => onChange([...players, ""]);
-  const remove = (i: number) => onChange(players.length > 1 ? players.filter((_, idx) => idx !== i) : players);
+function Empty({ label }: { label: string }) {
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <label className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">{label}</label>
-        <button type="button" onClick={add} className="text-xs text-primary hover:underline">+ Add player</button>
+    <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-background/40 px-4 py-8 text-center backdrop-blur">
+      <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+      <div className="relative font-display text-xl tracking-widest text-muted-foreground neon-text">NO FIXTURES</div>
+      <p className="relative mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function EditFixture({ match, onClose, onSaved }: { match: Match; onClose: () => void; onSaved: () => void }) {
+  const [teamA, setTeamA] = useState(match.teamA);
+  const [teamB, setTeamB] = useState(match.teamB);
+  const [when, setWhen] = useState(toLocalInput(match.scheduledAt ?? Date.now()));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const ts = new Date(when).getTime();
+      if (!ts || isNaN(ts)) throw new Error("Neplatné datum");
+      await updateMatchFixture(match.id, { teamA: teamA.trim(), teamB: teamB.trim(), scheduledAt: ts });
+      onSaved();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const field =
+    "w-full rounded-md border border-primary/30 bg-background/40 px-3 py-2 text-sm focus:border-primary focus:outline-none";
+
+  return (
+    <div className="relative border-t border-primary/20 bg-background/70 p-3 sm:p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Admin úprava</p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <input value={teamA} onChange={(e) => setTeamA(e.target.value)} className={field} maxLength={80} aria-label="Tým A" />
+        <input value={teamB} onChange={(e) => setTeamB(e.target.value)} className={field} maxLength={80} aria-label="Tým B" />
       </div>
-      <div className="mt-2 space-y-2">
-        {players.map((p, i) => (
-          <div key={i} className="flex gap-2">
-            <input
-              list={listId}
-              value={p}
-              onChange={(e) => update(i, e.target.value)}
-              placeholder={i === 0 ? "Player or team name" : `Player ${i + 1}`}
-              className="w-full rounded-md border border-primary/30 bg-background/40 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:shadow-[0_0_20px_-8px_var(--color-primary)]"
-              maxLength={60}
-            />
-            {players.length > 1 && (
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="rounded-md border border-primary/25 px-2 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
-                aria-label="Remove player"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        ))}
+      <label className="mt-2 flex items-center gap-2">
+        <Clock className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <input
+          type="datetime-local"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
+          className={`${field} font-mono text-primary`}
+          aria-label="Nový čas"
+        />
+      </label>
+      {err && <p className="mt-2 text-xs text-destructive">{err}</p>}
+      <div className="mt-3 flex gap-2">
+        <button
+          onClick={save}
+          disabled={busy}
+          className="rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+        >
+          Uložit změny
+        </button>
+        <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-xs text-muted-foreground">
+          Zrušit
+        </button>
       </div>
-      <datalist id={listId}>
-        {options.map((o) => <option key={o} value={o} />)}
-      </datalist>
     </div>
   );
 }

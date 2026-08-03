@@ -2,9 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { SPORTS, type Match } from "@/lib/matches";
-import { fetchMatch, saveMatch } from "@/lib/matches-db";
+import { fetchMatch, saveMatch, reopenMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useMatchesRealtime, LiveBadge } from "@/lib/live";
+import { useIsParticipant } from "@/lib/participants";
+
 
 const searchSchema = z.object({ id: z.string() });
 
@@ -50,6 +52,8 @@ function LiveRefereePage() {
     { matchId: id },
   );
 
+  const isParticipant = useIsParticipant(match);
+
   if (notFound)
     return (
       <main className="mx-auto max-w-xl px-4 py-10 text-center">
@@ -60,7 +64,11 @@ function LiveRefereePage() {
   if (!match || authLoading) return null;
 
   const cfg = SPORTS[match.sport];
-  const canScore = !!user && (user.id === match.ownerId || isAdmin) && !match.endedAt;
+  const finished = !!match.endedAt;
+  // Participants (1v1, 2v2, tournament team members) and the admin may score.
+  const canScore = (isParticipant || isAdmin) && !finished;
+  const canOverride = isAdmin;
+
 
   async function commit(next: Match, snapshot?: Snapshot) {
     if (snapshot) {
@@ -131,9 +139,41 @@ function LiveRefereePage() {
 
       {!canScore && (
         <p className="panel mt-3 p-3 text-center text-xs text-muted-foreground">
-          {match.endedAt ? "Zápas je ukončený." : "Zapisovat může jen zakladatel zápasu nebo admin."}
+          {finished
+            ? canOverride
+              ? "Zápas je ukončený — jako admin můžeš skóre resetovat."
+              : "Zápas je ukončený — zamčeno."
+            : user
+            ? "Režim pouze pro čtení — zapisovat mohou jen hráči tohoto zápasu nebo admin."
+            : "Přihlas se, pokud jsi hráč tohoto zápasu."}
         </p>
       )}
+
+      {finished && canOverride && (
+        <button
+          onClick={async () => {
+            if (!confirm("Resetovat skóre a znovu otevřít zápas?")) return;
+            setBusy(true);
+            try {
+              await reopenMatch(match.id);
+              const fresh = await fetchMatch(match.id);
+              if (fresh) setMatch(fresh);
+              history.current = [];
+              setCanUndo(false);
+            } catch (e) {
+              setErr((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+          disabled={busy}
+          className="mt-3 h-12 w-full rounded-xl border border-destructive/50 bg-destructive/10 text-sm font-semibold text-destructive disabled:opacity-40"
+        >
+          ♻︎ Admin: reset a znovu otevřít
+        </button>
+      )}
+
+
 
       {cfg.hasSets && (
         <p className="mt-3 text-center font-mono text-xs text-muted-foreground">
