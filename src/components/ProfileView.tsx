@@ -9,6 +9,9 @@ import { NickLink } from "@/lib/profile-links";
 import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown, Gamepad2 } from "lucide-react";
 import { useDm } from "@/lib/dm";
 import { ArcadeProfile } from "@/components/ArcadeProfile";
+import { splitPlayers, sideOf, winnerSideOf, playerSplitStats, isSoloMatch } from "@/lib/stats";
+import { NeonStat } from "@/components/NeonStat";
+import { playerEmoji, statEmoji } from "@/lib/emoji";
 
 
 import heroImg from "@/assets/profile-hero.jpg";
@@ -16,40 +19,22 @@ import heroImg from "@/assets/profile-hero.jpg";
 type BetStatus = "won" | "lost" | "open";
 type BetRow = Bet & { matchId: string; match: Match; status: BetStatus };
 
-export function splitPlayers(name: string): string[] {
-  return name
-    .split(/\s*(?:&|\/|\+|,|\band\b)\s*/i)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+export { splitPlayers };
 
-function winnerSideOf(m: Match): "a" | "b" | null {
-  if (!m.endedAt) return null;
-  const cfg = SPORTS[m.sport];
-  if (cfg.hasSets && m.sets.length > 0) {
-    const a = m.sets.filter((s) => s.a > s.b).length;
-    const b = m.sets.filter((s) => s.b > s.a).length;
-    if (a === b) return null;
-    return a > b ? "a" : "b";
-  }
-  if (m.scoreA === m.scoreB) return null;
-  return m.scoreA > m.scoreB ? "a" : "b";
-}
 
 function playsInMatch(nickname: string, m: Match): boolean {
-  const nick = nickname.toLowerCase();
-  const inSide = (name: string) => splitPlayers(name).some((p) => p.toLowerCase() === nick);
-  return inSide(m.teamA) || inSide(m.teamB);
+  return sideOf(nickname, m) !== null;
 }
 
 function matchOutcome(nickname: string | null, m: Match): "win" | "loss" | null {
   if (!nickname) return null;
   const w = winnerSideOf(m);
   if (!w) return null;
-  const side = w === "a" ? m.teamA : m.teamB;
-  const won = splitPlayers(side).some((p) => p.toLowerCase() === nickname.toLowerCase());
-  return won ? "win" : "loss";
+  const side = sideOf(nickname, m);
+  if (!side) return null;
+  return side === w ? "win" : "loss";
 }
+
 
 export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
@@ -118,15 +103,19 @@ export function ProfileView({ userId }: { userId?: string }) {
       else if (b.status === "lost") { betLost++; if (b.amount) moneyNet -= b.amount; }
       else betOpen++;
     }
-    let victories = 0, losses = 0;
-    for (const m of myMatches) {
-      const o = matchOutcome(nickname, m);
-      if (o === "win") victories++;
-      else if (o === "loss") losses++;
-    }
+    const split = playerSplitStats(matches, nickname);
     const sports = new Set(myMatches.map((m) => m.sport));
-    return { total: myMatches.length, victories, losses, betWon, betLost, betOpen, moneyNet, biggestBet, sports: sports.size };
-  }, [myMatches, myBets, nickname]);
+    return {
+      solo: split.solo,
+      team: split.team,
+      // Strict math: total === wins + losses (only decided matches count)
+      total: split.overall.total,
+      victories: split.overall.wins,
+      losses: split.overall.losses,
+      betWon, betLost, betOpen, moneyNet, biggestBet, sports: sports.size,
+    };
+  }, [matches, myMatches, myBets, nickname]);
+
 
   const badges = useMemo(() => {
     const all = [
@@ -189,7 +178,9 @@ export function ProfileView({ userId }: { userId?: string }) {
             </div>
             <div className="min-w-0">
               <h1 className="truncate font-display text-3xl tracking-wider neon-text sm:text-7xl">
+                <span className="mr-2 align-middle text-2xl sm:text-4xl">{playerEmoji(nickname)}</span>
                 <span className="text-primary">{nickname ?? "PLAYER"}</span>
+
               </h1>
               <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Zápasy & historie sázek</p>
             </div>
@@ -254,13 +245,42 @@ export function ProfileView({ userId }: { userId?: string }) {
       )}
 
       <section className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <Stat label="Zápasy" value={stats.total} />
-        <Stat label="Výhry" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
-        <Stat label="Prohry" value={stats.losses} tone={stats.losses > 0 ? "bad" : undefined} />
-        <Stat label="Sázky +" value={stats.betWon} tone={stats.betWon > 0 ? "good" : undefined} />
-        <Stat label="Sázky −" value={stats.betLost} tone={stats.betLost > 0 ? "bad" : undefined} />
-        <Stat label="Net $" value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)} tone={stats.moneyNet >= 0 ? "good" : "bad"} />
+        <NeonStat label="Zápasy" value={stats.total} tone="cyan" emoji={statEmoji("matches")} hint="Odehrané rozhodnuté zápasy" />
+        <NeonStat label="Výhry" value={stats.victories} tone="gold" emoji={statEmoji("wins")} />
+        <NeonStat label="Prohry" value={stats.losses} tone="rose" emoji={statEmoji("losses")} />
+        <NeonStat label="Sázky +" value={stats.betWon} tone="gold" emoji={statEmoji("bets")} />
+        <NeonStat label="Sázky −" value={stats.betLost} tone="rose" emoji={statEmoji("bets")} />
+        <NeonStat
+          label="Net $"
+          value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)}
+          tone={stats.moneyNet >= 0 ? "violet" : "rose"}
+          emoji={statEmoji("money")}
+        />
       </section>
+
+      <section className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-primary/20 bg-background/50 p-3 backdrop-blur">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-primary/70">
+            {statEmoji("solo")} Solo statistiky
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <NeonStat label="Zápasy" value={stats.solo.total} tone="cyan" />
+            <NeonStat label="Výhry" value={stats.solo.wins} tone="gold" />
+            <NeonStat label="Prohry" value={stats.solo.losses} tone="rose" />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-primary/20 bg-background/50 p-3 backdrop-blur">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-primary/70">
+            {statEmoji("team")} Týmové statistiky (jednorázové týmy)
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <NeonStat label="Zápasy" value={stats.team.total} tone="cyan" />
+            <NeonStat label="Výhry" value={stats.team.wins} tone="gold" />
+            <NeonStat label="Prohry" value={stats.team.losses} tone="rose" />
+          </div>
+        </div>
+      </section>
+
 
       <section className="mt-8">
         <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">ODZNAKY A ÚSPĚCHY</h2>
@@ -319,6 +339,10 @@ export function ProfileView({ userId }: { userId?: string }) {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
                         <span>{cfg.emoji} {cfg.name}</span>
+                        <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-primary/80">
+                          {isSoloMatch(m) ? "🧍 Solo" : "🤝 Team"}
+                        </span>
+
                         <span>·</span>
                         <span className="hidden sm:inline">{new Date(m.startedAt).toLocaleString()}</span>
                         <span className="sm:hidden">{new Date(m.startedAt).toLocaleDateString()}</span>
@@ -435,16 +459,6 @@ function TeamNames({ name }: { name: string }) {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string | number; tone?: "good" | "bad" }) {
-  const color = tone === "good" ? "text-accent" : tone === "bad" ? "text-destructive" : "text-primary";
-  return (
-    <div className="relative overflow-hidden rounded-lg border border-primary/25 bg-background/60 p-2 backdrop-blur sm:p-3">
-      <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-      <div className="relative text-[9px] uppercase tracking-[0.2em] text-primary/70">{label}</div>
-      <div className={`relative mt-0.5 font-display text-xl neon-text sm:text-2xl ${color}`}>{value}</div>
-    </div>
-  );
-}
 
 function AvatarSection({
   userId,
