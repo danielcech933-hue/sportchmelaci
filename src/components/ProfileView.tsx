@@ -178,7 +178,9 @@ export function ProfileView({ userId }: { userId?: string }) {
             </div>
             <div className="min-w-0">
               <h1 className="truncate font-display text-3xl tracking-wider neon-text sm:text-7xl">
+                <span className="mr-2 align-middle text-2xl sm:text-4xl">{playerEmoji(nickname)}</span>
                 <span className="text-primary">{nickname ?? "PLAYER"}</span>
+
               </h1>
               <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Zápasy & historie sázek</p>
             </div>
