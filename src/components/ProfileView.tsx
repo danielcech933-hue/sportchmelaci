@@ -103,15 +103,19 @@ export function ProfileView({ userId }: { userId?: string }) {
       else if (b.status === "lost") { betLost++; if (b.amount) moneyNet -= b.amount; }
       else betOpen++;
     }
-    let victories = 0, losses = 0;
-    for (const m of myMatches) {
-      const o = matchOutcome(nickname, m);
-      if (o === "win") victories++;
-      else if (o === "loss") losses++;
-    }
+    const split = playerSplitStats(matches, nickname);
     const sports = new Set(myMatches.map((m) => m.sport));
-    return { total: myMatches.length, victories, losses, betWon, betLost, betOpen, moneyNet, biggestBet, sports: sports.size };
-  }, [myMatches, myBets, nickname]);
+    return {
+      solo: split.solo,
+      team: split.team,
+      // Strict math: total === wins + losses (only decided matches count)
+      total: split.overall.total,
+      victories: split.overall.wins,
+      losses: split.overall.losses,
+      betWon, betLost, betOpen, moneyNet, biggestBet, sports: sports.size,
+    };
+  }, [matches, myMatches, myBets, nickname]);
+
 
   const badges = useMemo(() => {
     const all = [
