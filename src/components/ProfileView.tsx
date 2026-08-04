@@ -9,6 +9,9 @@ import { NickLink } from "@/lib/profile-links";
 import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown, Gamepad2 } from "lucide-react";
 import { useDm } from "@/lib/dm";
 import { ArcadeProfile } from "@/components/ArcadeProfile";
+import { splitPlayers, sideOf, winnerSideOf, playerSplitStats, isSoloMatch } from "@/lib/stats";
+import { NeonStat } from "@/components/NeonStat";
+import { playerEmoji, statEmoji } from "@/lib/emoji";
 
 
 import heroImg from "@/assets/profile-hero.jpg";
@@ -16,7 +19,8 @@ import heroImg from "@/assets/profile-hero.jpg";
 type BetStatus = "won" | "lost" | "open";
 type BetRow = Bet & { matchId: string; match: Match; status: BetStatus };
 
-export { splitPlayers } from "@/lib/stats";
+export { splitPlayers };
+
 
 function playsInMatch(nickname: string, m: Match): boolean {
   return sideOf(nickname, m) !== null;
