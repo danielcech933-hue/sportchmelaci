@@ -339,6 +339,10 @@ export function ProfileView({ userId }: { userId?: string }) {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
                         <span>{cfg.emoji} {cfg.name}</span>
+                        <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-primary/80">
+                          {isSoloMatch(m) ? "🧍 Solo" : "🤝 Team"}
+                        </span>
+
                         <span>·</span>
                         <span className="hidden sm:inline">{new Date(m.startedAt).toLocaleString()}</span>
                         <span className="sm:hidden">{new Date(m.startedAt).toLocaleDateString()}</span>
