@@ -92,14 +92,17 @@ function History() {
             const setsB = m.sets.filter((s) => s.b > s.a).length;
             const isOwner = m.ownerId === user.id;
             return (
-              <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition hover:border-primary/60 sm:p-4">
+              <li key={m.id} className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-3 backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-[0_0_40px_-16px_var(--color-primary)] sm:p-4">
                 <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
                 <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
                       <span>{cfg.emoji} {cfg.name}</span>
+                      <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-primary/80">
+                        {isSoloMatch(m) ? "🧍 Solo" : "🤝 Team"}
+                      </span>
                       <span>·</span>
-                      <span>by <span className="text-primary">{m.ownerNickname}</span></span>
+                      <span>by <span className="text-primary">{playerEmoji(m.ownerNickname)} {m.ownerNickname}</span></span>
                       <span className="hidden sm:inline">·</span>
                       <span className="hidden sm:inline">{new Date(m.startedAt).toLocaleString()}</span>
                       <span className="sm:hidden">{new Date(m.startedAt).toLocaleDateString()}</span>
@@ -107,7 +110,7 @@ function History() {
                     </div>
                     <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
                       <span className="min-w-0 truncate text-sm sm:text-base">{m.teamA}</span>
-                      <span className="led-digit text-xl sm:text-3xl">
+                      <span className="led-digit text-xl transition-all duration-500 sm:text-3xl">
                         {cfg.hasSets && m.sets.length > 0 ? `${setsA} : ${setsB}` : `${m.scoreA} : ${m.scoreB}`}
                       </span>
                       <span className="min-w-0 truncate text-right text-sm sm:text-base">{m.teamB}</span>
@@ -117,19 +120,20 @@ function History() {
                         {m.sets.map((s, i) => <span key={i}>({s.a}–{s.b})</span>)}
                       </div>
                     )}
+                    {isAdmin && <div className="mt-3"><AdminScoreOverride match={m} onSaved={reload} /></div>}
                   </div>
                   <div className="flex shrink-0 gap-2 sm:flex-col md:flex-row">
                     <Link
                       to="/match"
                       search={{ id: m.id }}
-                      className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] sm:flex-none"
+                      className="flex-1 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_var(--color-primary)] transition hover:brightness-110 sm:flex-none"
                     >
                       {isOwner ? (m.endedAt ? "View" : "Resume") : "View"}
                     </Link>
-                    {isOwner && (
+                    {(isOwner || isAdmin) && (
                       <button
                         onClick={() => remove(m.id)}
-                        className="flex-1 rounded-md border border-primary/25 px-3 py-2 text-sm text-muted-foreground hover:border-destructive hover:text-destructive sm:flex-none"
+                        className="flex-1 rounded-md border border-primary/25 px-3 py-2 text-sm text-muted-foreground transition hover:border-destructive hover:text-destructive sm:flex-none"
                       >
                         Delete
                       </button>
@@ -137,6 +141,7 @@ function History() {
                   </div>
                 </div>
               </li>
+
             );
           })}
         </ul>
