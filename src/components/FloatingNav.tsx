@@ -65,7 +65,16 @@ export function FloatingNav() {
       aria-label="Hlavní navigace"
       className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 sm:bottom-5"
     >
-      <div className="nav-dock no-scrollbar flex max-w-[min(72rem,96vw)] items-center gap-0.5 overflow-x-auto rounded-2xl px-2 py-1.5 sm:gap-1 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible">
+      <div
+        onWheel={(e) => {
+          // Smooth horizontal mouse-wheel scrolling when the dock overflows.
+          const el = e.currentTarget;
+          if (el.scrollWidth <= el.clientWidth) return;
+          el.scrollLeft += e.deltaY + e.deltaX;
+        }}
+        className="nav-dock no-scrollbar flex max-w-[min(72rem,96vw)] items-center gap-0.5 overflow-x-auto rounded-2xl px-2 py-1.5 sm:gap-1 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible"
+      >
+
 
         {visible.map((item) => {
           const active = matchesRoute(pathname, item);
