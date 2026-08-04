@@ -22,7 +22,7 @@ export const Route = createFileRoute("/history")({
 });
 
 function History() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [mineOnly, setMineOnly] = useState(false);
   const [loading, setLoading] = useState(true);
