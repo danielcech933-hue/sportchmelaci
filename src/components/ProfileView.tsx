@@ -16,40 +16,21 @@ import heroImg from "@/assets/profile-hero.jpg";
 type BetStatus = "won" | "lost" | "open";
 type BetRow = Bet & { matchId: string; match: Match; status: BetStatus };
 
-export function splitPlayers(name: string): string[] {
-  return name
-    .split(/\s*(?:&|\/|\+|,|\band\b)\s*/i)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function winnerSideOf(m: Match): "a" | "b" | null {
-  if (!m.endedAt) return null;
-  const cfg = SPORTS[m.sport];
-  if (cfg.hasSets && m.sets.length > 0) {
-    const a = m.sets.filter((s) => s.a > s.b).length;
-    const b = m.sets.filter((s) => s.b > s.a).length;
-    if (a === b) return null;
-    return a > b ? "a" : "b";
-  }
-  if (m.scoreA === m.scoreB) return null;
-  return m.scoreA > m.scoreB ? "a" : "b";
-}
+export { splitPlayers } from "@/lib/stats";
 
 function playsInMatch(nickname: string, m: Match): boolean {
-  const nick = nickname.toLowerCase();
-  const inSide = (name: string) => splitPlayers(name).some((p) => p.toLowerCase() === nick);
-  return inSide(m.teamA) || inSide(m.teamB);
+  return sideOf(nickname, m) !== null;
 }
 
 function matchOutcome(nickname: string | null, m: Match): "win" | "loss" | null {
   if (!nickname) return null;
   const w = winnerSideOf(m);
   if (!w) return null;
-  const side = w === "a" ? m.teamA : m.teamB;
-  const won = splitPlayers(side).some((p) => p.toLowerCase() === nickname.toLowerCase());
-  return won ? "win" : "loss";
+  const side = sideOf(nickname, m);
+  if (!side) return null;
+  return side === w ? "win" : "loss";
 }
+
 
 export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
