@@ -169,3 +169,20 @@ export async function reopenMatch(id: string): Promise<void> {
     .eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * Admin score override. Writes the final score/sets, then asks the database to
+ * recalculate the affected players' ELO (settlement + bracket triggers run
+ * server-side on update).
+ */
+export async function adminOverrideScore(
+  id: string,
+  input: { scoreA: number; scoreB: number; sets?: SetScore[] },
+): Promise<void> {
+  const payload: Record<string, unknown> = { score_a: input.scoreA, score_b: input.scoreB };
+  if (input.sets) payload.sets = input.sets;
+  const { error } = await supabase.from("matches").update(payload as never).eq("id", id);
+  if (error) throw error;
+  const { error: rpcErr } = await supabase.rpc("sync_match_elo" as never, { _match_id: id } as never);
+  if (rpcErr) throw rpcErr;
+}
