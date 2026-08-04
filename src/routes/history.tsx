@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { SPORTS, type Match } from "@/lib/matches";
 import { fetchAllMatches, removeMatch } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
+import { AdminScoreOverride } from "@/components/AdminScoreOverride";
+import { isSoloMatch } from "@/lib/stats";
+import { playerEmoji } from "@/lib/emoji";
 import heroImg from "@/assets/history-hero.jpg";
+
 
 export const Route = createFileRoute("/history")({
   head: () => ({
