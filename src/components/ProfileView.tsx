@@ -455,16 +455,6 @@ function TeamNames({ name }: { name: string }) {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string | number; tone?: "good" | "bad" }) {
-  const color = tone === "good" ? "text-accent" : tone === "bad" ? "text-destructive" : "text-primary";
-  return (
-    <div className="relative overflow-hidden rounded-lg border border-primary/25 bg-background/60 p-2 backdrop-blur sm:p-3">
-      <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-      <div className="relative text-[9px] uppercase tracking-[0.2em] text-primary/70">{label}</div>
-      <div className={`relative mt-0.5 font-display text-xl neon-text sm:text-2xl ${color}`}>{value}</div>
-    </div>
-  );
-}
 
 function AvatarSection({
   userId,
