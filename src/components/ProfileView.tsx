@@ -243,13 +243,42 @@ export function ProfileView({ userId }: { userId?: string }) {
       )}
 
       <section className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <Stat label="Zápasy" value={stats.total} />
-        <Stat label="Výhry" value={stats.victories} tone={stats.victories > 0 ? "good" : undefined} />
-        <Stat label="Prohry" value={stats.losses} tone={stats.losses > 0 ? "bad" : undefined} />
-        <Stat label="Sázky +" value={stats.betWon} tone={stats.betWon > 0 ? "good" : undefined} />
-        <Stat label="Sázky −" value={stats.betLost} tone={stats.betLost > 0 ? "bad" : undefined} />
-        <Stat label="Net $" value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)} tone={stats.moneyNet >= 0 ? "good" : "bad"} />
+        <NeonStat label="Zápasy" value={stats.total} tone="cyan" emoji={statEmoji("matches")} hint="Odehrané rozhodnuté zápasy" />
+        <NeonStat label="Výhry" value={stats.victories} tone="gold" emoji={statEmoji("wins")} />
+        <NeonStat label="Prohry" value={stats.losses} tone="rose" emoji={statEmoji("losses")} />
+        <NeonStat label="Sázky +" value={stats.betWon} tone="gold" emoji={statEmoji("bets")} />
+        <NeonStat label="Sázky −" value={stats.betLost} tone="rose" emoji={statEmoji("bets")} />
+        <NeonStat
+          label="Net $"
+          value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)}
+          tone={stats.moneyNet >= 0 ? "violet" : "rose"}
+          emoji={statEmoji("money")}
+        />
       </section>
+
+      <section className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-primary/20 bg-background/50 p-3 backdrop-blur">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-primary/70">
+            {statEmoji("solo")} Solo statistiky
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <NeonStat label="Zápasy" value={stats.solo.total} tone="cyan" />
+            <NeonStat label="Výhry" value={stats.solo.wins} tone="gold" />
+            <NeonStat label="Prohry" value={stats.solo.losses} tone="rose" />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-primary/20 bg-background/50 p-3 backdrop-blur">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-primary/70">
+            {statEmoji("team")} Týmové statistiky (jednorázové týmy)
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <NeonStat label="Zápasy" value={stats.team.total} tone="cyan" />
+            <NeonStat label="Výhry" value={stats.team.wins} tone="gold" />
+            <NeonStat label="Prohry" value={stats.team.losses} tone="rose" />
+          </div>
+        </div>
+      </section>
+
 
       <section className="mt-8">
         <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">ODZNAKY A ÚSPĚCHY</h2>
