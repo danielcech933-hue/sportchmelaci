@@ -23,7 +23,7 @@ export function SlotsScoreboard({ playerName, playerBest, compact }: ScoreboardP
           const me = !r.bot;
           return (
             <motion.li
-              key={r.name}
+              key={`${r.name}-${i}`}
               layout
               className={`flex items-center justify-between rounded-xl border px-2.5 py-1.5 text-xs ${
                 me

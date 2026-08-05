@@ -36,7 +36,7 @@ export const SLOT_SYMBOLS: Record<SymKey, SymbolDef> = {
   q: { key: "q", label: "Q", glyph: "Q", tier: "low", pays: [0.6, 1.5, 4], weight: 14 },
   k: { key: "k", label: "K", glyph: "K", tier: "low", pays: [0.8, 2, 5], weight: 13 },
   a: { key: "a", label: "A", glyph: "A", tier: "low", pays: [1, 2.5, 6], weight: 12 },
-  whistle: { key: "whistle", label: "Píšťalka", glyph: "🪈", tier: "mid", pays: [1.5, 4, 10], weight: 10 },
+  whistle: { key: "whistle", label: "Píšťalka", glyph: "📣", tier: "mid", pays: [1.5, 4, 10], weight: 10 },
   boots: { key: "boots", label: "Kopačky v chmelu", glyph: "👟", tier: "mid", pays: [2, 6, 15], weight: 9 },
   silver: { key: "silver", label: "Stříbrný pohár", glyph: "🥈", tier: "high", pays: [5, 15, 40], weight: 6 },
   gold: { key: "gold", label: "Chmelovci Cup", glyph: "🏆", tier: "high", pays: [15, 40, 100], weight: 4 },
