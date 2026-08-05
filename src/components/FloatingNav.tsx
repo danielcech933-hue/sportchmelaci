@@ -13,6 +13,7 @@ import {
   HeartHandshake,
   MapPin,
   Gamepad2,
+  Beer,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
@@ -32,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" },
   { to: "/arcade", label: "Arcade", icon: Gamepad2 },
+  { to: "/slots", label: "Slot", icon: Beer },
   { to: "/teams", label: "Teams", icon: Users },
   { to: "/venues", label: "Sportoviště", icon: MapPin },
   { to: "/bets", label: "Bets", icon: Coins },
