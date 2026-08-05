@@ -14,6 +14,7 @@ import { Route as TournamentsRouteImport } from './routes/tournaments'
 import { Route as TournamentRouteImport } from './routes/tournament'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as SlotsRouteImport } from './routes/slots'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScheduleRouteImport } from './routes/schedule'
 import { Route as RankingsRouteImport } from './routes/rankings'
@@ -53,6 +54,11 @@ const TeamsRoute = TeamsRouteImport.update({
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlotsRoute = SlotsRouteImport.update({
+  id: '/slots',
+  path: '/slots',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/slots': typeof SlotsRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/slots': typeof SlotsRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/slots': typeof SlotsRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
+    | '/slots'
     | '/support'
     | '/teams'
     | '/tournament'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
+    | '/slots'
     | '/support'
     | '/teams'
     | '/tournament'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
+    | '/slots'
     | '/support'
     | '/teams'
     | '/tournament'
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   RankingsRoute: typeof RankingsRoute
   ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SlotsRoute: typeof SlotsRoute
   SupportRoute: typeof SupportRouteWithChildren
   TeamsRoute: typeof TeamsRoute
   TournamentRoute: typeof TournamentRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/slots': {
+      id: '/slots'
+      path: '/slots'
+      fullPath: '/slots'
+      preLoaderRoute: typeof SlotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -458,6 +478,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingsRoute: RankingsRoute,
   ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SlotsRoute: SlotsRoute,
   SupportRoute: SupportRouteWithChildren,
   TeamsRoute: TeamsRoute,
   TournamentRoute: TournamentRoute,
