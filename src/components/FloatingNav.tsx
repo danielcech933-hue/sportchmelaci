@@ -13,6 +13,7 @@ import {
   HeartHandshake,
   MapPin,
   Gamepad2,
+  Beer,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
