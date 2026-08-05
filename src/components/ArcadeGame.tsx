@@ -1,207 +1,174 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client"; // Uprav cestu dle svého Supabase klienta
-import { useAuth } from "@/hooks/useAuth"; // Nebo tvůj Custom Hook pro přihlášeného uživatele
+import { useCallback, useEffect, useRef, useState } from "react";
 
-interface SymbolConfig {
-  id: string;
-  label: string;
-  icon: string;
-  value: number;
-  isWild?: boolean;
-  isScatter?: boolean;
+interface ArcadeGameProps {
+  onFinish: (scoreA: number, scoreB: number) => void;
+  labelA: string;
+  labelB: string;
 }
 
-const SYMBOLS: SymbolConfig[] = [
-  { id: "trophy", label: "Trofej", icon: "🏆", value: 50, isScatter: true },
-  { id: "ball", label: "Míč", icon: "⚽", value: 25 },
-  { id: "shirt", label: "Dres", icon: "👕", value: 15 },
-  { id: "boots", label: "Kopačky", icon: "👟", value: 10 },
-  { id: "whistle", label: "Píšťalka", icon: "📣", value: 5 },
-  { id: "wild", label: "WILD", icon: "🃏", value: 0, isWild: true },
-];
+const W = 640;
+const H = 360;
+const PAD_W = 12;
+const PAD_H = 78;
+const TARGET = 3;
 
-export const FootballSlotGame: React.FC = () => {
-  const { user } = useAuth(); // Získání ID přihlášeného uživatele
-  const [balance, setBalance] = useState<number>(0);
-  const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
-  const [bet, setBet] = useState<number>(10);
-  const [reels, setReels] = useState<SymbolConfig[]>([SYMBOLS[1], SYMBOLS[0], SYMBOLS[1]]);
-  const [spinning, setSpinning] = useState<boolean>(false);
-  const [freeSpins, setFreeSpins] = useState<number>(0);
-  const [winMessage, setWinMessage] = useState<string | null>(null);
+/** 2D Puck Arena — WASD/šipky, první na 3 branky vyhrává. */
+export function ArcadeGame({ onFinish, labelA, labelB }: ArcadeGameProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [running, setRunning] = useState(false);
+  const [score, setScore] = useState<[number, number]>([0, 0]);
+  const [finished, setFinished] = useState(false);
 
-  // 1. načtení aktuálního zůstatku z databáze (z tabulky profiles / wallets)
+  const state = useRef({
+    ball: { x: W / 2, y: H / 2, vx: 4.2, vy: 2.4 },
+    pa: H / 2 - PAD_H / 2,
+    pb: H / 2 - PAD_H / 2,
+    keys: new Set<string>(),
+    score: [0, 0] as [number, number],
+    over: false,
+  });
+
+  const reset = useCallback((dir: number) => {
+    const s = state.current;
+    s.ball = { x: W / 2, y: H / 2, vx: 4.2 * dir, vy: (Math.random() * 3 - 1.5) || 2 };
+  }, []);
+
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase.from("profiles").select("balance").eq("id", user.id).single();
-
-        if (error) throw error;
-        if (data) setBalance(data.balance ?? 0);
-      } catch (err) {
-        console.error("Chyba při načítání zůstatku:", err);
-      } finally {
-        setLoadingBalance(false);
-      }
+    const down = (e: KeyboardEvent) => {
+      state.current.keys.add(e.key.toLowerCase());
+      if (["arrowup", "arrowdown", "w", "s"].includes(e.key.toLowerCase())) e.preventDefault();
     };
+    const up = (e: KeyboardEvent) => state.current.keys.delete(e.key.toLowerCase());
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, []);
 
-    fetchBalance();
-  }, [user]);
+  useEffect(() => {
+    if (!running) return;
+    let raf = 0;
+    const tick = () => {
+      const s = state.current;
+      const cvs = canvasRef.current;
+      if (!cvs) return;
+      const ctx = cvs.getContext("2d");
+      if (!ctx) return;
 
-  // 2. Pomocná funkce pro zápis nového zůstatku do DB
-  const syncBalanceToDb = async (newBalance: number) => {
-    setBalance(newBalance);
-    if (!user) return;
+      // input
+      const speed = 6.5;
+      if (s.keys.has("w") || s.keys.has("arrowup")) s.pa -= speed;
+      if (s.keys.has("s") || s.keys.has("arrowdown")) s.pa += speed;
+      s.pa = Math.max(0, Math.min(H - PAD_H, s.pa));
 
-    try {
-      const { error } = await supabase.from("profiles").update({ balance: newBalance }).eq("id", user.id);
+      // simple CPU
+      const target = s.ball.y - PAD_H / 2;
+      s.pb += Math.max(-5, Math.min(5, (target - s.pb) * 0.12));
+      s.pb = Math.max(0, Math.min(H - PAD_H, s.pb));
 
-      if (error) throw error;
-    } catch (err) {
-      console.error("Chyba při ukládání zůstatku:", err);
-    }
-  };
+      // ball
+      const b = s.ball;
+      b.x += b.vx;
+      b.y += b.vy;
+      if (b.y < 6 || b.y > H - 6) b.vy *= -1;
 
-  const spin = async () => {
-    if (spinning || loadingBalance) return;
+      if (b.x < 22 + PAD_W && b.y > s.pa && b.y < s.pa + PAD_H && b.vx < 0) {
+        b.vx = Math.abs(b.vx) * 1.04;
+        b.vy += (b.y - (s.pa + PAD_H / 2)) * 0.06;
+      }
+      if (b.x > W - 22 - PAD_W && b.y > s.pb && b.y < s.pb + PAD_H && b.vx > 0) {
+        b.vx = -Math.abs(b.vx) * 1.04;
+        b.vy += (b.y - (s.pb + PAD_H / 2)) * 0.06;
+      }
 
-    // Kontrola kreditů při běžném zatočení
-    if (freeSpins === 0 && balance < bet) {
-      setWinMessage("⚠️ Nedostatek kreditů!");
-      return;
-    }
+      if (b.x < 0) {
+        s.score[1] += 1;
+        setScore([s.score[0], s.score[1]]);
+        reset(1);
+      } else if (b.x > W) {
+        s.score[0] += 1;
+        setScore([s.score[0], s.score[1]]);
+        reset(-1);
+      }
 
-    let currentBalance = balance;
+      // draw
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#04140c";
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(120,255,190,0.25)";
+      ctx.setLineDash([8, 10]);
+      ctx.beginPath();
+      ctx.moveTo(W / 2, 0);
+      ctx.lineTo(W / 2, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "#3ef2a1";
+      ctx.fillStyle = "#3ef2a1";
+      ctx.fillRect(22, s.pa, PAD_W, PAD_H);
+      ctx.fillStyle = "#ffd166";
+      ctx.shadowColor = "#ffd166";
+      ctx.fillRect(W - 22 - PAD_W, s.pb, PAD_W, PAD_H);
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
 
-    // Stržení sázky před točením
-    if (freeSpins === 0) {
-      currentBalance -= bet;
-      await syncBalanceToDb(currentBalance);
-    } else {
-      setFreeSpins((prev) => prev - 1);
-    }
+      if (!s.over && (s.score[0] >= TARGET || s.score[1] >= TARGET)) {
+        s.over = true;
+        setFinished(true);
+        setRunning(false);
+        onFinish(s.score[0], s.score[1]);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [running, onFinish, reset]);
 
-    setSpinning(true);
-    setWinMessage(null);
-
-    // Animace točení válců
-    const interval = setInterval(() => {
-      setReels([
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-      ]);
-    }, 70);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      const finalReels = [
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-      ];
-      setReels(finalReels);
-      setSpinning(false);
-      evaluateWin(finalReels, currentBalance);
-    }, 1500);
-  };
-
-  const evaluateWin = async (results: SymbolConfig[], baseBalance: number) => {
-    const scatters = results.filter((s) => s.isScatter).length;
-    let updatedBalance = baseBalance;
-
-    // 3 Scatter symboly = Free Spiny
-    if (scatters === 3) {
-      setFreeSpins((prev) => prev + 10);
-      setWinMessage("🎉 10 FREE SPINŮ ZÍSKÁNO!");
-      return;
-    }
-
-    // Vyhodnocení výherní linie
-    const nonWilds = results.filter((s) => !s.isWild);
-    const isWin = nonWilds.every((val, i, arr) => val.id === arr[0].id);
-
-    if (isWin && nonWilds.length > 0) {
-      const winSymbol = nonWilds[0];
-      const winAmount = winSymbol.value * bet;
-      updatedBalance += winAmount;
-      setWinMessage(`🔥 VÝHRA ${winAmount} KREDITŮ! (${winSymbol.label})`);
-      await syncBalanceToDb(updatedBalance);
-    } else if (results.every((s) => s.isWild)) {
-      const winAmount = 100 * bet;
-      updatedBalance += winAmount;
-      setWinMessage(`🃏 WILD JACKPOT! +${winAmount}`);
-      await syncBalanceToDb(updatedBalance);
-    } else {
-      setWinMessage(freeSpins > 0 ? "Volné zatočení..." : null);
-    }
-  };
+  function start() {
+    const s = state.current;
+    s.score = [0, 0];
+    s.over = false;
+    s.pa = H / 2 - PAD_H / 2;
+    s.pb = H / 2 - PAD_H / 2;
+    reset(1);
+    setScore([0, 0]);
+    setFinished(false);
+    setRunning(true);
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-emerald-950 text-white rounded-3xl shadow-2xl max-w-md mx-auto border-4 border-amber-400/80">
-      <div className="text-center mb-4">
-        <h2 className="text-3xl font-black text-amber-400 uppercase tracking-wider drop-shadow-md">
-          FOOTBALL SYNOT SLOT
-        </h2>
-        <p className="text-xs text-emerald-300 font-semibold uppercase">Turnajová edice • Propojeno s profilem</p>
+    <div className="rounded-2xl border border-primary/25 bg-background/60 p-3 backdrop-blur">
+      <div className="mb-2 flex items-center justify-between text-xs">
+        <span className="font-mono uppercase tracking-[0.2em] text-primary/80">{labelA}</span>
+        <span className="font-display text-lg tracking-widest text-primary">
+          {score[0]} : {score[1]}
+        </span>
+        <span className="font-mono uppercase tracking-[0.2em] text-muted-foreground">{labelB}</span>
       </div>
-
-      <div className="flex justify-between w-full px-4 py-2 bg-emerald-900/80 rounded-xl mb-4 text-sm font-bold border border-emerald-700">
-        <span className="text-amber-300">Zůstatek: {loadingBalance ? "Načítám..." : `${balance} bodů`}</span>
-        {freeSpins > 0 && <span className="text-yellow-400 animate-pulse">Free Spiny: {freeSpins}</span>}
-      </div>
-
-      <div className="flex gap-3 my-2 bg-slate-900 p-4 rounded-2xl border-4 border-amber-500 shadow-inner">
-        {reels.map((symbol, idx) => (
-          <div
-            key={idx}
-            className={`w-20 h-28 bg-gradient-to-b from-slate-800 to-slate-950 rounded-xl flex flex-col items-center justify-center border-2 border-amber-500/50 shadow-md ${
-              spinning ? "animate-pulse scale-95" : "scale-100 transition-all"
-            }`}
-          >
-            <span className="text-4xl drop-shadow">{symbol.icon}</span>
-            <span className="text-[10px] uppercase font-bold text-amber-200 mt-1">{symbol.label}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="h-10 my-2 flex items-center justify-center text-center">
-        {winMessage && (
-          <span className="text-sm font-extrabold text-amber-300 animate-bounce bg-emerald-900/90 px-3 py-1 rounded-full border border-amber-400">
-            {winMessage}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-4 mt-2">
-        <div className="flex items-center gap-2 bg-emerald-900 p-2 rounded-xl border border-emerald-700">
-          <span className="text-xs text-slate-300 font-bold">Sázka:</span>
-          <button
-            onClick={() => setBet((b) => Math.max(5, b - 5))}
-            disabled={spinning}
-            className="px-2 py-1 bg-emerald-800 hover:bg-emerald-700 rounded font-bold cursor-pointer"
-          >
-            -
-          </button>
-          <span className="font-black text-amber-400 w-8 text-center">{bet}</span>
-          <button
-            onClick={() => setBet((b) => b + 5)}
-            disabled={spinning}
-            className="px-2 py-1 bg-emerald-800 hover:bg-emerald-700 rounded font-bold cursor-pointer"
-          >
-            +
-          </button>
-        </div>
-
+      <canvas
+        ref={canvasRef}
+        width={W}
+        height={H}
+        className="w-full rounded-xl border border-primary/20"
+        style={{ aspectRatio: `${W} / ${H}` }}
+      />
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <p className="text-[11px] text-muted-foreground">Ovládání: W / S nebo ↑ / ↓ · první na {TARGET} branky</p>
         <button
-          onClick={spin}
-          disabled={spinning || loadingBalance}
-          className="px-8 py-3 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-600 disabled:opacity-50 text-slate-950 font-black text-lg rounded-full shadow-lg transition-all transform active:scale-95 uppercase cursor-pointer"
+          onClick={start}
+          disabled={running}
+          className="rounded-full border border-primary/50 bg-primary/15 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-primary disabled:opacity-50"
         >
-          {spinning ? "Točí se..." : freeSpins > 0 ? "FREE SPIN" : "ZATOČIT"}
+          {running ? "Hraje se…" : finished ? "Hrát znovu" : "Start"}
         </button>
       </div>
     </div>
   );
-};
+}
+
+export default ArcadeGame;
