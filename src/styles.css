@@ -342,3 +342,61 @@ body { padding-bottom: 5.5rem; }
   border-color: oklch(0.72 0.13 55 / 0.7);
   box-shadow: 0 0 55px -14px oklch(0.72 0.15 55 / 0.8), inset 0 0 40px -28px oklch(0.72 0.13 55);
 }
+
+/* ===== CHMELOVCI CUP — slot design tokens & utilities ===== */
+@theme inline {
+  --color-hop-950: #051f10;
+  --color-hop-900: #0a2e17;
+  --color-hop-800: #0f4423;
+  --color-hop-gold: #ffcc44;
+  --color-hop-gold-deep: #b8860b;
+  --color-hop-neon: #4dffa6;
+}
+
+@utility slot-frame {
+  background: linear-gradient(160deg, rgba(255, 204, 68, 0.22), rgba(5, 31, 16, 0.75) 35%, rgba(0, 0, 0, 0.9));
+  border: 1px solid rgba(255, 204, 68, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6) inset,
+    0 0 60px -18px rgba(255, 204, 68, 0.75),
+    0 30px 80px -40px rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+@utility slot-cell {
+  background: linear-gradient(180deg, rgba(10, 46, 23, 0.9), rgba(3, 14, 8, 0.95));
+  box-shadow: inset 0 0 0 1px rgba(255, 204, 68, 0.18), inset 0 12px 24px -18px rgba(255, 255, 255, 0.5);
+}
+
+@utility slot-led {
+  animation: slot-led 2.6s ease-in-out infinite;
+}
+@keyframes slot-led {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.5), 0 0 34px -12px rgba(255, 204, 68, 0.85); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 204, 68, 0.9), 0 0 60px -6px rgba(255, 204, 68, 1); }
+}
+
+@utility slot-gold-text {
+  background: linear-gradient(180deg, #fff3bf 0%, #ffcc44 45%, #b8860b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(255, 204, 68, 0.45));
+}
+
+@utility slot-speedlines {
+  background: repeating-linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0 14px,
+    rgba(255, 255, 255, 0.16) 14px 16px
+  );
+  animation: slot-speed 0.35s linear infinite;
+}
+@keyframes slot-speed {
+  from { transform: translateX(0); }
+  to { transform: translateX(-32px); }
+}
+
+@utility slot-blur {
+  filter: blur(3px) saturate(130%);
+}
