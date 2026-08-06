@@ -30,6 +30,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SlotsIndexRouteImport } from './routes/slots.index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
+import { Route as SlotsChmelovciCupRouteImport } from './routes/slots.chmelovci-cup'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 
 const VenuesRoute = VenuesRouteImport.update({
@@ -137,6 +138,11 @@ const SupportReturnRoute = SupportReturnRouteImport.update({
   path: '/return',
   getParentRoute: () => SupportRoute,
 } as any)
+const SlotsChmelovciCupRoute = SlotsChmelovciCupRouteImport.update({
+  id: '/chmelovci-cup',
+  path: '/chmelovci-cup',
+  getParentRoute: () => SlotsRoute,
+} as any)
 const ProfileIdRoute = ProfileIdRouteImport.update({
   id: '/profile/$id',
   path: '/profile/$id',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/tournaments': typeof TournamentsRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
   '/slots/': typeof SlotsIndexRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/tournaments': typeof TournamentsRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
   '/profile': typeof ProfileIndexRoute
   '/slots': typeof SlotsIndexRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/tournaments': typeof TournamentsRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
   '/slots/': typeof SlotsIndexRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/tournaments'
     | '/venues'
     | '/profile/$id'
+    | '/slots/chmelovci-cup'
     | '/support/return'
     | '/profile/'
     | '/slots/'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/tournaments'
     | '/venues'
     | '/profile/$id'
+    | '/slots/chmelovci-cup'
     | '/support/return'
     | '/profile'
     | '/slots'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/tournaments'
     | '/venues'
     | '/profile/$id'
+    | '/slots/chmelovci-cup'
     | '/support/return'
     | '/profile/'
     | '/slots/'
@@ -461,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportReturnRouteImport
       parentRoute: typeof SupportRoute
     }
+    '/slots/chmelovci-cup': {
+      id: '/slots/chmelovci-cup'
+      path: '/chmelovci-cup'
+      fullPath: '/slots/chmelovci-cup'
+      preLoaderRoute: typeof SlotsChmelovciCupRouteImport
+      parentRoute: typeof SlotsRoute
+    }
     '/profile/$id': {
       id: '/profile/$id'
       path: '/profile/$id'
@@ -472,10 +491,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface SlotsRouteChildren {
+  SlotsChmelovciCupRoute: typeof SlotsChmelovciCupRoute
   SlotsIndexRoute: typeof SlotsIndexRoute
 }
 
 const SlotsRouteChildren: SlotsRouteChildren = {
+  SlotsChmelovciCupRoute: SlotsChmelovciCupRoute,
   SlotsIndexRoute: SlotsIndexRoute,
 }
 

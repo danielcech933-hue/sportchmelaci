@@ -11,7 +11,6 @@ import {
   MAX_BET,
   PAYLINES,
   REELS,
-  START_BALANCE,
   evaluateSpin,
   formatKc,
   hasAnticipation,
@@ -21,10 +20,13 @@ import {
   type Grid,
   type LineWin,
 } from "@/lib/slots";
+import { useWallet } from "@/lib/wallet";
 
-const STOP_BASE = 420;
-const STOP_STEP = 230;
-const ANTICIPATION_EXTRA = 900;
+/** Celková doba točení ~2500 ms, každý další válec +200 ms (kaskádové napětí). */
+const SPIN_DURATION = 2500;
+const STOP_STEP = 200;
+const STOP_BASE = SPIN_DURATION - STOP_STEP * (REELS - 1);
+const ANTICIPATION_EXTRA = 700;
 
 function randomBonusOptions(): BonusOption[] {
   const pool: BonusOption[] = [
