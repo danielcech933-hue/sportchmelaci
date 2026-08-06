@@ -55,8 +55,9 @@ function fireConfetti() {
   window.setTimeout(() => shoot(0.5), 250);
 }
 
-export function SlotMachine({ playerName }: { playerName: string }) {
-  const [balance, setBalance] = useState(START_BALANCE);
+export function SlotMachine({ playerName, onExchange }: { playerName: string; onExchange?: () => void }) {
+  const { slotCZK, betSlot, winSlot } = useWallet();
+  const [isSpinning, setIsSpinning] = useState(false);
   const [bet, setBet] = useState(10);
   const [grid, setGrid] = useState<Grid>(() => spinGrid());
   const [spinningReels, setSpinningReels] = useState<boolean[]>(() => Array(REELS).fill(false));
