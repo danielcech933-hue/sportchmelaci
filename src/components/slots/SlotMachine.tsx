@@ -80,7 +80,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
   const [bestMultiplier, setBestMultiplier] = useState(0);
   const [autoLeft, setAutoLeft] = useState(0);
 
-  const busy = spinningReels.some(Boolean);
+  const busy = isSpinning || spinningReels.some(Boolean);
   const timers = useRef<number[]>([]);
 
   useEffect(() => setBestMultiplier(loadBestMultiplier()), []);
@@ -89,8 +89,14 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
   const doSpin = useCallback(() => {
     if (busy || pickOptions || recap) return;
     const isFree = freeSpinsLeft > 0;
-    if (!isFree && balance < bet) {
-      setMessage("Nedostatek zůstatku — sniž sázku.");
+    if (!isFree && slotCZK < bet) {
+      setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu.");
+      setAutoLeft(0);
+      return;
+    }
+    if (!isFree && !betSlot(bet)) {
+      setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu.");
+      setAutoLeft(0);
       return;
     }
 
@@ -101,7 +107,9 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
     setBigWin(null);
 
     if (isFree) setFreeSpinsLeft((n) => n - 1);
-    else setBalance((b) => b - bet);
+
+    setIsSpinning(true);
+    timers.current.push(window.setTimeout(() => setIsSpinning(false), SPIN_DURATION));
 
     const next = spinGrid();
     const tense = hasAnticipation(next);
@@ -134,7 +142,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
       setLastWin(res.total);
 
       if (res.total > 0) {
-        setBalance((b) => b + res.total);
+        winSlot(res.total);
         if (wasFree) setBonusTotal((t) => t + res.total);
         const m = res.total / bet;
         if (m > bestMultiplier) setBestMultiplier(saveBestMultiplier(m));
@@ -150,7 +158,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
         timers.current.push(window.setTimeout(() => setPickOptions(randomBonusOptions()), 700));
       }
     }
-  }, [balance, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap]);
+  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap]);
 
   /* Free spins + autoplay driver */
   useEffect(() => {
@@ -270,7 +278,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
           </div>
 
           <ControlBar
-            balance={balance}
+            balance={slotCZK}
             bet={bet}
             lastWin={lastWin}
             spinning={busy}
