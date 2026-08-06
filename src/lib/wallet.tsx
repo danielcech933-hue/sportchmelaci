@@ -96,15 +96,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [slotCZK],
   );
 
-  const betSlot = useCallback<WalletState["betSlot"]>((amount) => {
-    let ok = false;
-    setSlotCZK((c) => {
-      if (amount <= 0 || c < amount) return c;
-      ok = true;
-      return c - amount;
-    });
-    return ok || slotCZK >= amount;
-  }, [slotCZK]);
+  const betSlot = useCallback<WalletState["betSlot"]>(
+    (amount) => {
+      if (amount <= 0 || slotCZK < amount) return false;
+      setSlotCZK((c) => c - amount);
+      return true;
+    },
+    [slotCZK],
+  );
 
   const winSlot = useCallback<WalletState["winSlot"]>((amount) => {
     if (amount > 0) setSlotCZK((c) => c + amount);
