@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import {
   Home,
   CalendarDays,
