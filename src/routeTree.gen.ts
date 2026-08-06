@@ -27,8 +27,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SlotsIndexRouteImport } from './routes/slots.index'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
+import { Route as SlotsChmelovciCupRouteImport } from './routes/slots.chmelovci-cup'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 
 const VenuesRoute = VenuesRouteImport.update({
@@ -121,6 +123,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SlotsIndexRoute = SlotsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SlotsRoute,
+} as any)
 const ProfileIndexRoute = ProfileIndexRouteImport.update({
   id: '/profile/',
   path: '/profile/',
@@ -130,6 +137,11 @@ const SupportReturnRoute = SupportReturnRouteImport.update({
   id: '/return',
   path: '/return',
   getParentRoute: () => SupportRoute,
+} as any)
+const SlotsChmelovciCupRoute = SlotsChmelovciCupRouteImport.update({
+  id: '/chmelovci-cup',
+  path: '/chmelovci-cup',
+  getParentRoute: () => SlotsRoute,
 } as any)
 const ProfileIdRoute = ProfileIdRouteImport.update({
   id: '/profile/$id',
@@ -150,15 +162,17 @@ export interface FileRoutesByFullPath {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/slots': typeof SlotsRoute
+  '/slots': typeof SlotsRouteWithChildren
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
+  '/slots/': typeof SlotsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -173,15 +187,16 @@ export interface FileRoutesByTo {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/slots': typeof SlotsRoute
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
   '/profile': typeof ProfileIndexRoute
+  '/slots': typeof SlotsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,15 +212,17 @@ export interface FileRoutesById {
   '/rankings': typeof RankingsRoute
   '/schedule': typeof ScheduleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/slots': typeof SlotsRoute
+  '/slots': typeof SlotsRouteWithChildren
   '/support': typeof SupportRouteWithChildren
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
+  '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
   '/profile/': typeof ProfileIndexRoute
+  '/slots/': typeof SlotsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -229,8 +246,10 @@ export interface FileRouteTypes {
     | '/tournaments'
     | '/venues'
     | '/profile/$id'
+    | '/slots/chmelovci-cup'
     | '/support/return'
     | '/profile/'
+    | '/slots/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -245,15 +264,16 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/schedule'
     | '/sitemap.xml'
-    | '/slots'
     | '/support'
     | '/teams'
     | '/tournament'
     | '/tournaments'
     | '/venues'
     | '/profile/$id'
+    | '/slots/chmelovci-cup'
     | '/support/return'
     | '/profile'
+    | '/slots'
   id:
     | '__root__'
     | '/'
@@ -275,8 +295,10 @@ export interface FileRouteTypes {
     | '/tournaments'
     | '/venues'
     | '/profile/$id'
+    | '/slots/chmelovci-cup'
     | '/support/return'
     | '/profile/'
+    | '/slots/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -292,7 +314,7 @@ export interface RootRouteChildren {
   RankingsRoute: typeof RankingsRoute
   ScheduleRoute: typeof ScheduleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  SlotsRoute: typeof SlotsRoute
+  SlotsRoute: typeof SlotsRouteWithChildren
   SupportRoute: typeof SupportRouteWithChildren
   TeamsRoute: typeof TeamsRoute
   TournamentRoute: typeof TournamentRoute
@@ -430,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/slots/': {
+      id: '/slots/'
+      path: '/'
+      fullPath: '/slots/'
+      preLoaderRoute: typeof SlotsIndexRouteImport
+      parentRoute: typeof SlotsRoute
+    }
     '/profile/': {
       id: '/profile/'
       path: '/profile'
@@ -444,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportReturnRouteImport
       parentRoute: typeof SupportRoute
     }
+    '/slots/chmelovci-cup': {
+      id: '/slots/chmelovci-cup'
+      path: '/chmelovci-cup'
+      fullPath: '/slots/chmelovci-cup'
+      preLoaderRoute: typeof SlotsChmelovciCupRouteImport
+      parentRoute: typeof SlotsRoute
+    }
     '/profile/$id': {
       id: '/profile/$id'
       path: '/profile/$id'
@@ -453,6 +489,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface SlotsRouteChildren {
+  SlotsChmelovciCupRoute: typeof SlotsChmelovciCupRoute
+  SlotsIndexRoute: typeof SlotsIndexRoute
+}
+
+const SlotsRouteChildren: SlotsRouteChildren = {
+  SlotsChmelovciCupRoute: SlotsChmelovciCupRoute,
+  SlotsIndexRoute: SlotsIndexRoute,
+}
+
+const SlotsRouteWithChildren = SlotsRoute._addFileChildren(SlotsRouteChildren)
 
 interface SupportRouteChildren {
   SupportReturnRoute: typeof SupportReturnRoute
@@ -478,7 +526,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingsRoute: RankingsRoute,
   ScheduleRoute: ScheduleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  SlotsRoute: SlotsRoute,
+  SlotsRoute: SlotsRouteWithChildren,
   SupportRoute: SupportRouteWithChildren,
   TeamsRoute: TeamsRoute,
   TournamentRoute: TournamentRoute,

@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import {
   Home,
   CalendarDays,
@@ -33,7 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" },
   { to: "/arcade", label: "Arcade", icon: Gamepad2 },
-  { to: "/slots", label: "Slot", icon: Beer },
+  { to: "/slots", label: "Sloty", icon: Beer },
   { to: "/teams", label: "Teams", icon: Users },
   { to: "/venues", label: "Sportoviště", icon: MapPin },
   { to: "/bets", label: "Bets", icon: Coins },
@@ -49,10 +49,37 @@ export function matchesRoute(pathname: string, item: NavItem): boolean {
   return pathname === item.to || pathname.startsWith(item.to + "/");
 }
 
-/** Compact floating navigation dock with neon micro-interactions. */
+/** Compact floating navigation dock — smart hide on scroll down, glassmorphism. */
 export function FloatingNav() {
   const { user, isAdmin, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [hidden, setHidden] = useState(false);
+
+  /* Globální scroll listener: dolů = skryj, nahoru = okamžitě zobraz. */
+  useEffect(() => {
+    let last = window.scrollY;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const y = window.scrollY;
+        const delta = y - last;
+        if (Math.abs(delta) < 6) return;
+        if (delta > 0 && y > 120) setHidden(true);
+        else if (delta < 0) setHidden(false);
+        last = y;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  /* Při přechodu na jinou stránku lištu vždy odhal. */
+  useEffect(() => setHidden(false), [pathname]);
 
   if (loading) return null;
 
@@ -65,7 +92,9 @@ export function FloatingNav() {
   return (
     <nav
       aria-label="Hlavní navigace"
-      className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 sm:bottom-5"
+      className={`fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 transition-transform duration-300 ease-out will-change-transform sm:bottom-5 ${
+        hidden ? "translate-y-[150%]" : "translate-y-0"
+      }`}
     >
       <div
         onWheel={(e) => {
@@ -74,7 +103,7 @@ export function FloatingNav() {
           if (el.scrollWidth <= el.clientWidth) return;
           el.scrollLeft += e.deltaY + e.deltaX;
         }}
-        className="nav-dock no-scrollbar flex max-w-[min(72rem,96vw)] items-center gap-0.5 overflow-x-auto rounded-2xl px-2 py-1.5 sm:gap-1 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible"
+        className="nav-dock no-scrollbar flex max-w-[min(72rem,96vw)] items-center gap-0.5 overflow-x-auto rounded-2xl border border-primary/25 bg-background/60 px-2 py-1.5 backdrop-blur-xl sm:gap-1 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible"
       >
 
 

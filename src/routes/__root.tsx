@@ -36,6 +36,8 @@ import { DmProvider, DmBell } from "@/lib/dm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingNav } from "@/components/FloatingNav";
 import { WinCelebrations } from "@/lib/win-toasts";
+import { WalletProvider } from "@/lib/wallet";
+import { Toaster } from "@/components/ui/sonner";
 
 
 
@@ -136,17 +138,20 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <DmProvider>
-          <div className="flex min-h-screen flex-col">
-            <SiteHeader />
-            <div className="flex-1">
-              <Outlet />
+        <WalletProvider>
+          <DmProvider>
+            <div className="flex min-h-screen flex-col">
+              <SiteHeader />
+              <div className="flex-1">
+                <Outlet />
+              </div>
+              <SiteFooter />
+              <FloatingNav />
+              <WinCelebrations />
+              <Toaster />
             </div>
-            <SiteFooter />
-            <FloatingNav />
-            <WinCelebrations />
-          </div>
-        </DmProvider>
+          </DmProvider>
+        </WalletProvider>
       </AuthProvider>
     </QueryClientProvider>
 

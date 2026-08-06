@@ -11,7 +11,6 @@ import {
   MAX_BET,
   PAYLINES,
   REELS,
-  START_BALANCE,
   evaluateSpin,
   formatKc,
   hasAnticipation,
@@ -21,10 +20,13 @@ import {
   type Grid,
   type LineWin,
 } from "@/lib/slots";
+import { useWallet } from "@/lib/wallet";
 
-const STOP_BASE = 420;
-const STOP_STEP = 230;
-const ANTICIPATION_EXTRA = 900;
+/** Celková doba točení ~2500 ms, každý další válec +200 ms (kaskádové napětí). */
+const SPIN_DURATION = 2500;
+const STOP_STEP = 200;
+const STOP_BASE = SPIN_DURATION - STOP_STEP * (REELS - 1);
+const ANTICIPATION_EXTRA = 700;
 
 function randomBonusOptions(): BonusOption[] {
   const pool: BonusOption[] = [
@@ -53,8 +55,9 @@ function fireConfetti() {
   window.setTimeout(() => shoot(0.5), 250);
 }
 
-export function SlotMachine({ playerName }: { playerName: string }) {
-  const [balance, setBalance] = useState(START_BALANCE);
+export function SlotMachine({ playerName, onExchange }: { playerName: string; onExchange?: () => void }) {
+  const { slotCZK, betSlot, winSlot } = useWallet();
+  const [isSpinning, setIsSpinning] = useState(false);
   const [bet, setBet] = useState(10);
   const [grid, setGrid] = useState<Grid>(() => spinGrid());
   const [spinningReels, setSpinningReels] = useState<boolean[]>(() => Array(REELS).fill(false));
@@ -77,7 +80,7 @@ export function SlotMachine({ playerName }: { playerName: string }) {
   const [bestMultiplier, setBestMultiplier] = useState(0);
   const [autoLeft, setAutoLeft] = useState(0);
 
-  const busy = spinningReels.some(Boolean);
+  const busy = isSpinning || spinningReels.some(Boolean);
   const timers = useRef<number[]>([]);
 
   useEffect(() => setBestMultiplier(loadBestMultiplier()), []);
@@ -86,8 +89,14 @@ export function SlotMachine({ playerName }: { playerName: string }) {
   const doSpin = useCallback(() => {
     if (busy || pickOptions || recap) return;
     const isFree = freeSpinsLeft > 0;
-    if (!isFree && balance < bet) {
-      setMessage("Nedostatek zůstatku — sniž sázku.");
+    if (!isFree && slotCZK < bet) {
+      setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu.");
+      setAutoLeft(0);
+      return;
+    }
+    if (!isFree && !betSlot(bet)) {
+      setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu.");
+      setAutoLeft(0);
       return;
     }
 
@@ -98,7 +107,9 @@ export function SlotMachine({ playerName }: { playerName: string }) {
     setBigWin(null);
 
     if (isFree) setFreeSpinsLeft((n) => n - 1);
-    else setBalance((b) => b - bet);
+
+    setIsSpinning(true);
+    timers.current.push(window.setTimeout(() => setIsSpinning(false), SPIN_DURATION));
 
     const next = spinGrid();
     const tense = hasAnticipation(next);
@@ -131,7 +142,7 @@ export function SlotMachine({ playerName }: { playerName: string }) {
       setLastWin(res.total);
 
       if (res.total > 0) {
-        setBalance((b) => b + res.total);
+        winSlot(res.total);
         if (wasFree) setBonusTotal((t) => t + res.total);
         const m = res.total / bet;
         if (m > bestMultiplier) setBestMultiplier(saveBestMultiplier(m));
@@ -147,7 +158,7 @@ export function SlotMachine({ playerName }: { playerName: string }) {
         timers.current.push(window.setTimeout(() => setPickOptions(randomBonusOptions()), 700));
       }
     }
-  }, [balance, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap]);
+  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap]);
 
   /* Free spins + autoplay driver */
   useEffect(() => {
@@ -246,8 +257,18 @@ export function SlotMachine({ playerName }: { playerName: string }) {
 
             <div className="mt-3 flex min-h-6 items-center justify-center text-center">
               {message ? (
-                <span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">
-                  {message}
+                <span className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">
+                    {message}
+                  </span>
+                  {onExchange && (
+                    <button
+                      onClick={onExchange}
+                      className="rounded-full border border-hop-gold/50 bg-hop-gold/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-hop-gold"
+                    >
+                      Směnárna
+                    </button>
+                  )}
                 </span>
               ) : lastWin > 0 ? (
                 <motion.span
@@ -267,7 +288,7 @@ export function SlotMachine({ playerName }: { playerName: string }) {
           </div>
 
           <ControlBar
-            balance={balance}
+            balance={slotCZK}
             bet={bet}
             lastWin={lastWin}
             spinning={busy}
