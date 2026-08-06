@@ -12,7 +12,7 @@ export function SiteFooter() {
           <Link to="/tournaments" className="hover:text-foreground">Turnaje</Link>
           <Link to="/venues" className="hover:text-foreground">Sportoviště</Link>
           <Link to="/profile" className="hover:text-foreground">Profil</Link>
-          <Link to="/chat" className="hover:text-foreground">Chat</Link>
+          <Link to="/chat" search={{ to: undefined }} className="hover:text-foreground">Chat</Link>
           <Link to="/support" className="hover:text-foreground">Podpoř nás</Link>
         </nav>
       </div>
