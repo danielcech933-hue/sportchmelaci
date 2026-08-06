@@ -257,8 +257,18 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
 
             <div className="mt-3 flex min-h-6 items-center justify-center text-center">
               {message ? (
-                <span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">
-                  {message}
+                <span className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">
+                    {message}
+                  </span>
+                  {onExchange && (
+                    <button
+                      onClick={onExchange}
+                      className="rounded-full border border-hop-gold/50 bg-hop-gold/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-hop-gold"
+                    >
+                      Směnárna
+                    </button>
+                  )}
                 </span>
               ) : lastWin > 0 ? (
                 <motion.span
