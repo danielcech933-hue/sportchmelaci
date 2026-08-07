@@ -10,21 +10,9 @@ import { useWallet } from "@/lib/wallet";
 const SEGMENTS = [0, 5, 10, 20, 0, 10, 5, 20] as const;
 const SEG_ANGLE = 360 / SEGMENTS.length;
 const SPIN_MS = 3400;
-const RESET_HOUR = 8;
+const COOLDOWN_MS = 10000; // Interval točení: 10 sekund
 
 const KEY = (scope: string) => `chmelovci-daily-wheel-v1:${scope}`;
-
-/** Začátek aktuálního denního okna — vždy fixně v 8:00 lokálního času. */
-function windowStart(now = new Date()): number {
-  const d = new Date(now);
-  d.setHours(RESET_HOUR, 0, 0, 0);
-  if (now.getTime() < d.getTime()) d.setDate(d.getDate() - 1);
-  return d.getTime();
-}
-
-function nextReset(now = new Date()): number {
-  return windowStart(now) + 24 * 60 * 60 * 1000;
-}
 
 function fmt(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -65,11 +53,18 @@ export function DailyBonusWheel() {
   /* Vyčištění časovačů při odchodu ze stránky během točení. */
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
+  /* Kontrola, zda uplynulo 10 sekund od posledního točení */
   const canSpin = useMemo(
-    () => hydrated && !spinning && (lastSpin === null || lastSpin < windowStart(new Date(now))),
+    () => hydrated && !spinning && (lastSpin === null || now - lastSpin >= COOLDOWN_MS),
     [hydrated, spinning, lastSpin, now],
   );
-  const countdown = hydrated ? fmt(nextReset(new Date(now)) - now) : "--:--:--";
+
+  const remainingMs = useMemo(() => {
+    if (!lastSpin) return 0;
+    return Math.max(0, lastSpin + COOLDOWN_MS - now);
+  }, [lastSpin, now]);
+
+  const countdown = hydrated ? fmt(remainingMs) : "--:--:--";
 
   const spin = useCallback(() => {
     if (!canSpin) return;
@@ -77,8 +72,9 @@ export function DailyBonusWheel() {
     const prize = SEGMENTS[idx];
     setSpinning(true);
     setResult(null);
+
     // 6 celých otáček + dojezd na střed vylosovaného segmentu
-    setAngle((a) => a + 360 * 6 + ((360 - (idx * SEG_ANGLE + SEG_ANGLE / 2) - (a % 360)) + 720) % 360);
+    setAngle((a) => a + 360 * 6 + ((360 - (idx * SEG_ANGLE + SEG_ANGLE / 2) - (a % 360) + 720) % 360));
 
     timers.current.push(
       window.setTimeout(() => {
@@ -94,9 +90,9 @@ export function DailyBonusWheel() {
         if (prize > 0) {
           addDollars(prize);
           confetti({ particleCount: 90, spread: 80, origin: { y: 0.7 }, colors: ["#ffcc44", "#4dffa6", "#fff3bf"] });
-          toast.success(`Denní bonus — +$${prize}`);
+          toast.success(`Bonus — +$${prize}`);
         } else {
-          toast("Dnes bez výhry. Zkus to zítra po 8:00!");
+          toast("Bez výhry. Zkus to za chvíli znovu!");
         }
       }, SPIN_MS),
     );
@@ -144,11 +140,11 @@ export function DailyBonusWheel() {
 
         <div className="min-w-0">
           <p className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-hop-neon/80">
-            <Gift className="h-4 w-4" /> Denní kolo štěstí
+            <Gift className="h-4 w-4" /> Kolo štěstí
           </p>
-          <h2 className="mt-1 font-display text-2xl tracking-[0.1em] slot-gold-text">DAILY SPIN</h2>
+          <h2 className="mt-1 font-display text-2xl tracking-[0.1em] slot-gold-text">FAST SPIN</h2>
           <p className="mt-2 text-sm text-foreground/75">
-            Jedno točení denně o sázkařské dolary ($0 / $5 / $10 / $20). Reset je vždy v 8:00 ráno.
+            Točení každých 10 sekund o sázkařské dolary ($0 / $5 / $10 / $20).
           </p>
 
           {result !== null && !spinning && (
