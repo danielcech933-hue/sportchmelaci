@@ -70,6 +70,7 @@ export function ControlBar({
         <motion.button
           onClick={onSpin}
           disabled={spinning}
+          aria-label={spinning ? "Válce se točí" : "Roztočit válce"}
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.04 }}
           className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-hop-gold/70 bg-gradient-to-b from-hop-gold via-amber-500 to-hop-gold-deep font-display text-sm font-black uppercase tracking-[0.12em] text-hop-950 shadow-[0_0_60px_-12px_rgba(255,204,68,0.95)] disabled:opacity-70 sm:h-28 sm:w-28 sm:text-base"
