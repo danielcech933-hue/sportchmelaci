@@ -1,23 +1,34 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Gift, Loader2 } from "lucide-react";
+import { Gift, Loader2, Sparkles, Trophy, Zap, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useWallet } from "@/lib/wallet";
 
-/** Segmenty kola — výhra pouze $1000. */
-const SEGMENTS = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000] as const;
+/** Segmenty kola — výhry $5, $10, $20, $50. */
+const SEGMENTS = [5, 10, 20, 50, 5, 10, 20, 50] as const;
 const SEG_ANGLE = 360 / SEGMENTS.length;
-const SPIN_MS = 3400;
-const COOLDOWN_MS = 10000; // Interval točení: 10 sekund
+const SPIN_MS = 4500; // 4.5s drama spin
+const COOLDOWN_MS = 8 * 60 * 60 * 1000; // 8 hodin
 
 const KEY = (scope: string) => `chmelovci-daily-wheel-v1:${scope}`;
+
+// Barvy podle hodnoty výhry
+const SEGMENT_COLORS: Record<number, { bg: string; text: string; border: string }> = {
+  5: { bg: "#059669", text: "#a7f3d0", border: "#10b981" },
+  10: { bg: "#0284c7", text: "#bae6fd", border: "#38bdf8" },
+  20: { bg: "#7c3aed", text: "#ddd6fe", border: "#a855f7" },
+  50: { bg: "#d97706", text: "#fef08a", border: "#fbbf24" },
+};
 
 function fmt(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+  const hours = Math.floor(s / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
 }
 
 export function DailyBonusWheel() {
@@ -50,10 +61,10 @@ export function DailyBonusWheel() {
     return () => window.clearInterval(id);
   }, []);
 
-  /* Vyčištění časovačů při odchodu ze stránky během točení. */
+  /* Vyčištění časovačů při odchodu ze stránky. */
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
-  /* Kontrola, zda uplynulo 10 sekund od posledního točení */
+  /* Kontrola, zda uplynulo 8 hodin od posledního točení */
   const canSpin = useMemo(
     () => hydrated && !spinning && (lastSpin === null || now - lastSpin >= COOLDOWN_MS),
     [hydrated, spinning, lastSpin, now],
@@ -66,6 +77,31 @@ export function DailyBonusWheel() {
 
   const countdown = hydrated ? fmt(remainingMs) : "--:--:--";
 
+  const triggerConfetti = (prize: number) => {
+    if (prize === 50) {
+      // Mega dělo pro $50 jackpot
+      const end = Date.now() + 2 * 1000;
+      const interval = setInterval(() => {
+        if (Date.now() > end) return clearInterval(interval);
+        confetti({
+          startVelocity: 30,
+          spread: 360,
+          ticks: 60,
+          zIndex: 1000,
+          origin: { x: Math.random(), y: Math.random() - 0.2 },
+        });
+      }, 200);
+    } else {
+      // Klasické oslavné konfety
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#ffcc44", "#a855f7", "#38bdf8", "#10b981"],
+      });
+    }
+  };
+
   const spin = useCallback(() => {
     if (!canSpin) return;
     const idx = Math.floor(Math.random() * SEGMENTS.length);
@@ -73,8 +109,8 @@ export function DailyBonusWheel() {
     setSpinning(true);
     setResult(null);
 
-    // 6 celých otáček + dojezd na střed vylosovaného segmentu
-    setAngle((a) => a + 360 * 6 + ((360 - (idx * SEG_ANGLE + SEG_ANGLE / 2) - (a % 360) + 720) % 360));
+    // 8 celých otáček pro pořádný efekt + dojezd na střed vylosovaného segmentu
+    setAngle((a) => a + 360 * 8 + ((360 - (idx * SEG_ANGLE + SEG_ANGLE / 2) - (a % 360) + 720) % 360));
 
     timers.current.push(
       window.setTimeout(() => {
@@ -89,71 +125,161 @@ export function DailyBonusWheel() {
         }
 
         addDollars(prize);
-        confetti({ particleCount: 120, spread: 90, origin: { y: 0.7 }, colors: ["#ffcc44", "#4dffa6", "#fff3bf"] });
-        toast.success(`Jackpot — +$${prize}`);
+        triggerConfetti(prize);
+
+        if (prize === 50) {
+          toast.success(`🔥 LEGENDÁRNÍ JACKPOT! +$50 🔥`, { duration: 5000 });
+        } else {
+          toast.success(`Skvěle! Vyhráváš +$${prize}`);
+        }
       }, SPIN_MS),
     );
   }, [canSpin, scope, addDollars]);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-hop-gold/35 bg-black/60 p-5 backdrop-blur-xl">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(77,255,166,0.18),transparent_60%)]" />
-      <div className="relative grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-        <div className="mx-auto">
-          <div className="relative h-44 w-44">
-            <span
-              aria-hidden
-              className="absolute left-1/2 top-0 z-10 -translate-x-1/2 text-2xl drop-shadow-[0_0_8px_rgba(255,204,68,0.9)]"
-            >
-              ▼
-            </span>
+    <section className="relative overflow-hidden rounded-3xl border-2 border-hop-gold/40 bg-gradient-to-br from-black/90 via-zinc-950/80 to-black/95 p-6 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,204,68,0.15)]">
+      {/* Kybernetické efekty pozadí */}
+      <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-hop-gold/10 blur-[80px]" />
+      <div className="pointer-events-none absolute -left-10 -bottom-10 h-64 w-64 rounded-full bg-purple-600/10 blur-[80px]" />
+
+      <div className="relative grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center">
+        {/* Sekce s kolem */}
+        <div className="mx-auto relative">
+          {/* Obvodová záře */}
+          <div
+            className={`absolute inset-0 rounded-full blur-xl transition-all duration-700 ${spinning ? "bg-gradient-to-r from-amber-500 via-purple-500 to-cyan-500 opacity-60 scale-105" : "bg-hop-gold/20 opacity-30"}`}
+          />
+
+          <div className="relative h-56 w-56 sm:h-64 sm:w-64">
+            {/* Animovaný pointer (ukazatel) */}
             <motion.div
-              className="h-full w-full rounded-full border-4 border-hop-gold/70 shadow-[0_0_40px_-8px_rgba(255,204,68,0.9)]"
+              animate={spinning ? { y: [0, -4, 0] } : { y: 0 }}
+              transition={{ repeat: Infinity, duration: 0.15 }}
+              className="absolute left-1/2 -top-3 z-30 -translate-x-1/2 drop-shadow-[0_0_12px_rgba(255,204,68,1)]"
+            >
+              <div className="text-3xl text-amber-400">▼</div>
+            </motion.div>
+
+            {/* Světelný prstenec okolo kola */}
+            <div className="absolute -inset-2 rounded-full border border-hop-gold/30 bg-black/40 p-1 backdrop-blur-sm shadow-[inset_0_0_15px_rgba(0,0,0,0.8)]">
+              {/* LED tečky na prstenci */}
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`absolute h-2 w-2 rounded-full ${spinning ? "animate-ping bg-amber-400" : "bg-hop-gold/40"}`}
+                  style={{
+                    top: `${50 + 47 * Math.sin((i * 30 * Math.PI) / 180)}%`,
+                    left: `${50 + 47 * Math.cos((i * 30 * Math.PI) / 180)}%`,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Točící se kolo */}
+            <motion.div
+              className="relative h-full w-full rounded-full border-4 border-amber-400/80 shadow-[0_0_30px_rgba(255,204,68,0.4)] overflow-hidden"
               style={{
-                background: `conic-gradient(${SEGMENTS.map((_, i) => {
-                  const color = i % 2 === 0 ? "#b8860b" : "#ffcc44";
+                background: `conic-gradient(${SEGMENTS.map((v, i) => {
+                  const color = SEGMENT_COLORS[v].bg;
                   return `${color} ${i * SEG_ANGLE}deg ${(i + 1) * SEG_ANGLE}deg`;
                 }).join(",")})`,
               }}
               animate={{ rotate: angle }}
-              transition={{ duration: SPIN_MS / 1000, ease: [0.12, 0.72, 0.12, 1] }}
+              transition={{ duration: SPIN_MS / 1000, ease: [0.15, 0.85, 0.25, 1] }}
             >
-              {SEGMENTS.map((v, i) => (
-                <span
-                  key={i}
-                  className="absolute left-1/2 top-1/2 font-mono text-[10px] font-black text-black"
-                  style={{
-                    transform: `rotate(${i * SEG_ANGLE + SEG_ANGLE / 2}deg) translateY(-60px) translateX(-50%)`,
-                    transformOrigin: "top left",
-                  }}
-                >
-                  ${v}
-                </span>
-              ))}
+              {SEGMENTS.map((v, i) => {
+                const conf = SEGMENT_COLORS[v];
+                return (
+                  <div
+                    key={i}
+                    className="absolute left-1/2 top-1/2 font-mono font-black select-none"
+                    style={{
+                      transform: `rotate(${i * SEG_ANGLE + SEG_ANGLE / 2}deg) translateY(-85px) translateX(-50%)`,
+                      transformOrigin: "top left",
+                      color: conf.text,
+                      textShadow: `0 0 8px ${conf.border}`,
+                    }}
+                  >
+                    <span className="text-xs sm:text-sm font-extrabold flex items-center gap-0.5">${v}</span>
+                  </div>
+                );
+              })}
             </motion.div>
-            <div className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-hop-gold/70 bg-black/80" />
+
+            {/* Středový nýt kola */}
+            <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-300 bg-gradient-to-tr from-black via-zinc-900 to-amber-950 shadow-[0_0_15px_rgba(0,0,0,0.9)] flex items-center justify-center">
+              <Zap className={`h-5 w-5 ${spinning ? "text-amber-400 animate-bounce" : "text-amber-400/70"}`} />
+            </div>
           </div>
         </div>
 
-        <div className="min-w-0">
-          <p className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-hop-neon/80">
-            <Gift className="h-4 w-4" /> Kolo štěstí
+        {/* Informační a ovládací sekce */}
+        <div className="min-w-0 text-center lg:text-left space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-widest text-amber-400">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse text-amber-300" /> Ultra Wheel 8H
+          </div>
+
+          <h2 className="font-display text-3xl sm:text-4xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 drop-shadow-[0_2px_10px_rgba(255,204,68,0.3)]">
+            KOLO ŠTĚSTÍ
+          </h2>
+
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto lg:mx-0">
+            Roztoč kolo každých <span className="text-amber-300 font-semibold">8 hodin</span> a získej garantovanou
+            výhru <span className="text-emerald-400 font-semibold">$5</span>,{" "}
+            <span className="text-cyan-400 font-semibold">$10</span>,{" "}
+            <span className="text-purple-400 font-semibold">$20</span> nebo legendárních{" "}
+            <span className="text-amber-400 font-bold">$50</span>!
           </p>
-          <h2 className="mt-1 font-display text-2xl tracking-[0.1em] slot-gold-text">FAST $1000 SPIN</h2>
-          <p className="mt-2 text-sm text-foreground/75">Garantovaná výhra $1000 každých 10 sekund!</p>
 
-          {result !== null && !spinning && (
-            <p className="mt-3 font-display text-lg tracking-[0.12em] slot-gold-text">VÝHRA +${result}</p>
-          )}
+          {/* Výsledkový banner */}
+          <AnimatePresence>
+            {result !== null && !spinning && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-2 inline-block rounded-xl border border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 px-4 py-2"
+              >
+                <p className="font-display text-lg tracking-wider text-amber-300 flex items-center gap-2 justify-center lg:justify-start">
+                  <Trophy className="h-5 w-5 text-amber-400 animate-bounce" /> VÝHRA: +${result} DOLLARS
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <button
-            onClick={spin}
-            disabled={!canSpin}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-hop-gold/50 bg-hop-gold/15 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] text-hop-gold transition hover:bg-hop-gold/25 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {spinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
-            {spinning ? "Točím…" : canSpin ? "Točit ($1000)" : `Další pokus za ${countdown}`}
-          </button>
+          {/* Tlačítko Spinu */}
+          <div className="pt-2">
+            <button
+              onClick={spin}
+              disabled={!canSpin}
+              className={`relative group overflow-hidden w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${
+                canSpin
+                  ? "border-2 border-amber-400 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-black shadow-[0_0_30px_rgba(255,204,68,0.5)] hover:scale-105 active:scale-95 cursor-pointer"
+                  : "border border-zinc-800 bg-zinc-900/80 text-zinc-500 cursor-not-allowed opacity-70"
+              }`}
+            >
+              {canSpin && (
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              )}
+              {spinning ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin text-black" />
+                  <span>NAČÍTÁM VÝHRU…</span>
+                </>
+              ) : canSpin ? (
+                <>
+                  <Flame className="h-5 w-5 text-black animate-pulse" />
+                  <span>ROZTOČIT KOLO ($5 - $50)</span>
+                </>
+              ) : (
+                <>
+                  <Gift className="h-5 w-5 text-zinc-500" />
+                  <span>DALŠÍ POKUS ZA {countdown}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </section>
