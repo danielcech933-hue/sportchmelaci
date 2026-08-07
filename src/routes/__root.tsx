@@ -272,7 +272,7 @@ function AuthNav() {
         <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
       </Link>
       <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-accent/40 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:px-2 sm:text-xs">
-        💰 ${balance.toFixed(0)}
+        💰 ${userDollars.toFixed(0)}
       </span>
       {nickname && (
         <span className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:inline">
