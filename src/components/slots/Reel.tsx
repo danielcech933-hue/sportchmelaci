@@ -20,7 +20,10 @@ export function Reel({ final, spinning, slow, winningRows, hasWin, reelIndex }: 
   }, [spinning, reelIndex]);
 
   return (
-    <div className="relative flex-1 overflow-hidden rounded-xl slot-cell">
+    <div
+      className="relative flex-1 overflow-hidden rounded-xl slot-cell"
+      data-reel-spinning={spinning ? "true" : "false"}
+    >
       <div className="pointer-events-none absolute inset-0 z-20 rounded-xl ring-1 ring-hop-gold/20" />
       <div className="relative h-[16.5rem] sm:h-[19.5rem]">
         {spinning ? (
