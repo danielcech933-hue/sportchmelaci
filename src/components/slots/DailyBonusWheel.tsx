@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useWallet } from "@/lib/wallet";
 
-/** Segmenty kola — pouze sázkařské Dollary. */
-const SEGMENTS = [0, 5, 10, 20, 0, 10, 5, 20] as const;
+/** Segmenty kola — výhra pouze $1000. */
+const SEGMENTS = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000] as const;
 const SEG_ANGLE = 360 / SEGMENTS.length;
 const SPIN_MS = 3400;
 const COOLDOWN_MS = 10000; // Interval točení: 10 sekund
@@ -87,13 +87,10 @@ export function DailyBonusWheel() {
         } catch {
           /* ignore */
         }
-        if (prize > 0) {
-          addDollars(prize);
-          confetti({ particleCount: 90, spread: 80, origin: { y: 0.7 }, colors: ["#ffcc44", "#4dffa6", "#fff3bf"] });
-          toast.success(`Bonus — +$${prize}`);
-        } else {
-          toast("Bez výhry. Zkus to za chvíli znovu!");
-        }
+
+        addDollars(prize);
+        confetti({ particleCount: 120, spread: 90, origin: { y: 0.7 }, colors: ["#ffcc44", "#4dffa6", "#fff3bf"] });
+        toast.success(`Jackpot — +$${prize}`);
       }, SPIN_MS),
     );
   }, [canSpin, scope, addDollars]);
@@ -113,8 +110,8 @@ export function DailyBonusWheel() {
             <motion.div
               className="h-full w-full rounded-full border-4 border-hop-gold/70 shadow-[0_0_40px_-8px_rgba(255,204,68,0.9)]"
               style={{
-                background: `conic-gradient(${SEGMENTS.map((v, i) => {
-                  const color = v === 0 ? "#123322" : v === 5 ? "#1d6b45" : v === 10 ? "#b8860b" : "#ffcc44";
+                background: `conic-gradient(${SEGMENTS.map((_, i) => {
+                  const color = i % 2 === 0 ? "#b8860b" : "#ffcc44";
                   return `${color} ${i * SEG_ANGLE}deg ${(i + 1) * SEG_ANGLE}deg`;
                 }).join(",")})`,
               }}
@@ -124,9 +121,9 @@ export function DailyBonusWheel() {
               {SEGMENTS.map((v, i) => (
                 <span
                   key={i}
-                  className="absolute left-1/2 top-1/2 font-mono text-xs font-black text-white"
+                  className="absolute left-1/2 top-1/2 font-mono text-[10px] font-black text-black"
                   style={{
-                    transform: `rotate(${i * SEG_ANGLE + SEG_ANGLE / 2}deg) translateY(-62px) translateX(-50%)`,
+                    transform: `rotate(${i * SEG_ANGLE + SEG_ANGLE / 2}deg) translateY(-60px) translateX(-50%)`,
                     transformOrigin: "top left",
                   }}
                 >
@@ -142,15 +139,11 @@ export function DailyBonusWheel() {
           <p className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-hop-neon/80">
             <Gift className="h-4 w-4" /> Kolo štěstí
           </p>
-          <h2 className="mt-1 font-display text-2xl tracking-[0.1em] slot-gold-text">FAST SPIN</h2>
-          <p className="mt-2 text-sm text-foreground/75">
-            Točení každých 10 sekund o sázkařské dolary ($0 / $5 / $10 / $20).
-          </p>
+          <h2 className="mt-1 font-display text-2xl tracking-[0.1em] slot-gold-text">FAST $1000 SPIN</h2>
+          <p className="mt-2 text-sm text-foreground/75">Garantovaná výhra $1000 každých 10 sekund!</p>
 
           {result !== null && !spinning && (
-            <p className="mt-3 font-display text-lg tracking-[0.12em] slot-gold-text">
-              {result > 0 ? `VÝHRA +$${result}` : "TENTOKRÁT NIC"}
-            </p>
+            <p className="mt-3 font-display text-lg tracking-[0.12em] slot-gold-text">VÝHRA +${result}</p>
           )}
 
           <button
@@ -159,7 +152,7 @@ export function DailyBonusWheel() {
             className="mt-4 inline-flex items-center gap-2 rounded-xl border border-hop-gold/50 bg-hop-gold/15 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] text-hop-gold transition hover:bg-hop-gold/25 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {spinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
-            {spinning ? "Točím…" : canSpin ? "Točit" : `Další pokus za ${countdown}`}
+            {spinning ? "Točím…" : canSpin ? "Točit ($1000)" : `Další pokus za ${countdown}`}
           </button>
         </div>
       </div>
