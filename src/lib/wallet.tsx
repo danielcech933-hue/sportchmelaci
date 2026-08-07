@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 export const EXCHANGE_RATE = 100;
 
 export interface WalletState {
-  /** Sportovní ekonomika (dolary) */
+  /** Sportovní ekonomika (dolary) — základ z databáze + lokální herní zisky/směny. */
   userDollars: number;
   /** Herní ekonomika automatu (Slot CZK) */
   slotCZK: number;
@@ -18,15 +18,18 @@ export interface WalletState {
   betSlot: (amount: number) => boolean;
   /** Připsání výhry do herní peněženky. */
   winSlot: (amount: number) => void;
+  /** Připsání dolarů (např. denní kolo štěstí). */
+  addDollars: (amount: number) => void;
 }
 
 const Ctx = createContext<WalletState | undefined>(undefined);
 
-const KEY = (scope: string) => `chmelovci-wallet-v1:${scope}`;
-const SEED_DOLLARS = 100;
+const KEY = (scope: string) => `chmelovci-wallet-v2:${scope}`;
+const GUEST_BASE_DOLLARS = 100;
 const SEED_SLOT = 10000;
 
-type Persisted = { userDollars: number; slotCZK: number };
+/** Perzistujeme jen deltu dolarů (základ drží databáze) a herní kredity. */
+type Persisted = { dollarDelta: number; slotCZK: number };
 
 function readStore(scope: string): Persisted | null {
   if (typeof window === "undefined") return null;
@@ -34,8 +37,8 @@ function readStore(scope: string): Persisted | null {
     const raw = window.localStorage.getItem(KEY(scope));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<Persisted>;
-    if (typeof parsed.userDollars !== "number" || typeof parsed.slotCZK !== "number") return null;
-    return { userDollars: parsed.userDollars, slotCZK: parsed.slotCZK };
+    if (typeof parsed.dollarDelta !== "number" || typeof parsed.slotCZK !== "number") return null;
+    return { dollarDelta: parsed.dollarDelta, slotCZK: parsed.slotCZK };
   } catch {
     return null;
   }
@@ -45,7 +48,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { user, balance, loading } = useAuth();
   const scope = user?.id ?? "guest";
 
-  const [userDollars, setUserDollars] = useState(0);
+  const [dollarDelta, setDollarDelta] = useState(0);
   const [slotCZK, setSlotCZK] = useState(0);
   const [ready, setReady] = useState(false);
 
@@ -54,20 +57,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (loading) return;
     setReady(false);
     const stored = readStore(scope);
-    if (stored) {
-      setUserDollars(stored.userDollars);
-      setSlotCZK(stored.slotCZK);
-    } else {
-      setUserDollars(user ? Number(balance ?? 0) : SEED_DOLLARS);
-      setSlotCZK(SEED_SLOT);
-    }
+    setDollarDelta(stored?.dollarDelta ?? 0);
+    setSlotCZK(stored?.slotCZK ?? SEED_SLOT);
     setReady(true);
-  }, [scope, loading, user, balance]);
+  }, [scope, loading]);
 
   useEffect(() => {
     if (!ready || typeof window === "undefined") return;
-    window.localStorage.setItem(KEY(scope), JSON.stringify({ userDollars, slotCZK } satisfies Persisted));
-  }, [ready, scope, userDollars, slotCZK]);
+    window.localStorage.setItem(KEY(scope), JSON.stringify({ dollarDelta, slotCZK } satisfies Persisted));
+  }, [ready, scope, dollarDelta, slotCZK]);
+
+  const baseDollars = user ? Number(balance ?? 0) : GUEST_BASE_DOLLARS;
+  const userDollars = Math.max(0, baseDollars + dollarDelta);
 
   const exchangeToSlot = useCallback<WalletState["exchangeToSlot"]>(
     (dollars) => {
@@ -75,7 +76,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Zadej platnou částku." };
       if (amount > userDollars) return { ok: false, error: "Nedostatek dolarů na účtu." };
       const gained = amount * EXCHANGE_RATE;
-      setUserDollars((d) => d - amount);
+      setDollarDelta((d) => d - amount);
       setSlotCZK((c) => c + gained);
       return { ok: true, gained };
     },
@@ -90,7 +91,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (amount > slotCZK) return { ok: false, error: "Nedostatek Slot CZK v automatu." };
       const gained = amount / EXCHANGE_RATE;
       setSlotCZK((c) => c - amount);
-      setUserDollars((d) => d + gained);
+      setDollarDelta((d) => d + gained);
       return { ok: true, gained };
     },
     [slotCZK],
@@ -109,9 +110,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (amount > 0) setSlotCZK((c) => c + amount);
   }, []);
 
+  const addDollars = useCallback<WalletState["addDollars"]>((amount) => {
+    if (amount > 0) setDollarDelta((d) => d + amount);
+  }, []);
+
   const value = useMemo<WalletState>(
-    () => ({ userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, betSlot, winSlot }),
-    [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, betSlot, winSlot],
+    () => ({ userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, betSlot, winSlot, addDollars }),
+    [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, betSlot, winSlot, addDollars],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
