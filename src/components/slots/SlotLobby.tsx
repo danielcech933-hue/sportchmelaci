@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRightLeft, Beer, Sparkles } from "lucide-react";
 import { CurrencyExchangeModal } from "@/components/CurrencyExchangeModal";
+import { DailyBonusWheel } from "@/components/slots/DailyBonusWheel";
 import { useWallet } from "@/lib/wallet";
 
 const GAMES = [
@@ -54,6 +55,10 @@ export function SlotLobby() {
           </div>
         </div>
       </header>
+
+      <div className="mt-6">
+        <DailyBonusWheel />
+      </div>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES.map((g) => (

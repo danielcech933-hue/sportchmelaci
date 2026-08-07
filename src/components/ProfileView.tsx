@@ -8,6 +8,7 @@ import { Avatar, invalidateAvatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
 import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, Coins, Sparkles, Medal, Zap, Crown, Gamepad2 } from "lucide-react";
 import { useDm } from "@/lib/dm";
+import { useWallet } from "@/lib/wallet";
 import { ArcadeProfile } from "@/components/ArcadeProfile";
 import { splitPlayers, sideOf, winnerSideOf, playerSplitStats, isSoloMatch } from "@/lib/stats";
 import { NeonStat } from "@/components/NeonStat";
@@ -39,6 +40,7 @@ function matchOutcome(nickname: string | null, m: Match): "win" | "loss" | null 
 export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
   const { openChat } = useDm();
+  const { userDollars, slotCZK } = useWallet();
   const targetId = userId ?? user?.id ?? null;
   const isSelf = !!targetId && targetId === user?.id;
   const [mode, setMode] = useState<"real" | "arcade">("real");
@@ -187,6 +189,21 @@ export function ProfileView({ userId }: { userId?: string }) {
           </div>
         </div>
       </section>
+
+      {isSelf && (
+        <section className="mt-4 grid grid-cols-2 gap-2 sm:max-w-md">
+          <div className="rounded-xl border border-accent/40 bg-accent/10 p-3">
+            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Sportovní dolary</p>
+            <p className="mt-0.5 font-display text-xl tracking-[0.08em] text-accent">${userDollars.toFixed(0)}</p>
+          </div>
+          <div className="rounded-xl border border-primary/40 bg-primary/10 p-3">
+            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Slot CZK</p>
+            <p className="mt-0.5 font-display text-xl tracking-[0.08em] text-primary">
+              {slotCZK.toLocaleString("cs-CZ")}
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="mt-5 flex justify-center">
         <div className="relative inline-flex rounded-full border border-primary/30 bg-background/60 p-1 backdrop-blur">
