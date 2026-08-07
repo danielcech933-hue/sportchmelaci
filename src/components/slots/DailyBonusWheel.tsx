@@ -42,7 +42,7 @@ export function DailyBonusWheel() {
   const [spinning, setSpinning] = useState(false);
   const [angle, setAngle] = useState(0);
   const [result, setResult] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -53,6 +53,7 @@ export function DailyBonusWheel() {
       setLastSpin(null);
     }
     setResult(null);
+    setNow(Date.now());
     setHydrated(true);
   }, [scope]);
 
@@ -68,7 +69,7 @@ export function DailyBonusWheel() {
     () => hydrated && !spinning && (lastSpin === null || lastSpin < windowStart(new Date(now))),
     [hydrated, spinning, lastSpin, now],
   );
-  const countdown = fmt(nextReset(new Date(now)) - now);
+  const countdown = hydrated ? fmt(nextReset(new Date(now)) - now) : "--:--:--";
 
   const spin = useCallback(() => {
     if (!canSpin) return;

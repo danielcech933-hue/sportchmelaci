@@ -109,7 +109,6 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
     if (isFree) setFreeSpinsLeft((n) => n - 1);
 
     setIsSpinning(true);
-    timers.current.push(window.setTimeout(() => setIsSpinning(false), SPIN_DURATION));
 
     const next = spinGrid();
     const tense = hasAnticipation(next);
@@ -128,6 +127,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
           setSpinningReels((s) => s.map((v, i) => (i === reel ? false : v)));
           if (reel === REELS - 1) {
             setAnticipation(false);
+            setIsSpinning(false);
             finish(next, isFree);
           }
         }, at),
