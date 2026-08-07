@@ -256,7 +256,8 @@ function SiteHeader() {
 }
 
 function AuthNav() {
-  const { user, nickname, balance, avatarPath, signOut, loading } = useAuth();
+  const { user, nickname, avatarPath, signOut, loading } = useAuth();
+  const { userDollars } = useWallet();
   if (loading) return null;
   if (!user) {
     return (
