@@ -60,7 +60,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
   const [isSpinning, setIsSpinning] = useState(false);
   const [bet, setBet] = useState(10);
   const [grid, setGrid] = useState<Grid>(() => spinGrid());
-  const [spinningReels, setSpinningReels] = useState<boolean[]>(() => Array(REELS).fill(false));
+  const [stoppedReels, setStoppedReels] = useState(REELS);
   const [anticipation, setAnticipation] = useState(false);
   const [winLines, setWinLines] = useState<LineWin[]>([]);
   const [scatterCells, setScatterCells] = useState<[number, number][]>([]);
@@ -80,7 +80,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
   const [bestMultiplier, setBestMultiplier] = useState(0);
   const [autoLeft, setAutoLeft] = useState(0);
 
-  const busy = isSpinning || spinningReels.some(Boolean);
+  const busy = isSpinning;
   const timers = useRef<number[]>([]);
 
   useEffect(() => setBestMultiplier(loadBestMultiplier()), []);
@@ -112,7 +112,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
 
     const next = spinGrid();
     const tense = hasAnticipation(next);
-    setSpinningReels(Array(REELS).fill(true));
+    setStoppedReels(0);
     setAnticipation(false);
 
     for (let reel = 0; reel < REELS; reel++) {
@@ -124,7 +124,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
       timers.current.push(
         window.setTimeout(() => {
           setGrid((g) => g.map((col, i) => (i === reel ? next[reel] : col)));
-          setSpinningReels((s) => s.map((v, i) => (i === reel ? false : v)));
+          setStoppedReels(reel + 1);
           if (reel === REELS - 1) {
             setAnticipation(false);
             setIsSpinning(false);
@@ -190,7 +190,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
   const hasWin = winLines.length > 0 || scatterCells.length > 0;
 
   return (
-    <div className="relative">
+    <div className="relative" data-slot-spinning={busy ? "true" : "false"}>
       {/* stadion + chmel pozadí */}
       <div className="pointer-events-none absolute -inset-6 -z-10 overflow-hidden rounded-3xl">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(255,204,68,0.25),transparent_55%),radial-gradient(circle_at_85%_10%,rgba(77,255,166,0.18),transparent_50%),linear-gradient(180deg,#051f10,#020a05)]" />
@@ -219,7 +219,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
                   key={reel}
                   reelIndex={reel}
                   final={col}
-                  spinning={spinningReels[reel]}
+                  spinning={isSpinning && reel >= stoppedReels}
                   slow={anticipation && reel >= 2}
                   winningRows={winningRowsFor(reel)}
                   hasWin={hasWin}
