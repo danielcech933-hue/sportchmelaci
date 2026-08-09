@@ -803,6 +803,32 @@ export type Database = {
             }
             Returns: string
           }
+      fc_create_challenge: {
+        Args: { _mode: string; _opponent: string; _ovr_cap: number }
+        Returns: string
+      }
+      fc_grant_pack: {
+        Args: { _pack_type: string; _source?: string }
+        Returns: string
+      }
+      fc_open_pack: { Args: { _pack_id: string }; Returns: Json }
+      fc_respond_challenge: {
+        Args: { _accept: boolean; _challenge_id: string }
+        Returns: undefined
+      }
+      fc_save_squad: {
+        Args: {
+          _chemistry: number
+          _formation: string
+          _slots: Json
+          _team_ovr: number
+        }
+        Returns: undefined
+      }
+      fc_set_ready: {
+        Args: { _challenge_id: string; _ready: boolean }
+        Returns: undefined
+      }
       generate_tournament_notifications: { Args: never; Returns: number }
       has_role: {
         Args: {
