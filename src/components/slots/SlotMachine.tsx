@@ -55,7 +55,15 @@ function fireConfetti() {
   window.setTimeout(() => shoot(0.5), 250);
 }
 
-export function SlotMachine({ playerName, onExchange }: { playerName: string; onExchange?: () => void }) {
+export function SlotMachine({
+  playerName,
+  onExchange,
+  onWin,
+}: {
+  playerName: string;
+  onExchange?: () => void;
+  onWin?: (multiplier: number) => void;
+}) {
   const { slotCZK, betSlot, winSlot } = useWallet();
   const [isSpinning, setIsSpinning] = useState(false);
   const [bet, setBet] = useState(10);
