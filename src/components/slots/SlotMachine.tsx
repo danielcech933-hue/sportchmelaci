@@ -154,6 +154,7 @@ export function SlotMachine({
         if (wasFree) setBonusTotal((t) => t + res.total);
         const m = res.total / bet;
         if (m > bestMultiplier) setBestMultiplier(saveBestMultiplier(m));
+        if (m >= 10) onWin?.(m);
         if (m >= 20) {
           setBigWin({ amount: res.total, multiplier: m });
           fireConfetti();
@@ -166,7 +167,7 @@ export function SlotMachine({
         timers.current.push(window.setTimeout(() => setPickOptions(randomBonusOptions()), 700));
       }
     }
-  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap]);
+  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap, onWin]);
 
   /* Free spins + autoplay driver */
   useEffect(() => {
