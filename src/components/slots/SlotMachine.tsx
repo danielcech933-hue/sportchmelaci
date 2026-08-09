@@ -55,7 +55,15 @@ function fireConfetti() {
   window.setTimeout(() => shoot(0.5), 250);
 }
 
-export function SlotMachine({ playerName, onExchange }: { playerName: string; onExchange?: () => void }) {
+export function SlotMachine({
+  playerName,
+  onExchange,
+  onWin,
+}: {
+  playerName: string;
+  onExchange?: () => void;
+  onWin?: (multiplier: number) => void;
+}) {
   const { slotCZK, betSlot, winSlot } = useWallet();
   const [isSpinning, setIsSpinning] = useState(false);
   const [bet, setBet] = useState(10);
@@ -146,6 +154,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
         if (wasFree) setBonusTotal((t) => t + res.total);
         const m = res.total / bet;
         if (m > bestMultiplier) setBestMultiplier(saveBestMultiplier(m));
+        if (m >= 10) onWin?.(m);
         if (m >= 20) {
           setBigWin({ amount: res.total, multiplier: m });
           fireConfetti();
@@ -158,7 +167,7 @@ export function SlotMachine({ playerName, onExchange }: { playerName: string; on
         timers.current.push(window.setTimeout(() => setPickOptions(randomBonusOptions()), 700));
       }
     }
-  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap]);
+  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap, onWin]);
 
   /* Free spins + autoplay driver */
   useEffect(() => {

@@ -253,6 +253,191 @@ export type Database = {
         }
         Relationships: []
       }
+      fc_cards: {
+        Row: {
+          card_type: string
+          club: string
+          created_at: string
+          def: number
+          dri: number
+          id: string
+          image_url: string | null
+          key: string
+          league: string
+          name: string
+          nation: string
+          pac: number
+          pas: number
+          phy: number
+          position: string
+          rating: number
+          sho: number
+        }
+        Insert: {
+          card_type?: string
+          club: string
+          created_at?: string
+          def?: number
+          dri?: number
+          id?: string
+          image_url?: string | null
+          key: string
+          league?: string
+          name: string
+          nation: string
+          pac?: number
+          pas?: number
+          phy?: number
+          position: string
+          rating: number
+          sho?: number
+        }
+        Update: {
+          card_type?: string
+          club?: string
+          created_at?: string
+          def?: number
+          dri?: number
+          id?: string
+          image_url?: string | null
+          key?: string
+          league?: string
+          name?: string
+          nation?: string
+          pac?: number
+          pas?: number
+          phy?: number
+          position?: string
+          rating?: number
+          sho?: number
+        }
+        Relationships: []
+      }
+      fc_challenges: {
+        Row: {
+          created_at: string
+          host_id: string
+          host_ready: boolean
+          id: string
+          mode: string
+          opponent_id: string | null
+          opponent_ready: boolean
+          ovr_cap: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          host_id: string
+          host_ready?: boolean
+          id?: string
+          mode?: string
+          opponent_id?: string | null
+          opponent_ready?: boolean
+          ovr_cap?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          host_id?: string
+          host_ready?: boolean
+          id?: string
+          mode?: string
+          opponent_id?: string | null
+          opponent_ready?: boolean
+          ovr_cap?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fc_packs: {
+        Row: {
+          created_at: string
+          id: string
+          opened: boolean
+          pack_type: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opened?: boolean
+          pack_type?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opened?: boolean
+          pack_type?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fc_squads: {
+        Row: {
+          chemistry: number
+          created_at: string
+          formation: string
+          slots: Json
+          team_ovr: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chemistry?: number
+          created_at?: string
+          formation?: string
+          slots?: Json
+          team_ovr?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chemistry?: number
+          created_at?: string
+          formation?: string
+          slots?: Json
+          team_ovr?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fc_user_cards: {
+        Row: {
+          card_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_user_cards_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "fc_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           bets: Json
@@ -618,6 +803,32 @@ export type Database = {
             }
             Returns: string
           }
+      fc_create_challenge: {
+        Args: { _mode: string; _opponent: string; _ovr_cap: number }
+        Returns: string
+      }
+      fc_grant_pack: {
+        Args: { _pack_type: string; _source?: string }
+        Returns: string
+      }
+      fc_open_pack: { Args: { _pack_id: string }; Returns: Json }
+      fc_respond_challenge: {
+        Args: { _accept: boolean; _challenge_id: string }
+        Returns: undefined
+      }
+      fc_save_squad: {
+        Args: {
+          _chemistry: number
+          _formation: string
+          _slots: Json
+          _team_ovr: number
+        }
+        Returns: undefined
+      }
+      fc_set_ready: {
+        Args: { _challenge_id: string; _ready: boolean }
+        Returns: undefined
+      }
       generate_tournament_notifications: { Args: never; Returns: number }
       has_role: {
         Args: {
