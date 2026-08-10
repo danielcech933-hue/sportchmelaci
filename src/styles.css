@@ -400,3 +400,59 @@ body { padding-bottom: 5.5rem; }
 @utility slot-blur {
   filter: blur(3px) saturate(130%);
 }
+
+/* ---------- Global high-energy sport UI ---------- */
+@keyframes aurora-drift {
+  0%   { transform: translate3d(-6%, -4%, 0) scale(1.05); opacity: 0.55; }
+  50%  { transform: translate3d(6%, 4%, 0) scale(1.15); opacity: 0.85; }
+  100% { transform: translate3d(-6%, -4%, 0) scale(1.05); opacity: 0.55; }
+}
+@keyframes spotlight-sweep {
+  0%   { transform: translateX(-30%) rotate(8deg); opacity: 0.25; }
+  50%  { transform: translateX(30%) rotate(8deg); opacity: 0.5; }
+  100% { transform: translateX(-30%) rotate(8deg); opacity: 0.25; }
+}
+.aurora-blob { animation: aurora-drift 18s ease-in-out infinite; will-change: transform, opacity; }
+.spotlight-beam { animation: spotlight-sweep 14s ease-in-out infinite; will-change: transform, opacity; }
+
+@utility glass {
+  background: color-mix(in oklab, var(--color-surface) 55%, transparent);
+  backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 22%, transparent);
+  border-radius: 1rem;
+  box-shadow: 0 18px 50px -30px color-mix(in oklab, var(--color-primary) 60%, transparent);
+}
+
+@utility glass-glow {
+  position: relative;
+  transition: transform 200ms ease, box-shadow 250ms ease;
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 55%, transparent),
+                0 0 34px -12px color-mix(in oklab, var(--color-primary) 80%, transparent);
+  }
+  &:active { transform: scale(0.985); }
+}
+
+@keyframes live-dot {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-danger) 70%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-danger) 0%, transparent); }
+}
+.live-dot { animation: live-dot 1.6s ease-out infinite; }
+
+@keyframes shimmer-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-surface-2) 70%, transparent);
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-primary) 18%, transparent), transparent);
+    animation: shimmer-slide 1.4s linear infinite;
+  }
+}
