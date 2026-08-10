@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
+import { SportBadge } from "@/components/SportBadge";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { SportActionModal } from "@/components/SportActionModal";
@@ -31,6 +32,13 @@ const SPORT_BG: Record<string, string> = {
   beerrace: beerraceLegendsAsset.url,
 };
 
+const FILTERS = [
+  { id: "all" as const, label: "Všechny zápasy" },
+  { id: "classic" as const, label: "Klasické sporty" },
+  { id: "esport" as const, label: "Esport" },
+  { id: "mine" as const, label: "Moje zápasy" },
+];
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -49,6 +57,7 @@ function Lobby() {
   const [upcoming, setUpcoming] = useState<Match[]>([]);
   const [hoveredSport, setHoveredSport] = useState<string | null>(null);
   const [modalSport, setModalSport] = useState<SportId | null>(null);
+  const [filter, setFilter] = useState<"all" | "classic" | "esport" | "mine">("all");
 
   useEffect(() => {
     if (!user) { setRecent([]); setUpcoming([]); return; }
@@ -73,6 +82,25 @@ function Lobby() {
     return () => window.removeEventListener("pointerdown", onDown);
   }, [hoveredSport, modalSport]);
 
+
+  const visibleSports = SPORT_LIST.filter((s) => {
+    if (filter === "classic") return !s.esport;
+    if (filter === "esport") return !!s.esport;
+    if (filter === "mine") {
+      const mine = [...recent, ...upcoming].filter((m) => m.ownerId === user?.id);
+      return mine.some((m) => m.sport === s.id);
+    }
+    return true;
+  });
+
+  const listFilter = (m: Match) => {
+    if (filter === "classic") return !SPORTS[m.sport].esport;
+    if (filter === "esport") return !!SPORTS[m.sport].esport;
+    if (filter === "mine") return m.ownerId === user?.id;
+    return true;
+  };
+  const upcomingShown = upcoming.filter(listFilter);
+  const recentShown = recent.filter(listFilter);
 
   return (
     <>
@@ -133,7 +161,7 @@ function Lobby() {
         </div>
       </section>
 
-      {upcoming.length > 0 && (
+      {upcomingShown.length > 0 && (
         <section className="relative mt-8 overflow-hidden rounded-2xl border border-primary/25 bg-background/50 backdrop-blur">
           <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
           <div className="relative flex items-center gap-3 border-b border-primary/20 bg-primary/5 px-4 py-2">
@@ -142,13 +170,13 @@ function Lobby() {
             <Link to="/schedule" className="ml-auto text-xs text-primary/80 hover:text-primary hover:underline">See all →</Link>
           </div>
           <ul className="relative divide-y divide-primary/10">
-            {upcoming.map((m) => {
+            {upcomingShown.map((m) => {
               const cfg = SPORTS[m.sport];
               const when = m.scheduledAt ? new Date(m.scheduledAt) : null;
               return (
                 <li key={m.id}>
                   <Link to="/match" search={{ id: m.id }} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-3 transition hover:bg-primary/10 sm:px-4">
-                    <span className="row-span-2 text-xl">{cfg.emoji}</span>
+                    <span className="row-span-2"><SportBadge sport={m.sport} /></span>
                     <span className="min-w-0 truncate font-display text-base tracking-wide sm:text-lg">
                       {m.teamA} <span className="text-muted-foreground">vs</span> {m.teamB}
                     </span>
@@ -167,9 +195,25 @@ function Lobby() {
       )}
 
       <section className="mt-10">
-        <h2 className="mb-4 font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">CHOOSE SPORT</h2>
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <h2 className="font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">CHOOSE SPORT</h2>
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilter(f.id)}
+                className={`glass-glow rounded-full border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] transition ${
+                  filter === f.id ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-          {SPORT_LIST.map((s) => {
+          {visibleSports.map((s) => {
             const active = hoveredSport === s.id;
             const handleClick = () => {
               setHoveredSport(s.id);
@@ -201,14 +245,14 @@ function Lobby() {
         </div>
       </section>
 
-      {recent.length > 0 && (
+      {recentShown.length > 0 && (
         <section className="mt-12">
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="font-display text-2xl tracking-[0.25em] text-primary/80 neon-text">RECENT MATCHES</h2>
             <Link to="/history" className="text-sm text-primary hover:underline">View all →</Link>
           </div>
           <ul className="grid gap-3 md:grid-cols-3">
-            {recent.map((m) => {
+            {recentShown.map((m) => {
               const cfg = SPORTS[m.sport];
               const setsA = m.sets.filter((s) => s.a > s.b).length;
               const setsB = m.sets.filter((s) => s.b > s.a).length;
@@ -220,7 +264,7 @@ function Lobby() {
                   <Link to="/match" search={{ id: m.id }} className="group relative block overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary">
                     <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
                     <div className="relative flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{cfg.emoji} {cfg.name}</span>
+                      <SportBadge sport={m.sport} />
                       <span>by <span className="text-primary">{m.ownerNickname}</span></span>
                     </div>
                     <div className="relative mt-3 flex items-center justify-between">
