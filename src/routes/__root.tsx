@@ -38,6 +38,8 @@ import { FloatingNav } from "@/components/FloatingNav";
 import { WinCelebrations } from "@/lib/win-toasts";
 import { WalletProvider, useWallet } from "@/lib/wallet";
 import { Toaster } from "@/components/ui/sonner";
+import { StadiumBackdrop } from "@/components/StadiumBackdrop";
+import { motion } from "framer-motion";
 
 
 
@@ -133,6 +135,20 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function PageTransition() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: "easeOut" }}
+    >
+      <Outlet />
+    </motion.div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
@@ -141,9 +157,10 @@ function RootComponent() {
         <WalletProvider>
           <DmProvider>
             <div className="flex min-h-screen flex-col">
+              <StadiumBackdrop />
               <SiteHeader />
               <div className="flex-1">
-                <Outlet />
+                <PageTransition />
               </div>
               <SiteFooter />
               <FloatingNav />
