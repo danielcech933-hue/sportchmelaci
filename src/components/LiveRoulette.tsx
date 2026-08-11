@@ -1,15 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 // Definice červených čísel pro evropskou ruletu
 const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+const REDS_SET = new Set(RED_NUMBERS);
+
+// Reálné sekvenční pořadí čísel na evropském kole rulety
+const WHEEL_NUMBERS = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7,
+  28, 12, 35, 3, 26,
+];
 
 // Reálná mřížka ruletového stolu (3 řádky × 12 sloupců)
-// Horní řádek: 3, 6, 9... | Prostřední: 2, 5, 8... | Spodní: 1, 4, 7...
 const BOARD_GRID = [
   [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
   [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
@@ -20,19 +27,36 @@ interface BetMap {
   [key: string]: number;
 }
 
-// SPRÁVNÝ EXPORT: Název komponenty odpovídá importu v SlotLobby.tsx
 export function LiveRoulette() {
-  const { balance, refreshProfile } = useAuth();
+  const { user, balance = 0, refreshProfile } = useAuth();
 
   // Stavy
   const [selectedChip, setSelectedChip] = useState<number>(10);
   const [bets, setBets] = useState<BetMap>({});
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
+  const [wheelRotation, setWheelRotation] = useState<number>(0);
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
+  // Ref pro bezpečné čtení sázek uvnitř časovače
+  const betsRef = useRef<BetMap>({});
+  betsRef.current = bets;
+
   // Celková částka sázek na stole
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
+
+  // Funkce pro aktualizaci zůstatku v Supabase databázi
+  const updateDatabaseBalance = async (newBalance: number) => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase.from("profiles").update({ balance: newBalance }).eq("id", user.id);
+
+      if (error) throw error;
+      if (refreshProfile) await refreshProfile();
+    } catch (err) {
+      console.error("Chyba při zápisu zůstatku:", err);
+    }
+  };
 
   // Přidání sázky kliknutím
   const handlePlaceBet = (betKey: string) => {
@@ -54,81 +78,138 @@ export function LiveRoulette() {
     setBets({});
   };
 
-  // Spuštění rulety
+  // Spuštění a zatočení rulety
   const spinWheel = async () => {
     if (totalBetAmount === 0) {
       toast.error("Nejprve polož sázky na stůl!");
       return;
     }
+    if (balance < totalBetAmount) {
+      toast.error("Nemáš dostatečný zůstatek na tyto sázky.");
+      return;
+    }
     if (isSpinning) return;
 
     setIsSpinning(true);
+    const currentBets = { ...betsRef.current };
 
-    const winningNum = Math.floor(Math.random() * 37); // 0 až 36
+    // 1. Okamžité odečtení celkové sázky ze zůstatku v DB
+    const balanceAfterBet = balance - totalBetAmount;
+    await updateDatabaseBalance(balanceAfterBet);
 
+    // 2. Náhodný výběr výherního políčka
+    const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
+    const winningNum = WHEEL_NUMBERS[winningIndex];
+
+    // 3. Výpočet úhlu otáčení kola (5 celých otoček + přesný úhel na číslo)
+    const segmentAngle = 360 / WHEEL_NUMBERS.length;
+    setWheelRotation((prev) => {
+      const currentSpins = Math.floor(prev / 360);
+      const targetMod = 360 - winningIndex * segmentAngle;
+      return (currentSpins + 5) * 360 + targetMod;
+    });
+
+    // 4. Vyhodnocení výhry po dokončení animace (3.5 sekundy)
     setTimeout(async () => {
       setLastWinningNumber(winningNum);
-      setHistory((prev) => [winningNum, ...prev.slice(0, 9)]);
+      setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
 
       let totalPayout = 0;
-      Object.entries(bets).forEach(([key, amount]) => {
+      Object.entries(currentBets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
       });
 
       if (totalPayout > 0) {
-        toast.success(`Výhra! Získáváš $${totalPayout}`);
+        toast.success(`🎉 Výhra! Získáváš $${totalPayout}`);
+        // Přičtení výhry k zůstatku v DB
+        await updateDatabaseBalance(balanceAfterBet + totalPayout);
       } else {
         toast.error("Tentokrát to nevyšlo.");
       }
 
-      await refreshProfile();
       setBets({});
       setIsSpinning(false);
-    }, 3000);
+    }, 3500);
   };
 
   return (
-    <div className="space-y-6">
-      {/* VIZUÁL / HORNÍ DISPLAY */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center justify-center text-center">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> Royal European Roulette
-          </span>
+    <div className="space-y-6 select-none">
+      {/* VIZUÁL / ANIMOVANÉ KOLO RULETY */}
+      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1 mb-3">
+          <Sparkles className="h-3 w-3" /> Royal European Roulette
+        </span>
 
-          <div className="my-6 flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-amber-500/40 bg-black/80 shadow-2xl ring-4 ring-amber-500/10">
-            <span className="font-mono text-[10px] uppercase text-zinc-500">POSLEDNÍ</span>
-            <span
-              className={cn(
-                "font-display text-4xl font-black",
-                lastWinningNumber === 0 && "text-emerald-400",
-                lastWinningNumber !== null && RED_NUMBERS.includes(lastWinningNumber) && "text-red-500",
-                lastWinningNumber !== null &&
-                  !RED_NUMBERS.includes(lastWinningNumber) &&
-                  lastWinningNumber !== 0 &&
-                  "text-zinc-100",
-              )}
-            >
-              {lastWinningNumber !== null ? lastWinningNumber : "--"}
-            </span>
-          </div>
+        {/* Fyzické animované kolo */}
+        <div className="relative flex items-center justify-center my-2">
+          {/* Ukazatel výherního políčka */}
+          <div className="absolute -top-3 z-20 h-4 w-4 rounded-full bg-amber-400 border-2 border-white shadow-lg shadow-amber-500/50" />
 
-          {/* Historie čísel */}
-          <div className="flex items-center gap-1.5 overflow-x-auto p-2">
-            {history.map((num, idx) => (
+          {/* Rotující disk s čísly */}
+          <motion.div
+            animate={{ rotate: wheelRotation }}
+            transition={{ duration: 3.5, ease: [0.15, 0.85, 0.35, 1.0] }}
+            className="relative flex h-56 w-56 items-center justify-center rounded-full border-8 border-amber-600/40 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 shadow-2xl overflow-hidden"
+          >
+            {/* Středový ciferník s výherním číslem */}
+            <div className="z-10 flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 border-amber-500/50 bg-black/90 shadow-inner">
+              <span className="font-mono text-[9px] uppercase text-zinc-500">POSLEDNÍ</span>
               <span
-                key={idx}
                 className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold border",
-                  num === 0 && "border-emerald-500/40 bg-emerald-950/60 text-emerald-400",
-                  RED_NUMBERS.includes(num) && "border-red-500/40 bg-red-950/60 text-red-400",
-                  !RED_NUMBERS.includes(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
+                  "font-display text-3xl font-black",
+                  lastWinningNumber === 0 && "text-emerald-400",
+                  lastWinningNumber !== null && REDS_SET.has(lastWinningNumber) && "text-red-500",
+                  lastWinningNumber !== null &&
+                    !REDS_SET.has(lastWinningNumber) &&
+                    lastWinningNumber !== 0 &&
+                    "text-zinc-100",
                 )}
               >
-                {num}
+                {lastWinningNumber !== null ? lastWinningNumber : "--"}
               </span>
-            ))}
-          </div>
+            </div>
+
+            {/* Čísla vykreslená po obvodu kola */}
+            {WHEEL_NUMBERS.map((num, idx) => {
+              const angle = (360 / WHEEL_NUMBERS.length) * idx;
+              const isRed = REDS_SET.has(num);
+              return (
+                <div
+                  key={idx}
+                  className="absolute h-full w-full text-center"
+                  style={{ transform: `rotate(${angle}deg)` }}
+                >
+                  <span
+                    className={cn(
+                      "inline-block pt-1.5 font-mono text-[10px] font-black",
+                      num === 0 && "text-emerald-400",
+                      isRed && "text-red-500",
+                      !isRed && num !== 0 && "text-zinc-200",
+                    )}
+                  >
+                    {num}
+                  </span>
+                </div>
+              );
+            })}
+          </motion.div>
+        </div>
+
+        {/* Historie čísel */}
+        <div className="flex items-center gap-1.5 overflow-x-auto p-2 mt-2">
+          {history.map((num, idx) => (
+            <span
+              key={idx}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold border",
+                num === 0 && "border-emerald-500/40 bg-emerald-950/60 text-emerald-400",
+                REDS_SET.has(num) && "border-red-500/40 bg-red-950/60 text-red-400",
+                !REDS_SET.has(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
+              )}
+            >
+              {num}
+            </span>
+          ))}
         </div>
       </div>
 
@@ -151,7 +232,7 @@ export function LiveRoulette() {
         <div className="space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
             <OutsideBetBtn
-              label="ČERVENÁ 2×"
+              label="ČERVENÁ"
               betKey="red"
               color="red"
               bets={bets}
@@ -159,7 +240,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="ČERNÁ 2×"
+              label="ČERNÁ"
               betKey="black"
               color="black"
               bets={bets}
@@ -167,7 +248,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="SUDÁ 2×"
+              label="SUDÁ"
               betKey="even"
               color="dark"
               bets={bets}
@@ -175,7 +256,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="LICHÁ 2×"
+              label="LICHÁ"
               betKey="odd"
               color="dark"
               bets={bets}
@@ -201,7 +282,7 @@ export function LiveRoulette() {
           </div>
           <div className="grid grid-cols-3 gap-2">
             <OutsideBetBtn
-              label="1. TUCET (1-12) 3×"
+              label="1. TUCET (1-12)"
               betKey="doz_1"
               color="dark"
               bets={bets}
@@ -209,7 +290,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="2. TUCET (13-24) 3×"
+              label="2. TUCET (13-24)"
               betKey="doz_2"
               color="dark"
               bets={bets}
@@ -217,7 +298,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="3. TUCET (25-36) 3×"
+              label="3. TUCET (25-36)"
               betKey="doz_3"
               color="dark"
               bets={bets}
@@ -244,7 +325,7 @@ export function LiveRoulette() {
             {BOARD_GRID.map((row, rowIndex) => (
               <div key={rowIndex} className="grid grid-cols-12 gap-1.5">
                 {row.map((num) => {
-                  const isRed = RED_NUMBERS.includes(num);
+                  const isRed = REDS_SET.has(num);
                   const betKey = num.toString();
                   const currentBet = bets[betKey];
 
@@ -270,7 +351,7 @@ export function LiveRoulette() {
           </div>
         </div>
 
-        {/* 3. Výběr žetonu a tlačítko vsadit */}
+        {/* 3. Výběr žetonu a tlačítko Vsadit */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-zinc-400 mr-1">Hodnota žetonu:</span>
@@ -310,7 +391,7 @@ export function LiveRoulette() {
             <button
               onClick={spinWheel}
               disabled={isSpinning || totalBetAmount === 0}
-              className="rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 py-3 font-mono text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-95 disabled:opacity-40 transition"
+              className="min-w-[150px] rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 py-3 font-mono text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-95 disabled:opacity-40 transition"
             >
               {isSpinning ? "Točí se..." : `VSADIT $${totalBetAmount}`}
             </button>
@@ -371,7 +452,7 @@ function OutsideBetBtn({
 
 // Výpočet výplat
 function calculateBetPayout(betKey: string, amount: number, winningNum: number): number {
-  const isRed = RED_NUMBERS.includes(winningNum);
+  const isRed = REDS_SET.has(winningNum);
 
   if (betKey === winningNum.toString()) return amount * 36;
   if (betKey === "red" && isRed) return amount * 2;
