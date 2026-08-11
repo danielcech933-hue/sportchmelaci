@@ -5,11 +5,16 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-// Definice červených čísel pro evropskou ruletu
+// Definice červených čísel
 const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 
-// Reálná mřížka ruletového stolu (3 řádky × 12 sloupců)
-// Horní řádek: 3, 6, 9... | Prostřední: 2, 5, 8... | Spodní: 1, 4, 7...
+// Reálné pořadí čísel na evropském ruletovém kole (po směru hodinových ručiček)
+const WHEEL_NUMBERS = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7,
+  28, 12, 35, 3, 26,
+];
+
+// Mřížka stolu (3x12)
 const BOARD_GRID = [
   [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
   [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
@@ -20,21 +25,21 @@ interface BetMap {
   [key: string]: number;
 }
 
-// SPRÁVNÝ EXPORT: Název komponenty odpovídá importu v SlotLobby.tsx
 export function LiveRoulette() {
-  const { balance, refreshProfile } = useAuth();
+  const { balance, updateBalance, refreshProfile } = useAuth();
 
   // Stavy
   const [selectedChip, setSelectedChip] = useState<number>(10);
   const [bets, setBets] = useState<BetMap>({});
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
+  const [wheelRotation, setWheelRotation] = useState<number>(0);
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
-  // Celková částka sázek na stole
+  // Celková hodnota sázek
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
 
-  // Přidání sázky kliknutím
+  // Přidání sázky
   const handlePlaceBet = (betKey: string) => {
     if (isSpinning) return;
     if (balance < totalBetAmount + selectedChip) {
@@ -48,87 +53,149 @@ export function LiveRoulette() {
     }));
   };
 
-  // Vyčištění sázek
   const clearBets = () => {
     if (isSpinning) return;
     setBets({});
   };
 
-  // Spuštění rulety
+  // Spuštění točení rulety s výpočtem výher
   const spinWheel = async () => {
     if (totalBetAmount === 0) {
       toast.error("Nejprve polož sázky na stůl!");
+      return;
+    }
+    if (balance < totalBetAmount) {
+      toast.error("Nemáš dostatečný zůstatek na tyto sázky.");
       return;
     }
     if (isSpinning) return;
 
     setIsSpinning(true);
 
-    const winningNum = Math.floor(Math.random() * 37); // 0 až 36
+    // 1. Okamžitě strhneme sázku ze zůstatku
+    if (updateBalance) {
+      await updateBalance(-totalBetAmount);
+    }
 
+    // 2. Vygenerujeme výherní číslo
+    const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
+    const winningNum = WHEEL_NUMBERS[winningIndex];
+
+    // 3. Výpočet rotace (více plných otáček + přesný úhel na vybrané číslo)
+    const segmentAngle = 360 / WHEEL_NUMBERS.length;
+    const extraSpins = 360 * 5; // 5 plných otáček
+    const targetAngle = extraSpins + (360 - winningIndex * segmentAngle);
+
+    setWheelRotation((prev) => prev + targetAngle);
+
+    // 4. Čekání na dokončení animace (4 sekundy)
     setTimeout(async () => {
       setLastWinningNumber(winningNum);
-      setHistory((prev) => [winningNum, ...prev.slice(0, 9)]);
+      setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
 
+      // Výpočet celkové výhry
       let totalPayout = 0;
       Object.entries(bets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
       });
 
+      // Zápis výhry do zůstatku
       if (totalPayout > 0) {
-        toast.success(`Výhra! Získáváš $${totalPayout}`);
+        toast.success(`🎉 Výhra! Získáváš $${totalPayout}`);
+        if (updateBalance) {
+          await updateBalance(totalPayout);
+        }
       } else {
         toast.error("Tentokrát to nevyšlo.");
       }
 
-      await refreshProfile();
+      if (refreshProfile) {
+        await refreshProfile();
+      }
+
       setBets({});
       setIsSpinning(false);
-    }, 3000);
+    }, 4000);
   };
 
   return (
-    <div className="space-y-6">
-      {/* VIZUÁL / HORNÍ DISPLAY */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl">
-        <div className="flex flex-col items-center justify-center text-center">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> Royal European Roulette
-          </span>
+    <div className="space-y-6 select-none">
+      {/* VISUÁL RULETOVÉHO KOLA S ANIMACÍ */}
+      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1 mb-4">
+          <Sparkles className="h-3 w-3" /> Royal European Roulette
+        </span>
 
-          <div className="my-6 flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-amber-500/40 bg-black/80 shadow-2xl ring-4 ring-amber-500/10">
-            <span className="font-mono text-[10px] uppercase text-zinc-500">POSLEDNÍ</span>
-            <span
-              className={cn(
-                "font-display text-4xl font-black",
-                lastWinningNumber === 0 && "text-emerald-400",
-                lastWinningNumber !== null && RED_NUMBERS.includes(lastWinningNumber) && "text-red-500",
-                lastWinningNumber !== null &&
-                  !RED_NUMBERS.includes(lastWinningNumber) &&
-                  lastWinningNumber !== 0 &&
-                  "text-zinc-100",
-              )}
-            >
-              {lastWinningNumber !== null ? lastWinningNumber : "--"}
-            </span>
-          </div>
+        {/* Ruletové kolo */}
+        <div className="relative flex items-center justify-center my-2">
+          {/* Ukazatel / Kulička nahoře */}
+          <div className="absolute -top-3 z-20 h-4 w-4 rounded-full bg-amber-400 border-2 border-white shadow-lg shadow-amber-500/50" />
 
-          {/* Historie čísel */}
-          <div className="flex items-center gap-1.5 overflow-x-auto p-2">
-            {history.map((num, idx) => (
+          {/* Otáčející se disk kola */}
+          <motion.div
+            animate={{ rotate: wheelRotation }}
+            transition={{ duration: 4, ease: [0.15, 0.85, 0.35, 1.0] }}
+            className="relative flex h-52 w-52 items-center justify-center rounded-full border-8 border-amber-600/40 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 shadow-2xl"
+          >
+            {/* Vnitřní středový displej */}
+            <div className="z-10 flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 border-amber-500/50 bg-black/90 shadow-inner">
+              <span className="font-mono text-[9px] uppercase text-zinc-500">POSLEDNÍ</span>
               <span
-                key={idx}
                 className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold border",
-                  num === 0 && "border-emerald-500/40 bg-emerald-950/60 text-emerald-400",
-                  RED_NUMBERS.includes(num) && "border-red-500/40 bg-red-950/60 text-red-400",
-                  !RED_NUMBERS.includes(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
+                  "font-display text-3xl font-black",
+                  lastWinningNumber === 0 && "text-emerald-400",
+                  lastWinningNumber !== null && RED_NUMBERS.includes(lastWinningNumber) && "text-red-500",
+                  lastWinningNumber !== null &&
+                    !RED_NUMBERS.includes(lastWinningNumber) &&
+                    lastWinningNumber !== 0 &&
+                    "text-zinc-100",
                 )}
               >
-                {num}
+                {lastWinningNumber !== null ? lastWinningNumber : "--"}
               </span>
-            ))}
-          </div>
+            </div>
+
+            {/* Čísla po obvodu */}
+            {WHEEL_NUMBERS.map((num, idx) => {
+              const angle = (360 / WHEEL_NUMBERS.length) * idx;
+              const isRed = RED_NUMBERS.includes(num);
+              return (
+                <div
+                  key={idx}
+                  className="absolute h-full w-full text-center"
+                  style={{ transform: `rotate(${angle}deg)` }}
+                >
+                  <span
+                    className={cn(
+                      "inline-block pt-1.5 font-mono text-[10px] font-black",
+                      num === 0 && "text-emerald-400",
+                      isRed && "text-red-500",
+                      !isRed && num !== 0 && "text-zinc-200",
+                    )}
+                  >
+                    {num}
+                  </span>
+                </div>
+              );
+            })}
+          </motion.div>
+        </div>
+
+        {/* Historie čísel */}
+        <div className="flex items-center gap-1.5 overflow-x-auto mt-4 p-1">
+          {history.map((num, idx) => (
+            <span
+              key={idx}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold border",
+                num === 0 && "border-emerald-500/40 bg-emerald-950/60 text-emerald-400",
+                RED_NUMBERS.includes(num) && "border-red-500/40 bg-red-950/60 text-red-400",
+                !RED_NUMBERS.includes(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
+              )}
+            >
+              {num}
+            </span>
+          ))}
         </div>
       </div>
 
@@ -270,7 +337,7 @@ export function LiveRoulette() {
           </div>
         </div>
 
-        {/* 3. Výběr žetonu a tlačítko vsadit */}
+        {/* 3. Výběr žetonů a spuštění */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-zinc-400 mr-1">Hodnota žetonu:</span>
