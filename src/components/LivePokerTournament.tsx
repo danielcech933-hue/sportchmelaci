@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Coins, LogOut, Plus, Timer, Users } from "lucide-react";
+import { Coins, LogOut, Plus, Timer, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -85,6 +85,24 @@ export function LivePokerTournament() {
     void load();
   };
 
+  const cancelTournament = async (tournamentId: string) => {
+    if (!user) return;
+
+    // Odhlášení/vrácení chipů pokud byl hráč připojen
+    await supabase.rpc("poker_cash_out", { _tournament_id: tournamentId });
+
+    const { error } = await supabase.from("poker_tournaments").delete().eq("id", tournamentId);
+    if (error) {
+      toast.error("Turnaj se nepodařilo zrušit.");
+      return;
+    }
+
+    toast.success("Turnaj byl úspěšně zrušen.");
+    if (openId === tournamentId) setOpenId(null);
+    void refreshProfile();
+    void load();
+  };
+
   const join = async (t: Tournament) => {
     if (!user) return toast.error("Pro připojení se přihlas.");
     if (balance < Number(t.buy_in)) return toast.error("Nedostatek prostředků na buy-in.");
@@ -102,6 +120,7 @@ export function LivePokerTournament() {
         seats={seats.filter((s) => s.tournament_id === open.id).sort((a, b) => a.seat_no - b.seat_no)}
         onLeave={() => setOpenId(null)}
         onRefresh={load}
+        onCancel={() => cancelTournament(open.id)}
       />
     );
   }
@@ -111,7 +130,10 @@ export function LivePokerTournament() {
       <div className="glass flex flex-wrap items-center justify-between gap-3 p-4">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Texas Hold'em</p>
-          <MagneticText text="POKER TURNAJE" className="font-display text-3xl tracking-[0.12em] text-primary sm:text-4xl" />
+          <MagneticText
+            text="POKER TURNAJE"
+            className="font-display text-3xl tracking-[0.12em] text-primary sm:text-4xl"
+          />
         </div>
         <button
           onClick={() => setCreating((v) => !v)}
@@ -122,7 +144,11 @@ export function LivePokerTournament() {
       </div>
 
       {creating && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="glass grid gap-3 p-4 sm:grid-cols-4">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass grid gap-3 p-4 sm:grid-cols-4"
+        >
           <label className="text-xs">
             <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Název</span>
             <input
@@ -142,7 +168,9 @@ export function LivePokerTournament() {
             />
           </label>
           <label className="text-xs">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Starting chips</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Starting chips
+            </span>
             <input
               type="number"
               min={100}
@@ -159,7 +187,9 @@ export function LivePokerTournament() {
               min={2}
               max={9}
               value={form.players}
-              onChange={(e) => setForm((f) => ({ ...f, players: Math.min(9, Math.max(2, Number(e.target.value) || 2)) }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, players: Math.min(9, Math.max(2, Number(e.target.value) || 2)) }))
+              }
               className="mt-1 w-full rounded-lg border border-border/60 bg-black/40 px-2 py-2 text-sm"
             />
           </label>
@@ -175,15 +205,30 @@ export function LivePokerTournament() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {tournaments.length === 0 && <p className="text-sm text-muted-foreground">Zatím žádné turnaje — založ první.</p>}
+        {tournaments.length === 0 && (
+          <p className="text-sm text-muted-foreground">Zatím žádné turnaje — založ první.</p>
+        )}
         {tournaments.map((t) => {
           const mySeats = seats.filter((s) => s.tournament_id === t.id);
           const seated = mySeats.some((s) => s.user_id === user?.id);
+          const isCreator = t.created_by === user?.id;
+
           return (
-            <TiltCard key={t.id} className="glass p-4" intensity={8}>
-              <FxText glitch className="font-display text-xl tracking-[0.1em] text-primary">
-                {t.name}
-              </FxText>
+            <TiltCard key={t.id} className="glass relative p-4" intensity={8}>
+              <div className="flex items-start justify-between">
+                <FxText glitch className="font-display text-xl tracking-[0.1em] text-primary">
+                  {t.name}
+                </FxText>
+                {isCreator && (
+                  <button
+                    onClick={() => cancelTournament(t.id)}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-danger/20 hover:text-danger transition"
+                    title="Zrušit turnaj"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               <div className="mt-2 grid grid-cols-2 gap-2 font-mono text-[11px] text-foreground/80">
                 <span>buy-in ${Number(t.buy_in).toFixed(0)}</span>
                 <span>{t.starting_chips} chips</span>
@@ -231,11 +276,13 @@ function PokerTable({
   seats,
   onLeave,
   onRefresh,
+  onCancel,
 }: {
   tournament: Tournament;
   seats: Seat[];
   onLeave: () => void;
   onRefresh: () => Promise<void> | void;
+  onCancel: () => void;
 }) {
   const { user, refreshProfile } = useAuth();
   const hand = tournament.hand;
@@ -250,6 +297,7 @@ function PokerTable({
 
   const mySeatNo = seats.find((s) => s.user_id === user?.id)?.seat_no ?? -1;
   const seated = mySeatNo >= 0;
+  const isCreator = tournament.created_by === user?.id;
 
   const pushHand = useCallback(
     async (next: HandState) => {
@@ -269,8 +317,11 @@ function PokerTable({
     [tournament.id, onRefresh],
   );
 
-  const deal = async () => {
-    if (seats.length < 2) return toast.error("Potřebujete alespoň 2 hráče.");
+  const deal = useCallback(async () => {
+    if (seats.length < 2) {
+      toast.error("Ke spuštění hry jsou potřeba alespoň 2 hráči.");
+      return;
+    }
     const dealer = hand ? (hand.dealer + 1) % seats.length : 0;
     const next = startHand(
       seats.map((s) => ({ userId: s.user_id, nickname: s.nickname, chips: s.chips })),
@@ -278,7 +329,26 @@ function PokerTable({
       Math.max(5, Math.round(tournament.starting_chips / 100)),
     );
     await pushHand(next);
-  };
+  }, [seats, hand, tournament.starting_chips, pushHand]);
+
+  /* ---- AUTOMATICKÝ START A AUTOMATICKÉ ROZDÁVÁNÍ ---- */
+  useEffect(() => {
+    // 1. Automaticky začít, když se naplní stůl
+    const isFull = seats.length >= tournament.max_players;
+    const noHandRunning = !hand || hand.stage === "done";
+
+    if (isFull && noHandRunning && isCreator) {
+      void deal();
+    }
+
+    // 2. Automaticky rozdat další kolo po dohrání
+    if (hand && hand.stage === "done" && seats.length >= 2 && isCreator) {
+      const timer = setTimeout(() => {
+        void deal();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [seats.length, tournament.max_players, hand, isCreator, deal]);
 
   const act = async (action: PokerAction, amount = 0) => {
     if (!hand || !user) return;
@@ -311,13 +381,29 @@ function PokerTable({
       <div className="space-y-4">
         <div className="glass flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Stůl · buy-in ${Number(tournament.buy_in).toFixed(0)}</p>
-            <MagneticText text={tournament.name.toUpperCase()} className="font-display text-2xl tracking-[0.1em] text-primary sm:text-3xl" />
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
+              Stůl · buy-in ${Number(tournament.buy_in).toFixed(0)}
+            </p>
+            <MagneticText
+              text={tournament.name.toUpperCase()}
+              className="font-display text-2xl tracking-[0.1em] text-primary sm:text-3xl"
+            />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={onLeave} className="rounded-xl border border-border/60 px-3 py-2 font-mono text-[11px] uppercase tracking-widest">
+            <button
+              onClick={onLeave}
+              className="rounded-xl border border-border/60 px-3 py-2 font-mono text-[11px] uppercase tracking-widest"
+            >
               Zpět do lobby
             </button>
+            {isCreator && (
+              <button
+                onClick={onCancel}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-danger/40 bg-danger/10 px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-danger hover:bg-danger/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Zrušit turnaj
+              </button>
+            )}
             {seated && (
               <button
                 onClick={cashOut}
@@ -342,7 +428,7 @@ function PokerTable({
           {/* Community */}
           <div className="flex flex-col items-center gap-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">
-              {hand ? hand.stage.toUpperCase() : "ČEKÁ NA ROZDÁNÍ"}
+              {hand ? hand.stage.toUpperCase() : `ČEKÁ NA HRÁČE (${seats.length}/${tournament.max_players})`}
             </p>
             <div className="flex items-center gap-2">
               {Array.from({ length: 5 }, (_, i) => (
@@ -391,7 +477,10 @@ function PokerTable({
                   </div>
                   <div className="mt-2 flex gap-1.5">
                     {hand ? (
-                      holeCards(hand, seats.findIndex((x) => x.id === s.id)).map((c, i) => (
+                      holeCards(
+                        hand,
+                        seats.findIndex((x) => x.id === s.id),
+                      ).map((c, i) => (
                         <HoleCard key={i} card={c} hidden={!mine && hand.stage !== "done"} delay={i * 120} />
                       ))
                     ) : (
