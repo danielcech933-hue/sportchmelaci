@@ -25,11 +25,17 @@ interface BetMap {
   [key: string]: number;
 }
 
-// 2. Hlavní komponenta (NÁZEV MUSÍ BÝT RoyalRoulette)
 export function RoyalRoulette() {
-  const { user, balance = 0, refreshProfile } = useAuth();
+  const { user, balance: authBalance = 0, refreshProfile } = useAuth();
 
-  // Stavy
+  // Lokální zrcadlení zůstatku pro okamžitou odezvu UI
+  const [localBalance, setLocalBalance] = useState<number>(authBalance);
+
+  useEffect(() => {
+    setLocalBalance(authBalance);
+  }, [authBalance]);
+
+  // Stavy hry
   const [selectedChip, setSelectedChip] = useState<number>(10);
   const [bets, setBets] = useState<BetMap>({});
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
@@ -37,8 +43,7 @@ export function RoyalRoulette() {
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
-  // Ochrana pro případ, že se uživatel překlikne jinam během točení
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -50,25 +55,29 @@ export function RoyalRoulette() {
 
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
 
-  // Bezpečná funkce pro úpravu zůstatku přes Supabase
-  const handleBalanceUpdate = async (amountChange: number) => {
+  // Bezpečná synchronizace zůstatku s DB
+  const syncBalanceToDb = async (newBalance: number) => {
     if (!user?.id) return;
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ balance: balance + amountChange })
-        .eq("id", user.id);
+      // Zkusíme standardní primární klíč 'id'
+      const { error } = await supabase.from("profiles").update({ balance: newBalance }).eq("id", user.id);
 
-      if (error) throw error;
-      if (refreshProfile) await refreshProfile();
+      if (error) {
+        // Fallback pro schémata s 'user_id'
+        await supabase.from("profiles").update({ balance: newBalance }).eq("user_id", user.id);
+      }
+
+      if (refreshProfile) {
+        await refreshProfile();
+      }
     } catch (err) {
-      console.error("Chyba databáze:", err);
+      console.error("Chyba při ukládání zůstatku:", err);
     }
   };
 
   const handlePlaceBet = (betKey: string) => {
     if (isSpinning) return;
-    if (balance < totalBetAmount + selectedChip) {
+    if (localBalance < totalBetAmount + selectedChip) {
       toast.error("Nedostatek prostředků na účtu.");
       return;
     }
@@ -88,18 +97,23 @@ export function RoyalRoulette() {
       toast.error("Nejprve polož sázky na stůl!");
       return;
     }
-    if (balance < totalBetAmount) {
+    if (localBalance < totalBetAmount) {
       toast.error("Nemáš dostatečný zůstatek na tyto sázky.");
       return;
     }
     if (isSpinning) return;
 
     setIsSpinning(true);
+
     const currentBets = { ...betsRef.current };
+    const betDeduction = totalBetAmount;
 
-    // Stržení sázky
-    await handleBalanceUpdate(-totalBetAmount);
+    // Zůstatek po odečtení sázky
+    const balanceAfterBet = localBalance - betDeduction;
+    setLocalBalance(balanceAfterBet);
+    await syncBalanceToDb(balanceAfterBet);
 
+    // Výpočet otočení rulety
     const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
     const winningNum = WHEEL_NUMBERS[winningIndex];
 
@@ -113,14 +127,18 @@ export function RoyalRoulette() {
       setLastWinningNumber(winningNum);
       setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
 
+      // Výpočet výhry
       let totalPayout = 0;
       Object.entries(currentBets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
       });
 
+      const finalBalance = balanceAfterBet + totalPayout;
+      setLocalBalance(finalBalance);
+
       if (totalPayout > 0) {
         toast.success(`🎉 Výhra! Získáváš $${totalPayout}`);
-        await handleBalanceUpdate(totalPayout); // Přičtení výhry
+        await syncBalanceToDb(finalBalance);
       } else {
         toast.error("Tentokrát to nevyšlo.");
       }
@@ -132,7 +150,7 @@ export function RoyalRoulette() {
 
   return (
     <div className="space-y-6 select-none">
-      {/* VIZUÁL RUULTY */}
+      {/* VIZUÁL RULETY */}
       <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center">
         <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1 mb-4">
           <Sparkles className="h-3 w-3" /> Royal European Roulette
@@ -366,7 +384,7 @@ export function RoyalRoulette() {
           <div className="flex items-center gap-4">
             <div className="text-right font-mono text-xs">
               <span className="text-zinc-500 block">Zůstatek</span>
-              <span className="font-bold text-amber-400 text-sm">${balance}</span>
+              <span className="font-bold text-amber-400 text-sm">${localBalance}</span>
             </div>
 
             <button
@@ -383,7 +401,7 @@ export function RoyalRoulette() {
   );
 }
 
-// 3. Pomocné komponenty a funkce
+// 3. Pomocné komponenty a výpočet
 function ChipBadge({ amount }: { amount: number }) {
   return (
     <motion.span
@@ -446,3 +464,5 @@ function calculateBetPayout(betKey: string, amount: number, winningNum: number):
 
   return 0;
 }
+
+export default RoyalRoulette;
