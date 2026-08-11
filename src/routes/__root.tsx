@@ -39,6 +39,7 @@ import { WinCelebrations } from "@/lib/win-toasts";
 import { WalletProvider, useWallet } from "@/lib/wallet";
 import { Toaster } from "@/components/ui/sonner";
 import { StadiumBackdrop } from "@/components/StadiumBackdrop";
+import { CursorSpotlight } from "@/lib/fx";
 import { motion } from "framer-motion";
 
 
@@ -158,6 +159,7 @@ function RootComponent() {
           <DmProvider>
             <div className="flex min-h-screen flex-col">
               <StadiumBackdrop />
+              <CursorSpotlight />
               <SiteHeader />
               <div className="flex-1">
                 <PageTransition />

@@ -202,6 +202,36 @@ export type Database = {
         }
         Relationships: []
       }
+      casino_chat: {
+        Row: {
+          content: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          nickname: string
+          room: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          nickname: string
+          room: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          nickname?: string
+          room?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -562,6 +592,83 @@ export type Database = {
           },
         ]
       }
+      poker_seats: {
+        Row: {
+          chips: number
+          created_at: string
+          id: string
+          nickname: string
+          seat_no: number
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          chips?: number
+          created_at?: string
+          id?: string
+          nickname: string
+          seat_no: number
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          chips?: number
+          created_at?: string
+          id?: string
+          nickname?: string
+          seat_no?: number
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poker_seats_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poker_tournaments: {
+        Row: {
+          buy_in: number
+          created_at: string
+          created_by: string
+          hand: Json | null
+          id: string
+          max_players: number
+          name: string
+          starting_chips: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buy_in: number
+          created_at?: string
+          created_by: string
+          hand?: Json | null
+          id?: string
+          max_players?: number
+          name: string
+          starting_chips?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buy_in?: number
+          created_at?: string
+          created_by?: string
+          hand?: Json | null
+          id?: string
+          max_players?: number
+          name?: string
+          starting_chips?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           arcade_points: number
@@ -592,6 +699,63 @@ export type Database = {
           id?: string
           nickname?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      roulette_bets: {
+        Row: {
+          amount: number
+          bet_type: string
+          bet_value: string | null
+          created_at: string
+          id: string
+          nickname: string
+          payout: number | null
+          round_no: number
+          settled: boolean
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bet_type: string
+          bet_value?: string | null
+          created_at?: string
+          id?: string
+          nickname: string
+          payout?: number | null
+          round_no: number
+          settled?: boolean
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bet_type?: string
+          bet_value?: string | null
+          created_at?: string
+          id?: string
+          nickname?: string
+          payout?: number | null
+          round_no?: number
+          settled?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      roulette_rounds: {
+        Row: {
+          created_at: string
+          result: number
+          round_no: number
+        }
+        Insert: {
+          created_at?: string
+          result: number
+          round_no: number
+        }
+        Update: {
+          created_at?: string
+          result?: number
+          round_no?: number
         }
         Relationships: []
       }
@@ -850,6 +1014,32 @@ export type Database = {
         }
         Returns: Json
       }
+      poker_cash_out: { Args: { _tournament_id: string }; Returns: Json }
+      poker_create_tournament: {
+        Args: {
+          _buy_in: number
+          _max_players: number
+          _name: string
+          _starting_chips: number
+        }
+        Returns: string
+      }
+      poker_join: { Args: { _tournament_id: string }; Returns: Json }
+      poker_sync_chips: {
+        Args: { _stacks: Json; _tournament_id: string }
+        Returns: undefined
+      }
+      roulette_place_bet: {
+        Args: {
+          _amount: number
+          _bet_type: string
+          _bet_value: string
+          _round_no: number
+        }
+        Returns: Json
+      }
+      roulette_result: { Args: { _round_no: number }; Returns: number }
+      roulette_settle: { Args: { _round_no: number }; Returns: Json }
       set_tournament_schedule: {
         Args: { _scheduled_at: string; _tournament_id: string }
         Returns: undefined
