@@ -24,7 +24,6 @@ interface BetMap {
   [key: string]: number;
 }
 
-// Konstanty pro globální Live cyklus (celkem 25s: 15s sázky + 5s točení + 5s pauza)
 const BETTING_PHASE_SEC = 15;
 const SPIN_PHASE_SEC = 5;
 const TOTAL_CYCLE_SEC = 25;
@@ -32,7 +31,13 @@ const TOTAL_CYCLE_SEC = 25;
 export function LiveRoulette() {
   const { user, balance = 0, refreshProfile } = useAuth();
 
-  // Stavy hry
+  // Reference na aktuální zůstatek zabraňující stale closure
+  const balanceRef = useRef(balance);
+  useEffect(() => {
+    balanceRef.current = balance;
+  }, [balance]);
+
+  // Stavy gry
   const [selectedChip, setSelectedChip] = useState<number>(10);
   const [bets, setBets] = useState<BetMap>({});
   const [wheelRotation, setWheelRotation] = useState<number>(0);
@@ -47,28 +52,24 @@ export function LiveRoulette() {
   betsRef.current = bets;
 
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
-  // DYNAMICKÝ ŽIVÝ ZŮSTATEK (okamžitě odečítá položení žetonů)
   const availableBalance = balance - totalBetAmount;
 
-  // 1. GLOBÁLNÍ SYNCHRONIZOVANÝ ČASOVAČ (Live Loop)
+  // 1. Synchronizovaný Live časovač
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Math.floor(Date.now() / 1000);
       const cycleTime = now % TOTAL_CYCLE_SEC;
 
       if (cycleTime < BETTING_PHASE_SEC) {
-        // Fáze podávání sázek
         setPhase("BETTING");
         setTimeLeft(BETTING_PHASE_SEC - cycleTime);
       } else if (cycleTime < BETTING_PHASE_SEC + SPIN_PHASE_SEC) {
-        // Fáze točení rulety
         if (phase !== "SPINNING") {
           handleAutoSpin(now);
         }
         setPhase("SPINNING");
         setTimeLeft(BETTING_PHASE_SEC + SPIN_PHASE_SEC - cycleTime);
       } else {
-        // Fáze zobrazování výsledku
         setPhase("RESULT");
         setTimeLeft(TOTAL_CYCLE_SEC - cycleTime);
       }
@@ -77,29 +78,31 @@ export function LiveRoulette() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // Zapís zůstatku do Supabase DB
+  // Přímá aktualizace databáze a okamžitý refresh Auth profilu
   const updateDatabaseBalance = async (newBalance: number) => {
     if (!user?.id) return;
     try {
       const { error } = await supabase.from("profiles").update({ balance: newBalance }).eq("id", user.id);
 
       if (error) throw error;
-      if (refreshProfile) await refreshProfile();
+      if (refreshProfile) {
+        await refreshProfile();
+      }
     } catch (err) {
-      console.error("Chyba při aktualizaci zůstatku:", err);
+      console.error("Chyba při zápisu do DB:", err);
     }
   };
 
-  // 2. AUTOMATICKÉ ZATOČENÍ PO VYPRŠENÍ ČASU SÁZEK
+  // 2. Vyhodnocení kola a přičtení/odečtení financí
   const handleAutoSpin = async (seedTime: number) => {
     const currentBets = { ...betsRef.current };
     const currentBetTotal = Object.values(currentBets).reduce((a, b) => a + b, 0);
 
-    // Deterministický výpočet výherního čísla pro všechny hráče ve stejnou vteřinu
+    // Výpočet výherního čísla
     const winningIndex = seedTime % WHEEL_NUMBERS.length;
     const winningNum = WHEEL_NUMBERS[winningIndex];
 
-    // Animace rotace
+    // Animace otáčení
     const segmentAngle = 360 / WHEEL_NUMBERS.length;
     setWheelRotation((prev) => {
       const currentSpins = Math.floor(prev / 360);
@@ -107,7 +110,7 @@ export function LiveRoulette() {
       return (currentSpins + 5) * 360 + targetMod;
     });
 
-    // Vyhodnocení sázek po dojezdu rulety
+    // Po dojezdu disku vyhodnotíme sázky s ČERSTVÝM zůstatkem
     setTimeout(async () => {
       setLastWinningNumber(winningNum);
       setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
@@ -118,7 +121,11 @@ export function LiveRoulette() {
           totalPayout += calculateBetPayout(key, amount, winningNum);
         });
 
-        const finalBalance = balance - currentBetTotal + totalPayout;
+        // Použití balanceRef.current zaručí správný výpočet od aktuálního stavu
+        const currentBalance = balanceRef.current;
+        const netChange = totalPayout - currentBetTotal;
+        const finalBalance = Math.max(0, currentBalance + netChange);
+
         await updateDatabaseBalance(finalBalance);
 
         if (totalPayout > 0) {
@@ -134,7 +141,7 @@ export function LiveRoulette() {
 
   const handlePlaceBet = (betKey: string) => {
     if (phase !== "BETTING") {
-      toast.error("Sázky pro toto kolo jsou již uzavřeny!");
+      toast.error("Sázky pro toto kolo jsou uzavřeny!");
       return;
     }
     if (availableBalance < selectedChip) {
@@ -155,9 +162,8 @@ export function LiveRoulette() {
 
   return (
     <div className="space-y-6 select-none">
-      {/* VIZUÁL / ANIMOVANÉ KOLO RULETY & LIVE DISPLAY */}
+      {/* VIZUÁL A LIVE STAV */}
       <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center">
-        {/* LIVE STATUS BAR */}
         <div className="w-full flex items-center justify-between mb-4 border-b border-white/10 pb-3">
           <span className="font-mono text-xs uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
             <Sparkles className="h-4 w-4" /> Royal European Roulette
@@ -181,7 +187,7 @@ export function LiveRoulette() {
           </div>
         </div>
 
-        {/* Fyzické animované kolo */}
+        {/* Rotující kolo */}
         <div className="relative flex items-center justify-center my-2">
           <div className="absolute -top-3 z-20 h-4 w-4 rounded-full bg-amber-400 border-2 border-white shadow-lg shadow-amber-500/50" />
 
@@ -268,7 +274,7 @@ export function LiveRoulette() {
         <div className="space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
             <OutsideBetBtn
-              label="ČERVENÁ"
+              label="ČERVENÁ (2x)"
               betKey="red"
               color="red"
               bets={bets}
@@ -276,7 +282,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="ČERNÁ"
+              label="ČERNÁ (2x)"
               betKey="black"
               color="black"
               bets={bets}
@@ -284,7 +290,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="SUDÁ"
+              label="SUDÁ (2x)"
               betKey="even"
               color="dark"
               bets={bets}
@@ -292,7 +298,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="LICHÁ"
+              label="LICHÁ (2x)"
               betKey="odd"
               color="dark"
               bets={bets}
@@ -300,7 +306,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="1–18"
+              label="1–18 (2x)"
               betKey="1-18"
               color="dark"
               bets={bets}
@@ -308,7 +314,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="19–36"
+              label="19–36 (2x)"
               betKey="19-36"
               color="dark"
               bets={bets}
@@ -318,7 +324,7 @@ export function LiveRoulette() {
           </div>
           <div className="grid grid-cols-3 gap-2">
             <OutsideBetBtn
-              label="1. TUCET (1-12)"
+              label="1. TUCET (1-12) 3x"
               betKey="doz_1"
               color="dark"
               bets={bets}
@@ -326,7 +332,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="2. TUCET (13-24)"
+              label="2. TUCET (13-24) 3x"
               betKey="doz_2"
               color="dark"
               bets={bets}
@@ -334,7 +340,7 @@ export function LiveRoulette() {
               disabled={phase !== "BETTING"}
             />
             <OutsideBetBtn
-              label="3. TUCET (25-36)"
+              label="3. TUCET (25-36) 3x"
               betKey="doz_3"
               color="dark"
               bets={bets}
@@ -387,7 +393,7 @@ export function LiveRoulette() {
           </div>
         </div>
 
-        {/* Dolní lišta žetonů a stavu účtu */}
+        {/* Dolní ovládací panel a Zůstatek */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-zinc-400 mr-1">Hodnota žetonu:</span>
@@ -406,7 +412,7 @@ export function LiveRoulette() {
               </button>
             ))}
             <button
-              onClick={() => setSelectedChip(availableBalance)}
+              onClick={() => setSelectedChip(Math.max(0, availableBalance))}
               className={cn(
                 "rounded-xl border px-3 py-2 font-mono text-xs font-black uppercase transition",
                 selectedChip === availableBalance
@@ -420,12 +426,12 @@ export function LiveRoulette() {
 
           <div className="flex items-center gap-4">
             <div className="text-right font-mono text-xs">
-              <span className="text-zinc-500 block">Dostupný zůstatek</span>
+              <span className="text-zinc-500 block">Zůstatek v profilu</span>
               <span className="font-bold text-amber-400 text-sm">${availableBalance}</span>
             </div>
 
             <div className="rounded-xl bg-zinc-900 border border-amber-500/30 px-6 py-3 font-mono text-xs font-black uppercase tracking-wider text-amber-400 shadow-lg">
-              {phase === "BETTING" ? `VSAZENO: $${totalBetAmount}` : "SÁZKY UZAVŘENY"}
+              {phase === "BETTING" ? `VSADIT $${totalBetAmount}` : "SÁZKY UZAVŘENY"}
             </div>
           </div>
         </div>
@@ -489,7 +495,7 @@ function calculateBetPayout(betKey: string, amount: number, winningNum: number):
   if (betKey === "even" && winningNum !== 0 && winningNum % 2 === 0) return amount * 2;
   if (betKey === "odd" && winningNum % 2 !== 0) return amount * 2;
   if (betKey === "1-18" && winningNum >= 1 && winningNum <= 18) return amount * 2;
-  if (betKey === "19-36" && winningNum >= 19 && winningNum <= 36) return amount * 2;
+  if (betKey === "19-36" && winningNum >= 19 && winningNum <= 36) return amount * 3;
   if (betKey === "doz_1" && winningNum >= 1 && winningNum <= 12) return amount * 3;
   if (betKey === "doz_2" && winningNum >= 13 && winningNum <= 24) return amount * 3;
   if (betKey === "doz_3" && winningNum >= 25 && winningNum <= 36) return amount * 3;
