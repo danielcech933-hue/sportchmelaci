@@ -456,3 +456,129 @@ body { padding-bottom: 5.5rem; }
     animation: shimmer-slide 1.4s linear infinite;
   }
 }
+
+/* ===== BRUTAL FX — interaktivní text, 3D tilt, kurzorové světlo ===== */
+@keyframes fx-shimmer-sweep {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
+}
+@keyframes fx-jitter {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1.5px, 1px); }
+  40% { transform: translate(1.5px, -1px); }
+  60% { transform: translate(-1px, -1.5px); }
+  80% { transform: translate(1px, 1.5px); }
+}
+
+.fx-text {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  transition: text-shadow 220ms ease, color 220ms ease, transform 220ms ease;
+}
+.fx-text::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, white 70%, transparent), transparent);
+  mix-blend-mode: screen;
+}
+.fx-text:hover {
+  text-shadow:
+    0 0 8px color-mix(in oklab, var(--color-primary) 85%, transparent),
+    0 0 22px color-mix(in oklab, var(--color-primary) 55%, transparent),
+    0 0 46px color-mix(in oklab, var(--color-accent) 35%, transparent);
+}
+.fx-text:hover::after {
+  opacity: 0.75;
+  animation: fx-shimmer-sweep 0.85s ease-out;
+}
+.fx-glitch:hover { animation: fx-jitter 0.22s steps(2) 3; }
+
+/* Globální hover glow pro nadpisy a tlačítka */
+h1, h2, h3, button, a {
+  transition: text-shadow 220ms ease, filter 220ms ease, transform 200ms ease;
+}
+h1:hover, h2:hover, h3:hover {
+  text-shadow:
+    0 0 10px color-mix(in oklab, var(--color-primary) 70%, transparent),
+    0 0 30px color-mix(in oklab, var(--color-primary) 40%, transparent);
+}
+button:hover:not(:disabled) { filter: drop-shadow(0 0 10px color-mix(in oklab, var(--color-primary) 55%, transparent)); }
+
+.fx-tilt {
+  transform: perspective(900px);
+  transform-style: preserve-3d;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 250ms ease;
+  will-change: transform;
+}
+.fx-spotlight { position: relative; isolation: isolate; }
+.fx-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 250ms ease;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--color-primary) 22%, transparent), transparent 70%);
+}
+.fx-spotlight:hover::before { opacity: 1; }
+
+.cursor-dot, .cursor-halo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  will-change: transform;
+}
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: var(--color-primary);
+  box-shadow: 0 0 12px var(--color-primary), 0 0 28px color-mix(in oklab, var(--color-primary) 60%, transparent);
+}
+.cursor-halo {
+  width: 190px;
+  height: 190px;
+  margin: -95px 0 0 -95px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 65%);
+  animation: pulse-glow 2.6s ease-in-out infinite;
+}
+
+/* ===== Casino — ruleta & poker ===== */
+@keyframes wheel-glow {
+  0%, 100% { box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 45%, transparent), 0 0 60px -20px var(--color-primary); }
+  50% { box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 80%, transparent), 0 0 90px -10px var(--color-primary); }
+}
+.wheel-glow { animation: wheel-glow 3s ease-in-out infinite; }
+
+@utility felt {
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--color-accent) 22%, transparent), transparent 62%),
+    linear-gradient(180deg, #06281a, #021009 70%);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 32%, transparent);
+  box-shadow: inset 0 0 90px -30px color-mix(in oklab, var(--color-accent) 60%, transparent),
+    0 30px 90px -50px #000;
+}
+
+@keyframes emoji-fly {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-70px) scale(1.5); opacity: 0; }
+}
+.emoji-fly { animation: emoji-fly 1.6s ease-out forwards; }
+
+@keyframes holo-card {
+  from { transform: rotateY(180deg) scale(0.7); opacity: 0; }
+  to { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+.holo-card { animation: holo-card 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
