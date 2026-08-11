@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 // Definice červených čísel
 const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+const REDS_SET = new Set(RED_NUMBERS);
 
 // Reálné pořadí čísel na evropském ruletovém kole (po směru hodinových ručiček)
 const WHEEL_NUMBERS = [
@@ -36,7 +37,7 @@ export function LiveRoulette() {
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
-  // Ref pro bezpečný přístup k aktuálním sázkám uvnitř časovače
+  // Ref pro bezpečný přístup k aktuálním sázkám
   const betsRef = useRef<BetMap>({});
   betsRef.current = bets;
 
@@ -76,37 +77,30 @@ export function LiveRoulette() {
 
     setIsSpinning(true);
 
-    // Uchováme si sázky pro vyhodnocení na konci
     const currentBets = { ...betsRef.current };
 
-    // 1. Okamžitě strhneme sázku ze zůstatku
     if (updateBalance) {
       await updateBalance(-totalBetAmount);
     }
 
-    // 2. Vygenerujeme výherní číslo
     const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
     const winningNum = WHEEL_NUMBERS[winningIndex];
 
-    // 3. Výpočet rotace
     const segmentAngle = 360 / WHEEL_NUMBERS.length;
     const extraSpins = 360 * 5;
     const targetAngle = extraSpins + (360 - winningIndex * segmentAngle);
 
     setWheelRotation((prev) => prev + targetAngle);
 
-    // 4. Čekání na dokončení animace (4 sekundy)
     setTimeout(async () => {
       setLastWinningNumber(winningNum);
       setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
 
-      // Výpočet celkové výhry
       let totalPayout = 0;
       Object.entries(currentBets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
       });
 
-      // Zápis výhry do zůstatku
       if (totalPayout > 0) {
         toast.success(`🎉 Výhra! Získáváš $${totalPayout}`);
         if (updateBalance) {
@@ -133,27 +127,23 @@ export function LiveRoulette() {
           <Sparkles className="h-3 w-3" /> Royal European Roulette
         </span>
 
-        {/* Ruletové kolo */}
         <div className="relative flex items-center justify-center my-2">
-          {/* Ukazatel / Kulička nahoře */}
           <div className="absolute -top-3 z-20 h-4 w-4 rounded-full bg-amber-400 border-2 border-white shadow-lg shadow-amber-500/50" />
 
-          {/* Otáčející se disk kola */}
           <motion.div
             animate={{ rotate: wheelRotation }}
             transition={{ duration: 4, ease: [0.15, 0.85, 0.35, 1.0] }}
             className="relative flex h-52 w-52 items-center justify-center rounded-full border-8 border-amber-600/40 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 shadow-2xl"
           >
-            {/* Vnitřní středový displej */}
             <div className="z-10 flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 border-amber-500/50 bg-black/90 shadow-inner">
               <span className="font-mono text-[9px] uppercase text-zinc-500">POSLEDNÍ</span>
               <span
                 className={cn(
                   "font-display text-3xl font-black",
                   lastWinningNumber === 0 && "text-emerald-400",
-                  lastWinningNumber !== null && RED_NUMBERS.includes(lastWinningNumber) && "text-red-500",
+                  lastWinningNumber !== null && REDS_SET.has(lastWinningNumber) && "text-red-500",
                   lastWinningNumber !== null &&
-                    !RED_NUMBERS.includes(lastWinningNumber) &&
+                    !REDS_SET.has(lastWinningNumber) &&
                     lastWinningNumber !== 0 &&
                     "text-zinc-100",
                 )}
@@ -162,10 +152,9 @@ export function LiveRoulette() {
               </span>
             </div>
 
-            {/* Čísla po obvodu */}
             {WHEEL_NUMBERS.map((num, idx) => {
               const angle = (360 / WHEEL_NUMBERS.length) * idx;
-              const isRed = RED_NUMBERS.includes(num);
+              const isRed = REDS_SET.has(num);
               return (
                 <div
                   key={idx}
@@ -188,7 +177,6 @@ export function LiveRoulette() {
           </motion.div>
         </div>
 
-        {/* Historie čísel */}
         <div className="flex items-center gap-1.5 overflow-x-auto mt-4 p-1">
           {history.map((num, idx) => (
             <span
@@ -196,8 +184,8 @@ export function LiveRoulette() {
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold border",
                 num === 0 && "border-emerald-500/40 bg-emerald-950/60 text-emerald-400",
-                RED_NUMBERS.includes(num) && "border-red-500/40 bg-red-950/60 text-red-400",
-                !RED_NUMBERS.includes(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
+                REDS_SET.has(num) && "border-red-500/40 bg-red-950/60 text-red-400",
+                !REDS_SET.has(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
               )}
             >
               {num}
@@ -221,7 +209,6 @@ export function LiveRoulette() {
           )}
         </div>
 
-        {/* 1. Vnější sázky */}
         <div className="space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
             <OutsideBetBtn
@@ -301,7 +288,6 @@ export function LiveRoulette() {
           </div>
         </div>
 
-        {/* 2. Číselná mřížka 3x12 + 0 */}
         <div className="flex gap-1.5 overflow-x-auto pb-2 select-none">
           <button
             disabled={isSpinning}
@@ -319,7 +305,7 @@ export function LiveRoulette() {
             {BOARD_GRID.map((row, rowIndex) => (
               <div key={rowIndex} className="grid grid-cols-12 gap-1.5">
                 {row.map((num) => {
-                  const isRed = RED_NUMBERS.includes(num);
+                  const isRed = REDS_SET.has(num);
                   const betKey = num.toString();
                   const currentBet = bets[betKey];
 
@@ -345,7 +331,6 @@ export function LiveRoulette() {
           </div>
         </div>
 
-        {/* 3. Výběr žetonů a spuštění */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-zinc-400 mr-1">Hodnota žetonu:</span>
@@ -396,7 +381,6 @@ export function LiveRoulette() {
   );
 }
 
-// Odznak žetonu na políčku
 function ChipBadge({ amount }: { amount: number }) {
   return (
     <motion.span
@@ -409,7 +393,6 @@ function ChipBadge({ amount }: { amount: number }) {
   );
 }
 
-// Tlačítko pro vnější sázky
 function OutsideBetBtn({
   label,
   betKey,
@@ -444,9 +427,8 @@ function OutsideBetBtn({
   );
 }
 
-// Výpočet výplat
 function calculateBetPayout(betKey: string, amount: number, winningNum: number): number {
-  const isRed = RED_NUMBERS.includes(winningNum);
+  const isRed = REDS_SET.has(winningNum);
 
   if (betKey === winningNum.toString()) return amount * 36;
   if (betKey === "red" && isRed) return amount * 2;
