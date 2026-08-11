@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Coins, RotateCcw, Sparkles, Volume2, VolumeX } from "lucide-react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Sparkles, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -21,20 +20,21 @@ interface BetMap {
   [key: string]: number;
 }
 
-export function RoyalRoulette() {
-  const { user, balance, refreshProfile } = useAuth();
+// SPRÁVNÝ EXPORT: Název komponenty odpovídá importu v SlotLobby.tsx
+export function LiveRoulette() {
+  const { balance, refreshProfile } = useAuth();
 
-  // Stavy hry
+  // Stavy
   const [selectedChip, setSelectedChip] = useState<number>(10);
   const [bets, setBets] = useState<BetMap>({});
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
-  // Celková hodnota aktuálně položených sázek na stole
+  // Celková částka sázek na stole
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
 
-  // Funkce pro podání/přidání sázky na konkrétní pole
+  // Přidání sázky kliknutím
   const handlePlaceBet = (betKey: string) => {
     if (isSpinning) return;
     if (balance < totalBetAmount + selectedChip) {
@@ -48,13 +48,13 @@ export function RoyalRoulette() {
     }));
   };
 
-  // Vyčištění všech sázek ze stolu
+  // Vyčištění sázek
   const clearBets = () => {
     if (isSpinning) return;
     setBets({});
   };
 
-  // Zatočení rulety
+  // Spuštění rulety
   const spinWheel = async () => {
     if (totalBetAmount === 0) {
       toast.error("Nejprve polož sázky na stůl!");
@@ -64,14 +64,12 @@ export function RoyalRoulette() {
 
     setIsSpinning(true);
 
-    // Výpočet výhry/prohry a generování výsledku (možno propojit s RPC na Supabase)
     const winningNum = Math.floor(Math.random() * 37); // 0 až 36
 
     setTimeout(async () => {
       setLastWinningNumber(winningNum);
       setHistory((prev) => [winningNum, ...prev.slice(0, 9)]);
 
-      // Zde vyhodnotíme sázky
       let totalPayout = 0;
       Object.entries(bets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
@@ -83,23 +81,21 @@ export function RoyalRoulette() {
         toast.error("Tentokrát to nevyšlo.");
       }
 
-      // Aktualizace profilu / databáze
       await refreshProfile();
       setBets({});
       setIsSpinning(false);
-    }, 3000); // Simulace délky točení kuličky
+    }, 3000);
   };
 
   return (
     <div className="space-y-6">
-      {/* HORNÍ KOLO / VIZUÁL RULETY */}
+      {/* VIZUÁL / HORNÍ DISPLAY */}
       <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl">
         <div className="flex flex-col items-center justify-center text-center">
           <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1">
             <Sparkles className="h-3 w-3" /> Royal European Roulette
           </span>
 
-          {/* Středový displej výsledku */}
           <div className="my-6 flex h-28 w-28 flex-col items-center justify-center rounded-full border-4 border-amber-500/40 bg-black/80 shadow-2xl ring-4 ring-amber-500/10">
             <span className="font-mono text-[10px] uppercase text-zinc-500">POSLEDNÍ</span>
             <span
@@ -117,7 +113,7 @@ export function RoyalRoulette() {
             </span>
           </div>
 
-          {/* Historie padlých čísel */}
+          {/* Historie čísel */}
           <div className="flex items-center gap-1.5 overflow-x-auto p-2">
             {history.map((num, idx) => (
               <span
@@ -151,7 +147,7 @@ export function RoyalRoulette() {
           )}
         </div>
 
-        {/* 1. Vnější sázky (Outside Bets) */}
+        {/* 1. Vnější sázky */}
         <div className="space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
             <OutsideBetBtn
@@ -231,9 +227,8 @@ export function RoyalRoulette() {
           </div>
         </div>
 
-        {/* 2. Hlavní mřížka čísel (3 × 12 + 0) */}
+        {/* 2. Číselná mřížka 3x12 + 0 */}
         <div className="flex gap-1.5 overflow-x-auto pb-2 select-none">
-          {/* Nula (přes 3 řádky) */}
           <button
             disabled={isSpinning}
             onClick={() => handlePlaceBet("0")}
@@ -245,7 +240,6 @@ export function RoyalRoulette() {
             0{bets["0"] && <ChipBadge amount={bets["0"]} />}
           </button>
 
-          {/* Mřížka 3x12 */}
           <div className="grid flex-1 grid-rows-3 gap-1.5 min-w-[620px]">
             {BOARD_GRID.map((row, rowIndex) => (
               <div key={rowIndex} className="grid grid-cols-12 gap-1.5">
@@ -276,7 +270,7 @@ export function RoyalRoulette() {
           </div>
         </div>
 
-        {/* 3. Lišta s výběrem žetonů a spuštěním */}
+        {/* 3. Výběr žetonu a tlačítko vsadit */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-zinc-400 mr-1">Hodnota žetonu:</span>
@@ -327,7 +321,7 @@ export function RoyalRoulette() {
   );
 }
 
-// Pomocný odznáček žetonu na políčku
+// Odznak žetonu na políčku
 function ChipBadge({ amount }: { amount: number }) {
   return (
     <motion.span
@@ -340,7 +334,7 @@ function ChipBadge({ amount }: { amount: number }) {
   );
 }
 
-// Tlačítko vnějších sázek
+// Tlačítko pro vnější sázky
 function OutsideBetBtn({
   label,
   betKey,
@@ -375,7 +369,7 @@ function OutsideBetBtn({
   );
 }
 
-// Pomocný výpočet výplat
+// Výpočet výplat
 function calculateBetPayout(betKey: string, amount: number, winningNum: number): number {
   const isRed = RED_NUMBERS.includes(winningNum);
 
