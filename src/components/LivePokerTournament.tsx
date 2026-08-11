@@ -364,10 +364,20 @@ function PokerTable({
 
   const pushHand = useCallback(
     async (next: HandState) => {
-      await supabase
+      const { error } = await supabase
         .from("poker_tournaments")
-        .update({ hand: next as unknown as never, status: next.stage === "done" ? "lobby" : "running" })
+        .update({
+          hand: next as unknown as never,
+          status: next.stage === "done" ? "lobby" : "running",
+        })
         .eq("id", tournament.id);
+
+      if (error) {
+        console.error("Supabase Hand Update Error:", error);
+        toast.error(`Chyba při ukládání hry: ${error.message}`);
+        return;
+      }
+
       if (next.stage === "done") {
         const stacks: Record<string, number> = {};
         next.players.forEach((p) => {
@@ -375,6 +385,7 @@ function PokerTable({
         });
         await supabase.rpc("poker_sync_chips", { _tournament_id: tournament.id, _stacks: stacks });
       }
+
       void onRefresh();
     },
     [tournament.id, onRefresh],
@@ -385,13 +396,19 @@ function PokerTable({
       toast.error("Ke spuštění hry jsou potřeba alespoň 2 hráči u stolu.");
       return;
     }
-    const dealer = hand ? (hand.dealer + 1) % seats.length : 0;
-    const next = startHand(
-      seats.map((s) => ({ userId: s.user_id, nickname: s.nickname, chips: s.chips })),
-      dealer,
-      Math.max(5, Math.round(tournament.starting_chips / 100)),
-    );
-    await pushHand(next);
+
+    try {
+      const dealer = hand ? (hand.dealer + 1) % seats.length : 0;
+      const next = startHand(
+        seats.map((s) => ({ userId: s.user_id, nickname: s.nickname, chips: s.chips })),
+        dealer,
+        Math.max(5, Math.round(tournament.starting_chips / 100)),
+      );
+      await pushHand(next);
+    } catch (err: any) {
+      console.error("Deal error:", err);
+      toast.error("Selhalo generování karet.");
+    }
   }, [seats, hand, tournament.starting_chips, pushHand]);
 
   const act = async (action: PokerAction, amount = 0) => {
