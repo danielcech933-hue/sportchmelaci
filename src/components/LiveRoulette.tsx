@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-// 1. Definice čísel a konstant
+// 1. Definice čísel a konstant evropské rulety
 const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 const REDS_SET = new Set(RED_NUMBERS);
 
+// Přesné pořadí čísel na fyzickém evropském kole rulety
 const WHEEL_NUMBERS = [
   0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7,
   28, 12, 35, 3, 26,
@@ -26,16 +27,9 @@ interface BetMap {
 }
 
 export function RoyalRoulette() {
-  const { user, balance: authBalance = 0, refreshProfile } = useAuth();
+  const { user, balance = 0, refreshProfile } = useAuth();
 
-  // Lokální zrcadlení zůstatku pro okamžitou odezvu UI
-  const [localBalance, setLocalBalance] = useState<number>(authBalance);
-
-  useEffect(() => {
-    setLocalBalance(authBalance);
-  }, [authBalance]);
-
-  // Stavy hry
+  // Stavy
   const [selectedChip, setSelectedChip] = useState<number>(10);
   const [bets, setBets] = useState<BetMap>({});
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
@@ -43,41 +37,35 @@ export function RoyalRoulette() {
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref pro bezpečný přístup k aktuálním sázkám uvnitř setTimeoutu
+  const betsRef = useRef<BetMap>({});
+  betsRef.current = bets;
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
-  const betsRef = useRef<BetMap>({});
-  betsRef.current = bets;
-
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
 
-  // Bezpečná synchronizace zůstatku s DB
-  const syncBalanceToDb = async (newBalance: number) => {
+  // Funkce pro přímý a bezpečný zápis zůstatku do Supabase DB
+  const updateDatabaseBalance = async (newBalance: number) => {
     if (!user?.id) return;
     try {
-      // Zkusíme standardní primární klíč 'id'
       const { error } = await supabase.from("profiles").update({ balance: newBalance }).eq("id", user.id);
 
-      if (error) {
-        // Fallback pro schémata s 'user_id'
-        await supabase.from("profiles").update({ balance: newBalance }).eq("user_id", user.id);
-      }
-
-      if (refreshProfile) {
-        await refreshProfile();
-      }
+      if (error) throw error;
+      if (refreshProfile) await refreshProfile();
     } catch (err) {
-      console.error("Chyba při ukládání zůstatku:", err);
+      console.error("Chyba při aktualizaci zůstatku v Supabase:", err);
     }
   };
 
   const handlePlaceBet = (betKey: string) => {
     if (isSpinning) return;
-    if (localBalance < totalBetAmount + selectedChip) {
+    if (balance < totalBetAmount + selectedChip) {
       toast.error("Nedostatek prostředků na účtu.");
       return;
     }
@@ -97,71 +85,70 @@ export function RoyalRoulette() {
       toast.error("Nejprve polož sázky na stůl!");
       return;
     }
-    if (localBalance < totalBetAmount) {
+    if (balance < totalBetAmount) {
       toast.error("Nemáš dostatečný zůstatek na tyto sázky.");
       return;
     }
     if (isSpinning) return;
 
     setIsSpinning(true);
-
     const currentBets = { ...betsRef.current };
-    const betDeduction = totalBetAmount;
 
-    // Zůstatek po odečtení sázky
-    const balanceAfterBet = localBalance - betDeduction;
-    setLocalBalance(balanceAfterBet);
-    await syncBalanceToDb(balanceAfterBet);
+    // 1. Stržení celkové sázky z DB
+    const balanceAfterBet = balance - totalBetAmount;
+    await updateDatabaseBalance(balanceAfterBet);
 
-    // Výpočet otočení rulety
+    // 2. Náhodný výběr výherního indexu a čísla
     const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
     const winningNum = WHEEL_NUMBERS[winningIndex];
 
+    // 3. Výpočet plynulé rotace kola
     const segmentAngle = 360 / WHEEL_NUMBERS.length;
-    const extraSpins = 360 * 5;
-    const targetAngle = extraSpins + (360 - winningIndex * segmentAngle);
+    setWheelRotation((prev) => {
+      const currentSpins = Math.floor(prev / 360);
+      const targetMod = 360 - winningIndex * segmentAngle;
+      return (currentSpins + 5) * 360 + targetMod;
+    });
 
-    setWheelRotation((prev) => prev + targetAngle);
-
+    // 4. Vyhodnocení po dojezdu kola (3.5s)
     timeoutRef.current = setTimeout(async () => {
       setLastWinningNumber(winningNum);
       setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
 
-      // Výpočet výhry
       let totalPayout = 0;
       Object.entries(currentBets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
       });
 
-      const finalBalance = balanceAfterBet + totalPayout;
-      setLocalBalance(finalBalance);
-
       if (totalPayout > 0) {
         toast.success(`🎉 Výhra! Získáváš $${totalPayout}`);
-        await syncBalanceToDb(finalBalance);
+        // Přičtení výhry k novému zůstatku v DB
+        await updateDatabaseBalance(balanceAfterBet + totalPayout);
       } else {
         toast.error("Tentokrát to nevyšlo.");
       }
 
       setBets({});
       setIsSpinning(false);
-    }, 4000);
+    }, 3500);
   };
 
   return (
     <div className="space-y-6 select-none">
-      {/* VIZUÁL RULETY */}
+      {/* VIZUÁL KOLEČKA RULETY */}
       <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center">
         <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1 mb-4">
           <Sparkles className="h-3 w-3" /> Royal European Roulette
         </span>
 
         <div className="relative flex items-center justify-center my-2">
+          {/* Ukazatel výherní pozice */}
           <div className="absolute -top-3 z-20 h-4 w-4 rounded-full bg-amber-400 border-2 border-white shadow-lg shadow-amber-500/50" />
 
+          {/* Rotující kolo */}
           <motion.div
             animate={{ rotate: wheelRotation }}
-            transition={{ duration: 4, ease: [0.15, 0.85, 0.35, 1.0] }}
+            transition={{ duration: 3.5, ease: [0.15, 0.85, 0.35, 1.0] }}
             className="relative flex h-52 w-52 items-center justify-center rounded-full border-8 border-amber-600/40 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 shadow-2xl"
           >
             <div className="z-10 flex h-24 w-24 flex-col items-center justify-center rounded-full border-4 border-amber-500/50 bg-black/90 shadow-inner">
@@ -206,7 +193,7 @@ export function RoyalRoulette() {
           </motion.div>
         </div>
 
-        {/* Historie */}
+        {/* Historie posledních čísel */}
         <div className="flex items-center gap-1.5 overflow-x-auto mt-4 p-1">
           {history.map((num, idx) => (
             <span
@@ -384,13 +371,13 @@ export function RoyalRoulette() {
           <div className="flex items-center gap-4">
             <div className="text-right font-mono text-xs">
               <span className="text-zinc-500 block">Zůstatek</span>
-              <span className="font-bold text-amber-400 text-sm">${localBalance}</span>
+              <span className="font-bold text-amber-400 text-sm">${balance}</span>
             </div>
 
             <button
               onClick={spinWheel}
               disabled={isSpinning || totalBetAmount === 0}
-              className="rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 py-3 font-mono text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-95 disabled:opacity-40 transition"
+              className="min-w-[150px] rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 py-3 font-mono text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-95 disabled:opacity-40 transition"
             >
               {isSpinning ? "Točí se..." : `VSADIT $${totalBetAmount}`}
             </button>
@@ -401,7 +388,7 @@ export function RoyalRoulette() {
   );
 }
 
-// 3. Pomocné komponenty a výpočet
+// 3. Pomocné komponenty a výpočet výher
 function ChipBadge({ amount }: { amount: number }) {
   return (
     <motion.span
@@ -464,5 +451,3 @@ function calculateBetPayout(betKey: string, amount: number, winningNum: number):
 
   return 0;
 }
-
-export default RoyalRoulette;
