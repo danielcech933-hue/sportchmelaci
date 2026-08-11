@@ -1,21 +1,20 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-// Definice červených čísel
+// 1. Definice čísel a konstant
 const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 const REDS_SET = new Set(RED_NUMBERS);
 
-// Reálné pořadí čísel na evropském ruletovém kole (po směru hodinových ručiček)
 const WHEEL_NUMBERS = [
   0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7,
   28, 12, 35, 3, 26,
 ];
 
-// Mřížka stolu (3x12)
 const BOARD_GRID = [
   [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
   [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
@@ -26,8 +25,9 @@ interface BetMap {
   [key: string]: number;
 }
 
-export function LiveRoulette() {
-  const { balance = 0, updateBalance, refreshProfile } = useAuth();
+// 2. Hlavní komponenta (NÁZEV MUSÍ BÝT RoyalRoulette)
+export function RoyalRoulette() {
+  const { user, balance = 0, refreshProfile } = useAuth();
 
   // Stavy
   const [selectedChip, setSelectedChip] = useState<number>(10);
@@ -37,21 +37,41 @@ export function LiveRoulette() {
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
 
-  // Ref pro bezpečný přístup k aktuálním sázkám
+  // Ochrana pro případ, že se uživatel překlikne jinam během točení
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   const betsRef = useRef<BetMap>({});
   betsRef.current = bets;
 
-  // Celková hodnota sázek
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
 
-  // Přidání sázky
+  // Bezpečná funkce pro úpravu zůstatku přes Supabase
+  const handleBalanceUpdate = async (amountChange: number) => {
+    if (!user?.id) return;
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ balance: balance + amountChange })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      if (refreshProfile) await refreshProfile();
+    } catch (err) {
+      console.error("Chyba databáze:", err);
+    }
+  };
+
   const handlePlaceBet = (betKey: string) => {
     if (isSpinning) return;
     if (balance < totalBetAmount + selectedChip) {
       toast.error("Nedostatek prostředků na účtu.");
       return;
     }
-
     setBets((prev) => ({
       ...prev,
       [betKey]: (prev[betKey] || 0) + selectedChip,
@@ -63,7 +83,6 @@ export function LiveRoulette() {
     setBets({});
   };
 
-  // Spuštění točení rulety s výpočtem výher
   const spinWheel = async () => {
     if (totalBetAmount === 0) {
       toast.error("Nejprve polož sázky na stůl!");
@@ -76,12 +95,10 @@ export function LiveRoulette() {
     if (isSpinning) return;
 
     setIsSpinning(true);
-
     const currentBets = { ...betsRef.current };
 
-    if (updateBalance) {
-      await updateBalance(-totalBetAmount);
-    }
+    // Stržení sázky
+    await handleBalanceUpdate(-totalBetAmount);
 
     const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
     const winningNum = WHEEL_NUMBERS[winningIndex];
@@ -92,7 +109,7 @@ export function LiveRoulette() {
 
     setWheelRotation((prev) => prev + targetAngle);
 
-    setTimeout(async () => {
+    timeoutRef.current = setTimeout(async () => {
       setLastWinningNumber(winningNum);
       setHistory((prev) => [winningNum, ...prev.slice(0, 8)]);
 
@@ -103,15 +120,9 @@ export function LiveRoulette() {
 
       if (totalPayout > 0) {
         toast.success(`🎉 Výhra! Získáváš $${totalPayout}`);
-        if (updateBalance) {
-          await updateBalance(totalPayout);
-        }
+        await handleBalanceUpdate(totalPayout); // Přičtení výhry
       } else {
         toast.error("Tentokrát to nevyšlo.");
-      }
-
-      if (refreshProfile) {
-        await refreshProfile();
       }
 
       setBets({});
@@ -121,7 +132,7 @@ export function LiveRoulette() {
 
   return (
     <div className="space-y-6 select-none">
-      {/* VISUÁL RULETOVÉHO KOLA S ANIMACÍ */}
+      {/* VIZUÁL RUULTY */}
       <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-zinc-950 via-black to-zinc-950 p-6 backdrop-blur-xl shadow-2xl flex flex-col items-center">
         <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1 mb-4">
           <Sparkles className="h-3 w-3" /> Royal European Roulette
@@ -177,12 +188,13 @@ export function LiveRoulette() {
           </motion.div>
         </div>
 
+        {/* Historie */}
         <div className="flex items-center gap-1.5 overflow-x-auto mt-4 p-1">
           {history.map((num, idx) => (
             <span
               key={idx}
               className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold border",
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-bold border",
                 num === 0 && "border-emerald-500/40 bg-emerald-950/60 text-emerald-400",
                 REDS_SET.has(num) && "border-red-500/40 bg-red-950/60 text-red-400",
                 !REDS_SET.has(num) && num !== 0 && "border-white/10 bg-zinc-900 text-zinc-300",
@@ -204,7 +216,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
               className="inline-flex items-center gap-1 font-mono text-xs text-red-400 hover:text-red-300 transition disabled:opacity-50"
             >
-              <RotateCcw className="h-3 w-3" /> Vyčistit sázky (${totalBetAmount})
+              <RotateCcw className="h-3 w-3" /> Zrušit (${totalBetAmount})
             </button>
           )}
         </div>
@@ -212,7 +224,7 @@ export function LiveRoulette() {
         <div className="space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
             <OutsideBetBtn
-              label="ČERVENÁ 2×"
+              label="ČERVENÁ"
               betKey="red"
               color="red"
               bets={bets}
@@ -220,7 +232,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="ČERNÁ 2×"
+              label="ČERNÁ"
               betKey="black"
               color="black"
               bets={bets}
@@ -228,7 +240,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="SUDÁ 2×"
+              label="SUDÁ"
               betKey="even"
               color="dark"
               bets={bets}
@@ -236,7 +248,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="LICHÁ 2×"
+              label="LICHÁ"
               betKey="odd"
               color="dark"
               bets={bets}
@@ -262,7 +274,7 @@ export function LiveRoulette() {
           </div>
           <div className="grid grid-cols-3 gap-2">
             <OutsideBetBtn
-              label="1. TUCET (1-12) 3×"
+              label="1. TUCET"
               betKey="doz_1"
               color="dark"
               bets={bets}
@@ -270,7 +282,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="2. TUCET (13-24) 3×"
+              label="2. TUCET"
               betKey="doz_2"
               color="dark"
               bets={bets}
@@ -278,7 +290,7 @@ export function LiveRoulette() {
               disabled={isSpinning}
             />
             <OutsideBetBtn
-              label="3. TUCET (25-36) 3×"
+              label="3. TUCET"
               betKey="doz_3"
               color="dark"
               bets={bets}
@@ -331,9 +343,10 @@ export function LiveRoulette() {
           </div>
         </div>
 
+        {/* Spodní panel (Zůstatek a Sázka) */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs text-zinc-400 mr-1">Hodnota žetonu:</span>
+            <span className="font-mono text-xs text-zinc-400 mr-1">Žeton:</span>
             {[10, 50, 100, 500].map((val) => (
               <button
                 key={val}
@@ -348,17 +361,6 @@ export function LiveRoulette() {
                 +${val}
               </button>
             ))}
-            <button
-              onClick={() => setSelectedChip(balance)}
-              className={cn(
-                "rounded-xl border px-3 py-2 font-mono text-xs font-black uppercase transition",
-                selectedChip === balance
-                  ? "border-amber-400 bg-amber-400 text-black shadow-lg shadow-amber-500/20 scale-105"
-                  : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10",
-              )}
-            >
-              MAX
-            </button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -381,6 +383,7 @@ export function LiveRoulette() {
   );
 }
 
+// 3. Pomocné komponenty a funkce
 function ChipBadge({ amount }: { amount: number }) {
   return (
     <motion.span
@@ -414,7 +417,7 @@ function OutsideBetBtn({
       disabled={disabled}
       onClick={() => onClick(betKey)}
       className={cn(
-        "relative rounded-xl border p-2.5 font-mono text-[11px] font-bold uppercase transition active:scale-95 disabled:opacity-50",
+        "relative flex-1 rounded-xl border p-2 font-mono text-[11px] font-bold uppercase transition active:scale-95 disabled:opacity-50",
         color === "red" && "border-red-500/30 bg-red-950/40 text-red-400 hover:bg-red-900/50",
         color === "black" && "border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800",
         color === "dark" && "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10",
