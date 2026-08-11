@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 
 /** Evropské kolo (37 pozic) */
 const WHEEL = [
-  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29,
-  7, 28, 12, 35, 3, 26,
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7,
+  28, 12, 35, 3, 26,
 ];
 const REDS = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 const ROUND_SEC = 15;
@@ -171,8 +171,13 @@ export function LiveRoulette() {
           <FlyingEmoji items={emojis} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Live ruleta · kolo #{round}</p>
-              <MagneticText text="NEON ROULETTE" className="font-display text-3xl tracking-[0.12em] text-primary sm:text-4xl" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
+                Live ruleta · kolo #{round}
+              </p>
+              <MagneticText
+                text="NEON ROULETTE"
+                className="font-display text-3xl tracking-[0.12em] text-primary sm:text-4xl"
+              />
             </div>
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 font-mono text-xs text-primary">
@@ -192,22 +197,31 @@ export function LiveRoulette() {
               <motion.div
                 animate={{ rotate: angle }}
                 transition={{ duration: 4, ease: [0.16, 1, 0.3, 1] }}
-                className="wheel-glow absolute inset-0 rounded-full border border-primary/40"
+                className="wheel-glow absolute inset-0 rounded-full border border-primary/40 shadow-2xl"
                 style={{
                   background: `conic-gradient(${WHEEL.map((n, i) => {
-                    const c = colorOf(n) === "green" ? "#10b981" : colorOf(n) === "red" ? "#e11d48" : "#0b0b12";
+                    const c = colorOf(n) === "green" ? "#10b981" : colorOf(n) === "red" ? "#e11d48" : "#0f0f18";
                     return `${c} ${i * step}deg ${(i + 1) * step}deg`;
                   }).join(",")})`,
                 }}
               >
                 {WHEEL.map((n, i) => (
-                  <span
+                  <div
                     key={n}
-                    className="absolute left-1/2 top-1/2 font-mono text-[9px] font-bold text-white/90"
-                    style={{ transform: `rotate(${i * step + step / 2}deg) translateY(-46%) ` }}
+                    className="absolute inset-0 flex justify-center pt-2"
+                    style={{
+                      transform: `rotate(${i * step + step / 2}deg)`,
+                    }}
                   >
-                    {n}
-                  </span>
+                    <span
+                      className="font-mono text-[11px] font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
+                      style={{
+                        transform: `rotate(180deg)`, // Otočí číslo, aby bylo čitelné ze středu
+                      }}
+                    >
+                      {n}
+                    </span>
+                  </div>
                 ))}
               </motion.div>
               <div className="absolute inset-[26%] rounded-full border border-primary/40 bg-black/85 backdrop-blur-xl">
@@ -238,7 +252,11 @@ export function LiveRoulette() {
                   key={`${n}-${i}`}
                   className={cn(
                     "rounded-md px-2 py-0.5 font-mono text-[10px] font-bold",
-                    colorOf(n) === "red" ? "bg-danger/25 text-danger" : colorOf(n) === "green" ? "bg-accent/25 text-accent" : "bg-white/10",
+                    colorOf(n) === "red"
+                      ? "bg-danger/25 text-danger"
+                      : colorOf(n) === "green"
+                        ? "bg-accent/25 text-accent"
+                        : "bg-white/10",
                   )}
                 >
                   {n}
@@ -273,7 +291,11 @@ export function LiveRoulette() {
                   onClick={() => setSelected({ type: "number", value: String(n) })}
                   className={cn(
                     "rounded-md py-1.5 font-mono text-[10px] font-bold transition hover:scale-110",
-                    colorOf(n) === "red" ? "bg-danger/25 text-danger" : colorOf(n) === "green" ? "bg-accent/25 text-accent" : "bg-white/10",
+                    colorOf(n) === "red"
+                      ? "bg-danger/25 text-danger"
+                      : colorOf(n) === "green"
+                        ? "bg-accent/25 text-accent"
+                        : "bg-white/10",
                     active && "ring-2 ring-primary",
                   )}
                 >
