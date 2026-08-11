@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ interface BetMap {
 }
 
 export function LiveRoulette() {
-  const { balance, updateBalance, refreshProfile } = useAuth();
+  const { balance = 0, updateBalance, refreshProfile } = useAuth();
 
   // Stavy
   const [selectedChip, setSelectedChip] = useState<number>(10);
@@ -35,6 +35,10 @@ export function LiveRoulette() {
   const [wheelRotation, setWheelRotation] = useState<number>(0);
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
+
+  // Ref pro bezpečný přístup k aktuálním sázkám uvnitř časovače
+  const betsRef = useRef<BetMap>({});
+  betsRef.current = bets;
 
   // Celková hodnota sázek
   const totalBetAmount = Object.values(bets).reduce((a, b) => a + b, 0);
@@ -72,6 +76,9 @@ export function LiveRoulette() {
 
     setIsSpinning(true);
 
+    // Uchováme si sázky pro vyhodnocení na konci
+    const currentBets = { ...betsRef.current };
+
     // 1. Okamžitě strhneme sázku ze zůstatku
     if (updateBalance) {
       await updateBalance(-totalBetAmount);
@@ -81,9 +88,9 @@ export function LiveRoulette() {
     const winningIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
     const winningNum = WHEEL_NUMBERS[winningIndex];
 
-    // 3. Výpočet rotace (více plných otáček + přesný úhel na vybrané číslo)
+    // 3. Výpočet rotace
     const segmentAngle = 360 / WHEEL_NUMBERS.length;
-    const extraSpins = 360 * 5; // 5 plných otáček
+    const extraSpins = 360 * 5;
     const targetAngle = extraSpins + (360 - winningIndex * segmentAngle);
 
     setWheelRotation((prev) => prev + targetAngle);
@@ -95,7 +102,7 @@ export function LiveRoulette() {
 
       // Výpočet celkové výhry
       let totalPayout = 0;
-      Object.entries(bets).forEach(([key, amount]) => {
+      Object.entries(currentBets).forEach(([key, amount]) => {
         totalPayout += calculateBetPayout(key, amount, winningNum);
       });
 
@@ -304,7 +311,8 @@ export function LiveRoulette() {
               bets["0"] && "ring-2 ring-amber-400 bg-emerald-900/80",
             )}
           >
-            0{bets["0"] && <ChipBadge amount={bets["0"]} />}
+            <span>0</span>
+            {bets["0"] && <ChipBadge amount={bets["0"]} />}
           </button>
 
           <div className="grid flex-1 grid-rows-3 gap-1.5 min-w-[620px]">
