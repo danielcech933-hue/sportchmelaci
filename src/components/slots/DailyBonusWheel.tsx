@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Gift, Loader2, Sparkles, Trophy, Zap, Flame } from "lucide-react";
+import { Gift, Loader2, Sparkles, Trophy, Zap, Flame, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useWallet } from "@/lib/wallet";
 
 /** Segmenty kola — výhry $5, $10, $20, $50. Skutečnou výhru určuje server. */
 const SEGMENTS = [5, 10, 20, 50, 5, 10, 20, 50] as const;
+const TEST_PRIZES = [5, 10, 20, 50] as const;
 const SEG_ANGLE = 360 / SEGMENTS.length;
 const SPIN_MS = 4500;
 const SEGMENT_COLORS: Record<number, { bg: string; text: string; border: string }> = {
@@ -65,6 +66,7 @@ export function DailyBonusWheel() {
   }, [nextClaimAt, now]);
 
   const canSpin = hydrated && Boolean(user) && !spinning && remainingMs <= 0;
+  const canPreviewSpin = import.meta.env.DEV && hydrated && Boolean(user) && !spinning;
   const countdown = hydrated ? fmt(remainingMs) : "--:--:--";
 
   const triggerConfetti = (prize: number) => {
@@ -78,6 +80,23 @@ export function DailyBonusWheel() {
       confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ["#ffcc44", "#a855f7", "#38bdf8", "#10b981"] });
     }
   };
+
+  const animatePrize = useCallback((prize: number, onDone?: () => void) => {
+    const targetIndex = SEGMENTS.findIndex((value) => value === prize);
+    if (targetIndex < 0) return;
+
+    setResult(null);
+    const current = angle % 360;
+    const target = (360 - (targetIndex * SEG_ANGLE + SEG_ANGLE / 2) - current + 720) % 360;
+    setAngle((a) => a + 360 * 8 + target);
+
+    timers.current.push(window.setTimeout(() => {
+      setSpinning(false);
+      setResult(prize);
+      triggerConfetti(prize);
+      onDone?.();
+    }, SPIN_MS));
+  }, [angle]);
 
   const spin = useCallback(async () => {
     if (!canSpin) return;
@@ -96,19 +115,20 @@ export function DailyBonusWheel() {
     }
 
     const prize = reward.prize;
-    const targetIndex = SEGMENTS.findIndex((value) => value === prize);
-    const current = angle % 360;
-    const target = (360 - (targetIndex * SEG_ANGLE + SEG_ANGLE / 2) - current + 720) % 360;
-    setAngle((a) => a + 360 * 8 + target);
-
-    timers.current.push(window.setTimeout(() => {
-      setSpinning(false);
-      setResult(prize);
+    animatePrize(prize, () => {
       setNextClaimAt(reward.nextClaimAt ?? null);
-      triggerConfetti(prize);
       toast.success(prize === 50 ? "🔥 LEGENDÁRNÍ JACKPOT! +$50 🔥" : `Skvěle! Vyhráváš +$${prize}`, { duration: prize === 50 ? 5000 : 3000 });
-    }, SPIN_MS));
-  }, [angle, canSpin, claimDailyBonus, refreshCooldown]);
+    });
+  }, [animatePrize, canSpin, claimDailyBonus, refreshCooldown]);
+
+  const previewSpin = useCallback(() => {
+    if (!canPreviewSpin) return;
+    setSpinning(true);
+    const prize = TEST_PRIZES[Math.floor(Math.random() * TEST_PRIZES.length)];
+    animatePrize(prize, () => {
+      toast.success(`TEST MODE: kolo dopadlo na +$${prize} — bez zápisu do účtu.`, { duration: 2500 });
+    });
+  }, [animatePrize, canPreviewSpin]);
 
   return (
     <section className="relative overflow-hidden rounded-3xl border-2 border-hop-gold/40 bg-gradient-to-br from-black/90 via-zinc-950/80 to-black/95 p-6 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,204,68,0.15)]">
@@ -122,7 +142,7 @@ export function DailyBonusWheel() {
             <div className="absolute -inset-2 rounded-full border border-hop-gold/30 bg-black/40 p-1 backdrop-blur-sm shadow-[inset_0_0_15px_rgba(0,0,0,0.8)]">
               {[...Array(12)].map((_, i) => <div key={i} className={`absolute h-2 w-2 rounded-full ${spinning ? "animate-ping bg-amber-400" : "bg-hop-gold/40"}`} style={{ top: `${50 + 47 * Math.sin((i * 30 * Math.PI) / 180)}%`, left: `${50 + 47 * Math.cos((i * 30 * Math.PI) / 180)}%`, transform: "translate(-50%, -50%)" }} />)}
             </div>
-            <motion.div className="relative h-full w-full rounded-full border-4 border-amber-400/80 shadow-[0_0_30px_rgba(255,204,68,0.4)] overflow-hidden" style={{ background: `conic-gradient(${SEGMENTS.map((v, i) => `${SEGMENT_COLORS[v].bg} ${i * SEG_ANGLE}deg ${(i + 1) * SEG_ANGLE}deg`).join(",")})` }} animate={{ rotate: angle }} transition={{ duration: SPIN_MS / 1000, ease: [0.15, 0.85, 0.25, 1] }}>
+            <motion.div className="relative h-full w-full rounded-full border-4 border-amber-400/80 shadow-[0_0_30px_rgba(255,204,68,0.4)] overflow-hidden" style={{ background: `conic-gradient(${SEGMENTS.map((v, i) => `${SEGMENT_COLORS[v].bg} ${i * SEG_ANGLE}deg ${(i + 1) * SEG_ANGLE}deg`).join(",")}` }} animate={{ rotate: angle }} transition={{ duration: SPIN_MS / 1000, ease: [0.15, 0.85, 0.25, 1] }}>
               {SEGMENTS.map((v, i) => { const conf = SEGMENT_COLORS[v]; return <div key={i} className="absolute left-1/2 top-1/2 font-mono font-black select-none" style={{ transform: `rotate(${i * SEG_ANGLE + SEG_ANGLE / 2}deg) translateY(-85px) translateX(-50%)`, transformOrigin: "top left", color: conf.text, textShadow: `0 0 8px ${conf.border}` }}><span className="text-xs sm:text-sm font-extrabold flex items-center gap-0.5">${v}</span></div>; })}
             </motion.div>
             <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-300 bg-gradient-to-tr from-black via-zinc-900 to-amber-950 shadow-[0_0_15px_rgba(0,0,0,0.9)] flex items-center justify-center"><Zap className={`h-5 w-5 ${spinning ? "text-amber-400 animate-bounce" : "text-amber-400/70"}`} /></div>
@@ -133,7 +153,19 @@ export function DailyBonusWheel() {
           <h2 className="font-display text-3xl sm:text-4xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 drop-shadow-[0_2px_10px_rgba(255,204,68,0.3)]">KOLO ŠTĚSTÍ</h2>
           <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto lg:mx-0">Roztoč kolo každých <span className="text-amber-300 font-semibold">8 hodin</span> a získej garantovanou výhru <span className="text-emerald-400 font-semibold">$5</span>, <span className="text-cyan-400 font-semibold">$10</span>, <span className="text-purple-400 font-semibold">$20</span> nebo legendárních <span className="text-amber-400 font-bold">$50</span>!</p>
           <AnimatePresence>{result !== null && !spinning && <motion.div initial={{ opacity: 0, scale: 0.8, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-2 inline-block rounded-xl border border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/10 px-4 py-2"><p className="font-display text-lg tracking-wider text-amber-300 flex items-center gap-2 justify-center lg:justify-start"><Trophy className="h-5 w-5 text-amber-400 animate-bounce" /> VÝHRA: +${result} DOLLARS</p></motion.div>}</AnimatePresence>
-          <div className="pt-2"><button onClick={() => void spin()} disabled={!canSpin} className={`relative group overflow-hidden w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${canSpin ? "border-2 border-amber-400 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-black shadow-[0_0_30px_rgba(255,204,68,0.5)] hover:scale-105 active:scale-95 cursor-pointer" : "border border-zinc-800 bg-zinc-900/80 text-zinc-500 cursor-not-allowed opacity-70"}`}>{spinning ? <><Loader2 className="h-5 w-5 animate-spin text-black" /><span>NAČÍTÁM VÝHRU…</span></> : !user ? <><Gift className="h-5 w-5 text-zinc-500" /><span>PŘIHLAS SE PRO KOLO</span></> : canSpin ? <><Flame className="h-5 w-5 text-black animate-pulse" /><span>ROZTOČIT KOLO ($5 - $50)</span></> : <><Gift className="h-5 w-5 text-zinc-500" /><span>DALŠÍ POKUS ZA {countdown}</span></>}</button></div>
+          <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2">
+            <button onClick={() => void spin()} disabled={!canSpin} className={`relative group overflow-hidden w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-4 text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${canSpin ? "border-2 border-amber-400 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-black shadow-[0_0_30px_rgba(255,204,68,0.5)] hover:scale-105 active:scale-95 cursor-pointer" : "border border-zinc-800 bg-zinc-900/80 text-zinc-500 cursor-not-allowed opacity-70"}`}>{spinning ? <><Loader2 className="h-5 w-5 animate-spin text-black" /><span>NAČÍTÁM VÝHRU…</span></> : !user ? <><Gift className="h-5 w-5 text-zinc-500" /><span>PŘIHLAS SE PRO KOLO</span></> : canSpin ? <><Flame className="h-5 w-5 text-black animate-pulse" /><span>ROZTOČIT KOLO</span></> : <><Gift className="h-5 w-5 text-zinc-500" /><span>DALŠÍ POKUS ZA {countdown}</span>}</button>
+            {canPreviewSpin && (
+              <button onClick={previewSpin} disabled={spinning} className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-cyan-300 hover:bg-cyan-400/20 disabled:opacity-50">
+                <FlaskConical className="h-4 w-4" /> TEST TOČENÍ
+              </button>
+            )}
+          </div>
+          {import.meta.env.DEV && user && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-mono uppercase tracking-[0.18em] text-cyan-300/80">
+              <FlaskConical className="h-3 w-3" /> Preview test mode · test točení nic nepřipisuje
+            </div>
+          )}
         </div>
       </div>
     </section>
