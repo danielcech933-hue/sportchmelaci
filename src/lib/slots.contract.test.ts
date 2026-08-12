@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { PAYLINES, REELS, ROWS, SLOT_SYMBOLS, evaluateSpin, type Grid } from "@/lib/slots";
+import { PAYLINES, REELS, ROWS, SLOT_SYMBOLS, evaluateSpin, hasAnticipation, type Grid } from "./slots";
 
 function gridOf(symbol: keyof typeof SLOT_SYMBOLS): Grid {
   return Array.from({ length: REELS }, () => Array.from({ length: ROWS }, () => symbol));
@@ -50,7 +50,7 @@ describe("Chmelovci Cup slot contract", () => {
     expect(evaluateSpin(six, 10).scatterAmount).toBe(1000);
   });
 
-  test("bonus multiplier applies to line and scatter payouts", () => {
+  test("bonus multiplier applies to line payout", () => {
     const grid = withLine("gold", 0, 3);
     const result = evaluateSpin(grid, 10, 2);
     expect(result.lineWins[0]?.amount).toBe(300);
@@ -61,6 +61,8 @@ describe("Chmelovci Cup slot contract", () => {
     const grid = gridOf("ten");
     grid[0][0] = "scatter";
     grid[1][1] = "scatter";
-    expect(evaluateSpin(grid, 10).scatterCount).toBe(2);
+    expect(hasAnticipation(grid)).toBe(true);
+    grid[1][1] = "ten";
+    expect(hasAnticipation(grid)).toBe(false);
   });
 });
