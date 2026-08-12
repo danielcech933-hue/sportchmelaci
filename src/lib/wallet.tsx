@@ -11,8 +11,8 @@ export interface WalletState {
   ready: boolean;
   exchangeToSlot: (dollars: number) => Promise<WalletResult>;
   exchangeToDollars: (czk: number) => Promise<WalletResult>;
-  betSlot: (amount: number) => Promise<boolean>;
-  winSlot: (amount: number) => Promise<void>;
+  betSlot: (amount: number) => boolean;
+  winSlot: (amount: number) => void;
   addDollars: (amount: number) => Promise<WalletResult>;
 }
 
@@ -33,44 +33,47 @@ function errorMessage(error: unknown): string {
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { user, balance, slotCZK: profileSlotCZK, loading, refreshProfile } = useAuth();
   const scope = user?.id ?? "guest";
-  const [guestSlotCZK, setGuestSlotCZK] = useState(SEED_SLOT);
+  const [slotBalance, setSlotBalance] = useState(SEED_SLOT);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     setReady(false);
-    if (!user && typeof window !== "undefined") {
+    if (user) {
+      setSlotBalance(Number(profileSlotCZK ?? SEED_SLOT));
+    } else if (typeof window !== "undefined") {
       try {
         const raw = window.localStorage.getItem(KEY(scope));
         const parsed = raw ? JSON.parse(raw) as { slotCZK?: number } : null;
-        setGuestSlotCZK(typeof parsed?.slotCZK === "number" ? Math.max(0, parsed.slotCZK) : SEED_SLOT);
+        setSlotBalance(typeof parsed?.slotCZK === "number" ? Math.max(0, parsed.slotCZK) : SEED_SLOT);
       } catch {
-        setGuestSlotCZK(SEED_SLOT);
+        setSlotBalance(SEED_SLOT);
       }
     }
     setReady(true);
-  }, [scope, user, loading]);
+  }, [scope, user, loading, profileSlotCZK]);
 
   useEffect(() => {
     if (!ready || user || typeof window === "undefined") return;
-    window.localStorage.setItem(KEY(scope), JSON.stringify({ slotCZK: guestSlotCZK }));
-  }, [ready, scope, user, guestSlotCZK]);
+    window.localStorage.setItem(KEY(scope), JSON.stringify({ slotCZK: slotBalance }));
+  }, [ready, scope, user, slotBalance]);
 
   const userDollars = user ? Number(balance ?? 0) : GUEST_BASE_DOLLARS;
-  const slotCZK = user ? Number(profileSlotCZK ?? SEED_SLOT) : guestSlotCZK;
+  const slotCZK = slotBalance;
 
   const apply = useCallback(async (deltaDollars: number, deltaSlot: number, reason: string) => {
-    if (!user) return { ok: true, balance: userDollars + deltaDollars, slot: slotCZK + deltaSlot };
+    if (!user) return { ok: true, balance: userDollars + deltaDollars, slot: slotBalance + deltaSlot };
     const { data, error } = await supabase.rpc("wallet_apply", {
       _delta_dollars: deltaDollars,
       _delta_slot_czk: deltaSlot,
       _reason: reason,
     });
     if (error) return { ok: false, error: errorMessage(error) };
-    await refreshProfile();
     const result = data as { balance?: number; slot_czk?: number } | null;
+    if (typeof result?.slot_czk === "number") setSlotBalance(result.slot_czk);
+    await refreshProfile();
     return { ok: true, balance: Number(result?.balance ?? 0), slot: Number(result?.slot_czk ?? 0) };
-  }, [refreshProfile, slotCZK, user, userDollars]);
+  }, [refreshProfile, slotBalance, user, userDollars]);
 
   const exchangeToSlot = useCallback<WalletState["exchangeToSlot"]>(async (dollars) => {
     const amount = Math.floor(dollars);
@@ -84,22 +87,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const amount = Math.floor(czk);
     if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Zadej platnou částku." };
     if (amount % EXCHANGE_RATE !== 0) return { ok: false, error: `Směňuj po ${EXCHANGE_RATE} Slot CZK.` };
-    if (amount > slotCZK) return { ok: false, error: "Nedostatek Slot CZK v automatu." };
+    if (amount > slotBalance) return { ok: false, error: "Nedostatek Slot CZK v automatu." };
     const gained = amount / EXCHANGE_RATE;
     const res = await apply(gained, -amount, "exchange_to_dollars");
     return res.ok ? { ok: true, gained } : { ok: false, error: res.error };
-  }, [apply, slotCZK]);
+  }, [apply, slotBalance]);
 
-  const betSlot = useCallback<WalletState["betSlot"]>(async (amount) => {
-    if (!Number.isFinite(amount) || amount <= 0 || slotCZK < amount) return false;
-    const res = await apply(0, -amount, "slot_bet");
-    return res.ok;
-  }, [apply, slotCZK]);
+  const betSlot = useCallback<WalletState["betSlot"]>((amount) => {
+    if (!Number.isFinite(amount) || amount <= 0 || slotBalance < amount) return false;
+    setSlotBalance((current) => current - amount);
+    if (user) {
+      void apply(0, -amount, "slot_bet").then((res) => {
+        if (!res.ok) void refreshProfile();
+      });
+    }
+    return true;
+  }, [apply, refreshProfile, slotBalance, user]);
 
-  const winSlot = useCallback<WalletState["winSlot"]>(async (amount) => {
+  const winSlot = useCallback<WalletState["winSlot"]>((amount) => {
     if (!Number.isFinite(amount) || amount <= 0) return;
-    await apply(0, amount, "slot_win");
-  }, [apply]);
+    setSlotBalance((current) => current + amount);
+    if (user) {
+      void apply(0, amount, "slot_win").then((res) => {
+        if (!res.ok) void refreshProfile();
+      });
+    }
+  }, [apply, refreshProfile, user]);
 
   const addDollars = useCallback<WalletState["addDollars"]>(async (amount) => {
     if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Neplatná výhra." };
