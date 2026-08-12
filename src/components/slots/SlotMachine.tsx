@@ -11,6 +11,7 @@ import {
   MAX_BET,
   PAYLINES,
   REELS,
+  ROWS,
   formatKc,
   loadBestMultiplier,
   saveBestMultiplier,
@@ -37,6 +38,16 @@ function fireConfetti() {
   shoot(0.2);
   shoot(0.8);
   window.setTimeout(() => shoot(0.5), 250);
+}
+
+function normalizeGrid(value: unknown): Grid {
+  const fallback = spinGrid();
+  const source = Array.isArray(value) ? value : [];
+
+  return Array.from({ length: REELS }, (_, reel) => {
+    const column = Array.isArray(source[reel]) ? source[reel] : [];
+    return Array.from({ length: ROWS }, (_, row) => column[row] ?? fallback[reel][row]);
+  }) as Grid;
 }
 
 export function SlotMachine({
@@ -107,7 +118,7 @@ export function SlotMachine({
     }
 
     const result = response.result;
-    const next = result.grid as Grid;
+    const next = normalizeGrid(result.grid);
     setGrid(next);
 
     const stopTimers = Array.from({ length: REELS }, (_, reel) =>
@@ -203,11 +214,11 @@ export function SlotMachine({
 
           <div className={`relative rounded-2xl slot-frame slot-led p-3 sm:p-4 ${anticipation ? "brightness-75" : ""}`}>
             <div className="relative flex gap-2 sm:gap-3">
-              {grid.map((col, reel) => (
+              {grid.slice(0, REELS).map((col, reel) => (
                 <Reel
                   key={reel}
                   reelIndex={reel}
-                  final={col}
+                  final={col.slice(0, ROWS)}
                   spinning={isSpinning && reel >= stoppedReels}
                   slow={anticipation && reel >= 2}
                   winningRows={winningRowsFor(reel)}
@@ -219,9 +230,10 @@ export function SlotMachine({
                 <AnimatePresence>
                   {winLines.map((w) => {
                     const pattern = PAYLINES[w.line];
+                    if (!pattern) return null;
                     const pts = pattern
                       .slice(0, w.count)
-                      .map((row, reel) => `${(reel + 0.5) * (100 / REELS)},${(row + 0.5) * (100 / 3)}`)
+                      .map((row, reel) => `${(reel + 0.5) * (100 / REELS)},${(row + 0.5) * (100 / ROWS)}`)
                       .join(" ");
                     return (
                       <motion.polyline
@@ -318,7 +330,7 @@ export function SlotMachine({
           />
         )}
         {showHof && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowHof(false)}>
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 1 }} onClick={() => setShowHof(false)}>
             <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} />
               <button onClick={() => setShowHof(false)} className="mx-auto mt-3 block rounded-full border border-hop-gold/50 px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-hop-gold">Zavřít</button>
