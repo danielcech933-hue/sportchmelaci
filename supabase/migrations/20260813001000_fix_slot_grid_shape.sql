@@ -49,7 +49,7 @@ BEGIN
 END;
 $$;
 
--- Contract assertion: the live function must now return a 5 x 3 grid.
+-- Contract assertion: the live function must contain the strict grid initializer.
 DO $$
 DECLARE
   fn text;
@@ -62,7 +62,7 @@ BEGIN
      AND p.proname = 'slot_spin'
      AND pg_get_function_identity_arguments(p.oid) = '_bet numeric';
 
-  IF fn IS NULL OR position("grid text[][] := ARRAY[" IN fn) = 0 THEN
+  IF fn IS NULL OR position('grid text[][] := ARRAY[' IN fn) = 0 THEN
     RAISE EXCEPTION 'slot_spin grid initializer is missing after migration';
   END IF;
 END;
