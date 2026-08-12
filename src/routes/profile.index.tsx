@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileView } from "@/components/ProfileView";
+import { AccountSecurity } from "@/components/AccountSecurity";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({
@@ -12,5 +13,14 @@ export const Route = createFileRoute("/profile/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => <ProfileView />,
+  component: ProfilePage,
 });
+
+function ProfilePage() {
+  return (
+    <>
+      <ProfileView />
+      <AccountSecurity />
+    </>
+  );
+}
