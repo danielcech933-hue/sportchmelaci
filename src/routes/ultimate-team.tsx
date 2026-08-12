@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Coins, Ticket, Sparkles, Layers, Shield } from "lucide-react";
+import { Coins, Ticket, Sparkles, Layers, Shield, Users } from "lucide-react";
 import { CardSpinPanel } from "@/components/ut/CardSpinPanel";
 import { CollectionBrowser } from "@/components/ut/CollectionBrowser";
+import { SquadBuilder } from "@/components/ut/SquadBuilder";
 import { fetchCollection, getClub, utErrorMessage } from "@/lib/ut";
 import type { UtClub, UtOwnedCard } from "@/types/ut";
 import { useAuth } from "@/lib/auth";
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/ultimate-team")({
   component: UltimateTeamPage,
 });
 
-type Tab = "club" | "spin" | "collection";
+type Tab = "club" | "squad" | "spin" | "collection";
 
 function UltimateTeamPage() {
   const { user, loading } = useAuth();
@@ -44,6 +45,7 @@ function UltimateTeamPage() {
       const c = await getClub();
       setClub(c);
       setCards(await fetchCollection(user.id));
+      setError(null);
     } catch (e) {
       setError(utErrorMessage(e));
     }
@@ -68,12 +70,13 @@ function UltimateTeamPage() {
 
   const tabs: Array<{ key: Tab; label: string; icon: typeof Shield }> = [
     { key: "club", label: "Můj klub", icon: Shield },
+    { key: "squad", label: "Sestava", icon: Users },
     { key: "spin", label: "Card Spin", icon: Sparkles },
     { key: "collection", label: "Sbírka", icon: Layers },
   ];
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-28 pt-6">
+    <main className="mx-auto max-w-6xl px-4 pb-28 pt-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-primary/70">Ultimate Team</p>
@@ -146,6 +149,8 @@ function UltimateTeamPage() {
             </div>
           </div>
         )}
+
+        {tab === "squad" && <SquadBuilder cards={cards} />}
 
         {tab === "spin" && club && (
           <CardSpinPanel
