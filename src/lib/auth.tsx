@@ -28,18 +28,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadProfile(uid: string | undefined) {
     if (!uid) {
-      setNickname(null); setBalance(0); setSlotCZK(10000); setAvatarPath(null); setIsAdmin(false); return;
+      setNickname(null);
+      setBalance(0);
+      setSlotCZK(10000);
+      setAvatarPath(null);
+      setIsAdmin(false);
+      return;
     }
-    const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("nickname,balance,slot_czk,avatar_path").eq("id", uid).maybeSingle(),
+
+    // Keep core profile data working even while the wallet migration is being deployed.
+    // A missing slot_czk column must never make the avatar/balance disappear.
+    const [{ data: prof, error: profileError }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("nickname,balance,avatar_path").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
-    const p = prof as { nickname?: string; balance?: number; slot_czk?: number; avatar_path?: string | null } | null;
-    setNickname(p?.nickname ?? null);
-    setBalance(Number(p?.balance ?? 0));
-    setSlotCZK(Number(p?.slot_czk ?? 10000));
-    setAvatarPath(p?.avatar_path ?? null);
+
+    const p = prof as { nickname?: string; balance?: number; avatar_path?: string | null } | null;
+    if (!profileError) {
+      setNickname(p?.nickname ?? null);
+      setBalance(Number(p?.balance ?? 0));
+      setAvatarPath(p?.avatar_path ?? null);
+    }
     setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
+
+    // slot_czk is optional until the authoritative wallet migration has run.
+    const { data: walletProfile } = await supabase
+      .from("profiles")
+      .select("slot_czk")
+      .eq("id", uid)
+      .maybeSingle();
+    const slotValue = Number((walletProfile as { slot_czk?: number } | null)?.slot_czk);
+    setSlotCZK(Number.isFinite(slotValue) ? slotValue : 10000);
   }
 
   useEffect(() => {
