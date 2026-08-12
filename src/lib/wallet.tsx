@@ -45,23 +45,36 @@ type DailyBonusRpc = { prize?: number; balance?: number; next_claim_at?: string 
 type DailyBonusStatusRpc = { next_claim_at?: string | null; can_claim?: boolean } | null;
 
 function errorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error ?? "");
-  if (message.includes("insufficient_balance")) return "Nedostatek dolarů na účtu.";
-  if (message.includes("insufficient_slot")) return "Nedostatek Slot CZK v automatu.";
-  if (message.includes("daily_bonus_cooldown")) return "Další kolo štěstí bude dostupné později.";
-  if (message.includes("invalid_daily_bonus")) return "Tato výhra kola štěstí není platná.";
-  if (message.includes("invalid_exchange")) return "Neplatná částka směny.";
-  if (message.includes("invalid_slot_bet")) return "Neplatná sázka.";
-  if (message.includes("bonus_pick_required")) return "Nejdřív vyber bonus.";
-  if (message.includes("no_bonus_pick")) return "Bonus už není dostupný.";
-  if (message.includes("invalid_bonus_pick")) return "Neplatná volba bonusu.";
-  if (message.includes("invalid_free_spin_bet")) return "Free spin nepoužívá další sázku.";
-  if (message.includes("not_authenticated")) return "Pro tuto operaci se musíš přihlásit.";
-  if (message.includes("no_profile")) return "Profil uživatele nebyl nalezen.";
+  const value = error as {
+    message?: unknown;
+    details?: unknown;
+    hint?: unknown;
+    code?: unknown;
+  } | null;
 
-  // Keep unexpected Supabase/RPC errors visible instead of hiding the real cause.
-  // This is especially useful while the database migrations are being synchronized.
-  if (message) return `Operace se nepovedla: ${message}`;
+  const parts = [value?.message, value?.details, value?.hint]
+    .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+    .map((part) => part.trim());
+
+  const code = typeof value?.code === "string" && value.code ? `[${value.code}] ` : "";
+  const message = parts[0] ?? (typeof error === "string" ? error : "");
+  const details = parts.slice(1).filter((part) => part !== message);
+  const full = `${code}${[message, ...details].join(" — ")}`.trim();
+
+  if (full.includes("insufficient_balance")) return "Nedostatek dolarů na účtu.";
+  if (full.includes("insufficient_slot")) return "Nedostatek Slot CZK v automatu.";
+  if (full.includes("daily_bonus_cooldown")) return "Další kolo štěstí bude dostupné později.";
+  if (full.includes("invalid_daily_bonus")) return "Tato výhra kola štěstí není platná.";
+  if (full.includes("invalid_exchange")) return "Neplatná částka směny.";
+  if (full.includes("invalid_slot_bet")) return "Neplatná sázka.";
+  if (full.includes("bonus_pick_required")) return "Nejdřív vyber bonus.";
+  if (full.includes("no_bonus_pick")) return "Bonus už není dostupný.";
+  if (full.includes("invalid_bonus_pick")) return "Neplatná volba bonusu.";
+  if (full.includes("invalid_free_spin_bet")) return "Free spin nepoužívá další sázku.";
+  if (full.includes("not_authenticated")) return "Pro tuto operaci se musíš přihlásit.";
+  if (full.includes("no_profile")) return "Profil uživatele nebyl nalezen.";
+
+  if (full) return `Operace se nepovedla: ${full}`;
   return "Operace se nepovedla. Zkus to znovu.";
 }
 
