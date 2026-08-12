@@ -24,6 +24,12 @@ function fmt(ms: number): string {
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 }
 
+function isSafePreviewHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host.startsWith("id-preview--");
+}
+
 export function DailyBonusWheel() {
   const { user } = useAuth();
   const { claimDailyBonus, dailyBonusStatus } = useWallet();
@@ -34,6 +40,8 @@ export function DailyBonusWheel() {
   const [result, setResult] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const timers = useRef<number[]>([]);
+
+  const previewHost = isSafePreviewHost();
 
   const refreshCooldown = useCallback(async () => {
     if (!user) {
@@ -66,7 +74,9 @@ export function DailyBonusWheel() {
   }, [nextClaimAt, now]);
 
   const canSpin = hydrated && Boolean(user) && !spinning && remainingMs <= 0;
-  const canPreviewSpin = import.meta.env.DEV && hydrated && Boolean(user) && !spinning;
+  // Preview-only test mode is deliberately restricted to localhost / Lovable's
+  // id-preview host. It never calls the reward RPC and never changes balances.
+  const canPreviewSpin = previewHost && hydrated && !spinning;
   const countdown = hydrated ? fmt(remainingMs) : "--:--:--";
 
   const triggerConfetti = (prize: number) => {
@@ -161,7 +171,7 @@ export function DailyBonusWheel() {
               </button>
             )}
           </div>
-          {import.meta.env.DEV && user && (
+          {previewHost && (
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-mono uppercase tracking-[0.18em] text-cyan-300/80">
               <FlaskConical className="h-3 w-3" /> Preview test mode · test točení nic nepřipisuje
             </div>
