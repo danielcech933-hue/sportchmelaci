@@ -91,9 +91,12 @@ export function DailyBonusWheel() {
     }
   };
 
-  const animatePrize = useCallback((prize: number, onDone?: () => void) => {
-    const targetIndex = SEGMENTS.findIndex((value) => value === prize);
+  const animatePrize = useCallback((prize: number, segmentIndex?: number, onDone?: () => void) => {
+    const targetIndex = Number.isInteger(segmentIndex) && segmentIndex! >= 0 && segmentIndex! < SEGMENTS.length
+      ? segmentIndex!
+      : SEGMENTS.findIndex((value) => value === prize);
     if (targetIndex < 0) return;
+    if (SEGMENTS[targetIndex] !== prize) return;
 
     setResult(null);
     const current = angle % 360;
@@ -114,8 +117,8 @@ export function DailyBonusWheel() {
     setSpinning(true);
     setResult(null);
 
-    // The server chooses the prize, applies the dollars and locks the 8h cooldown.
-    // The client only animates to the already-authorized result.
+    // The server chooses the prize AND exact visual segment, applies the dollars,
+    // and locks the 8h cooldown. The browser only animates to that result.
     const reward = await claimDailyBonus();
     if (!reward.ok || !reward.prize) {
       setSpinning(false);
@@ -125,7 +128,7 @@ export function DailyBonusWheel() {
     }
 
     const prize = reward.prize;
-    animatePrize(prize, () => {
+    animatePrize(prize, reward.segmentIndex, () => {
       setNextClaimAt(reward.nextClaimAt ?? null);
       toast.success(prize === 50 ? "🔥 LEGENDÁRNÍ JACKPOT! +$50 🔥" : `Skvěle! Vyhráváš +$${prize}`, { duration: prize === 50 ? 5000 : 3000 });
     });
@@ -135,7 +138,9 @@ export function DailyBonusWheel() {
     if (!canPreviewSpin) return;
     setSpinning(true);
     const prize = TEST_PRIZES[Math.floor(Math.random() * TEST_PRIZES.length)];
-    animatePrize(prize, () => {
+    const matching = SEGMENTS.flatMap((value, index) => value === prize ? [index] : []);
+    const segmentIndex = matching[Math.floor(Math.random() * matching.length)];
+    animatePrize(prize, segmentIndex, () => {
       toast.success(`TEST MODE: kolo dopadlo na +$${prize} — bez zápisu do účtu.`, { duration: 2500 });
     });
   }, [animatePrize, canPreviewSpin]);
