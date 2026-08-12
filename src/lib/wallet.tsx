@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { SLOT_SYMBOLS } from "@/lib/slots";
 
 export const EXCHANGE_RATE = 100;
 type WalletResult = { ok: boolean; error?: string; gained?: number };
@@ -85,6 +86,20 @@ function findRpcValue(data: unknown, keys: string[]): unknown {
     if (found !== undefined) return found;
   }
   return undefined;
+}
+
+function isValidSlotGrid(value: unknown): value is string[][] {
+  if (!Array.isArray(value) || value.length !== 5) return false;
+  return value.every((column) =>
+    Array.isArray(column) &&
+    column.length === 3 &&
+    column.every((symbol) => typeof symbol === "string" && Object.prototype.hasOwnProperty.call(SLOT_SYMBOLS, symbol)),
+  );
+}
+
+function isFiniteNonNegative(value: unknown): boolean {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0;
 }
 
 function errorMessage(error: unknown): string {
@@ -185,21 +200,39 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const spinSlot = useCallback<WalletState["spinSlot"]>(async (bet) => {
     const amount = Math.floor(bet);
     if (!user) return { ok: false, error: "Pro hraní automatu se musíš přihlásit." };
-    if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Neplatná sázka." };
+    if (!Number.isFinite(amount) || amount < 0) return { ok: false, error: "Neplatná sázka." };
     const { data, error } = await supabase.rpc("slot_spin", { _bet: amount });
     if (error) return { ok: false, error: errorMessage(error) };
     const result = normalizeRpcJson<SlotSpinRpc>(data);
-    if (!result || !Array.isArray(result.grid) || result.grid.length !== 5 || result.grid.some((col) => !Array.isArray(col) || col.length !== 3)) {
-      return { ok: false, error: "Server vrátil neplatný výsledek automatu (očekáváno 5×3)." };
+    if (!result || !isValidSlotGrid(result.grid)) {
+      return { ok: false, error: "Server vrátil neplatný výsledek automatu (očekáváno 5×3 se známými symboly)." };
+    }
+    if (!Array.isArray(result.line_wins) || !Array.isArray(result.scatter_cells) || !Array.isArray(result.bonus_options)) {
+      return { ok: false, error: "Server vrátil neúplný výsledek automatu." };
+    }
+    if (!Number.isInteger(result.scatter_count) || result.scatter_count < 0 || result.scatter_count > 15) {
+      return { ok: false, error: "Server vrátil neplatný počet SCATTER symbolů." };
+    }
+    if (!["boolean"].includes(typeof result.free_spins_triggered) || typeof result.bonus_done !== "boolean") {
+      return { ok: false, error: "Server vrátil neplatný stav bonusu." };
+    }
+    for (const value of [result.scatter_amount, result.total, result.multiplier_of_bet, result.free_spins_left, result.bonus_total, result.slot_czk]) {
+      if (!isFiniteNonNegative(value)) return { ok: false, error: "Server vrátil neplatnou hodnotu výplaty." };
+    }
+    for (const option of result.bonus_options) {
+      if (!option || !Number.isInteger(option.spins) || option.spins < 1 || option.spins > 50 || !isFiniteNonNegative(option.mult)) {
+        return { ok: false, error: "Server vrátil neplatnou nabídku bonusu." };
+      }
     }
     const nextSlot = Number(result.slot_czk);
-    if (Number.isFinite(nextSlot)) setSlotBalance(Math.max(0, nextSlot));
+    setSlotBalance(Math.max(0, nextSlot));
     await refreshProfile();
     return { ok: true, result };
   }, [refreshProfile, user]);
 
   const pickBonus = useCallback<WalletState["pickBonus"]>(async (multiplier) => {
     if (!user) return { ok: false, error: "Pro bonus se musíš přihlásit." };
+    if (!Number.isFinite(multiplier) || multiplier <= 0) return { ok: false, error: "Neplatný násobitel bonusu." };
     const { error } = await supabase.rpc("slot_pick_bonus", { _multiplier: multiplier });
     if (error) return { ok: false, error: errorMessage(error) };
     await refreshProfile();
