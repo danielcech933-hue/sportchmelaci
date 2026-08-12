@@ -11,9 +11,7 @@ import {
   MAX_BET,
   PAYLINES,
   REELS,
-  evaluateSpin,
   formatKc,
-  hasAnticipation,
   loadBestMultiplier,
   saveBestMultiplier,
   spinGrid,
@@ -22,23 +20,9 @@ import {
 } from "@/lib/slots";
 import { useWallet } from "@/lib/wallet";
 
-/** Celková doba točení ~2500 ms, každý další válec +200 ms (kaskádové napětí). */
 const SPIN_DURATION = 2500;
 const STOP_STEP = 200;
 const STOP_BASE = SPIN_DURATION - STOP_STEP * (REELS - 1);
-const ANTICIPATION_EXTRA = 700;
-
-function randomBonusOptions(): BonusOption[] {
-  const pool: BonusOption[] = [
-    { spins: 10, mult: 2 },
-    { spins: 15, mult: 3 },
-    { spins: 20, mult: 2 },
-    { spins: 25, mult: 4 },
-    { spins: 30, mult: 3 },
-    { spins: 50, mult: 8 },
-  ];
-  return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-}
 
 function fireConfetti() {
   const shoot = (x: number) =>
@@ -64,7 +48,7 @@ export function SlotMachine({
   onExchange?: () => void;
   onWin?: (multiplier: number) => void;
 }) {
-  const { slotCZK, betSlot, winSlot } = useWallet();
+  const { slotCZK, spinSlot, pickBonus } = useWallet();
   const [isSpinning, setIsSpinning] = useState(false);
   const [bet, setBet] = useState(10);
   const [grid, setGrid] = useState<Grid>(() => spinGrid());
@@ -94,15 +78,11 @@ export function SlotMachine({
   useEffect(() => setBestMultiplier(loadBestMultiplier()), []);
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
-  const doSpin = useCallback(() => {
+  const doSpin = useCallback(async () => {
     if (busy || pickOptions || recap) return;
+
     const isFree = freeSpinsLeft > 0;
     if (!isFree && slotCZK < bet) {
-      setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu.");
-      setAutoLeft(0);
-      return;
-    }
-    if (!isFree && !betSlot(bet)) {
       setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu.");
       setAutoLeft(0);
       return;
@@ -113,82 +93,83 @@ export function SlotMachine({
     setScatterCells([]);
     setLastWin(0);
     setBigWin(null);
-
-    if (isFree) setFreeSpinsLeft((n) => n - 1);
-
     setIsSpinning(true);
-
-    const next = spinGrid();
-    const tense = hasAnticipation(next);
     setStoppedReels(0);
     setAnticipation(false);
 
-    for (let reel = 0; reel < REELS; reel++) {
-      const extra = tense && reel >= 2 ? ANTICIPATION_EXTRA * (reel - 1) : 0;
-      const at = STOP_BASE + reel * STOP_STEP + extra;
-      if (tense && reel === 2) {
-        timers.current.push(window.setTimeout(() => setAnticipation(true), STOP_BASE + STOP_STEP + 60));
-      }
-      timers.current.push(
-        window.setTimeout(() => {
-          setGrid((g) => g.map((col, i) => (i === reel ? next[reel] : col)));
-          setStoppedReels(reel + 1);
-          if (reel === REELS - 1) {
-            setAnticipation(false);
-            setIsSpinning(false);
-            finish(next, isFree);
-          }
-        }, at),
-      );
+    const response = await spinSlot(isFree ? 0 : bet);
+    if (!response.ok || !response.result) {
+      setIsSpinning(false);
+      setStoppedReels(REELS);
+      setMessage(response.error ?? "Točka se nepovedla. Zkus to znovu.");
+      setAutoLeft(0);
+      return;
     }
 
-    function finish(final: Grid, wasFree: boolean) {
-      const mult = wasFree ? bonusMultiplier : 1;
-      const res = evaluateSpin(final, bet, mult);
-      setWinLines(res.lineWins);
-      setScatterCells(res.scatterCount >= 3 ? res.scatterCells : []);
-      setLastWin(res.total);
+    const result = response.result;
+    const next = result.grid as Grid;
+    setGrid(next);
 
-      if (res.total > 0) {
-        winSlot(res.total);
-        if (wasFree) setBonusTotal((t) => t + res.total);
-        const m = res.total / bet;
+    const stopTimers = Array.from({ length: REELS }, (_, reel) =>
+      window.setTimeout(() => {
+        setStoppedReels(reel + 1);
+        if (reel === REELS - 1) {
+          setAnticipation(false);
+          setIsSpinning(false);
+        }
+      }, STOP_BASE + reel * STOP_STEP),
+    );
+    timers.current.push(...stopTimers);
+
+    setTimeout(() => {
+      const wins = (result.line_wins ?? []) as LineWin[];
+      setWinLines(wins);
+      setScatterCells(result.scatter_count >= 3 ? result.scatter_cells : []);
+      setLastWin(Number(result.total ?? 0));
+      setFreeSpinsLeft(Number(result.free_spins_left ?? 0));
+      setBonusTotal(Number(result.bonus_total ?? 0));
+
+      const total = Number(result.total ?? 0);
+      const m = Number(result.multiplier_of_bet ?? 0);
+      if (total > 0) {
         if (m > bestMultiplier) setBestMultiplier(saveBestMultiplier(m));
         if (m >= 10) onWin?.(m);
         if (m >= 20) {
-          setBigWin({ amount: res.total, multiplier: m });
+          setBigWin({ amount: total, multiplier: m });
           fireConfetti();
           timers.current.push(window.setTimeout(() => setBigWin(null), 3200));
         }
       }
 
-      if (res.freeSpinsTriggered && !wasFree) {
-        setBonusTotal(res.total);
-        timers.current.push(window.setTimeout(() => setPickOptions(randomBonusOptions()), 700));
+      if (!isFree && result.free_spins_triggered && result.bonus_options?.length) {
+        setPickOptions(result.bonus_options);
       }
-    }
-  }, [betSlot, winSlot, slotCZK, bet, bestMultiplier, bonusMultiplier, busy, freeSpinsLeft, pickOptions, recap, onWin]);
 
-  /* Free spins + autoplay driver */
+      if (isFree && result.bonus_done) {
+        setRecap({
+          total: Number(result.bonus_total ?? 0),
+          spins: bonusSpinsGranted,
+          mult: bonusMultiplier,
+        });
+        setBonusSpinsGranted(0);
+      }
+    }, STOP_BASE + (REELS - 1) * STOP_STEP + 50);
+  }, [bestMultiplier, bet, bonusMultiplier, bonusSpinsGranted, busy, freeSpinsLeft, onWin, pickOptions, recap, slotCZK, spinSlot]);
+
   useEffect(() => {
     if (busy || pickOptions || recap) return;
     if (freeSpinsLeft > 0) {
-      const t = window.setTimeout(doSpin, 900);
+      const t = window.setTimeout(() => void doSpin(), 900);
       return () => window.clearTimeout(t);
-    }
-    if (bonusSpinsGranted > 0) {
-      setRecap({ total: bonusTotal, spins: bonusSpinsGranted, mult: bonusMultiplier });
-      setBonusSpinsGranted(0);
-      return;
     }
     if (autoLeft > 0) {
       const t = window.setTimeout(() => {
         setAutoLeft((n) => n - 1);
-        doSpin();
+        void doSpin();
       }, 700);
       return () => window.clearTimeout(t);
     }
-  }, [busy, freeSpinsLeft, autoLeft, pickOptions, recap, bonusSpinsGranted, bonusTotal, bonusMultiplier, doSpin]);
+  }, [busy, freeSpinsLeft, autoLeft, pickOptions, recap, doSpin]);
 
   const winningRowsFor = (reel: number) => {
     const rows = new Set<number>();
@@ -200,7 +181,6 @@ export function SlotMachine({
 
   return (
     <div className="relative" data-slot-spinning={busy ? "true" : "false"}>
-      {/* stadion + chmel pozadí */}
       <div className="pointer-events-none absolute -inset-6 -z-10 overflow-hidden rounded-3xl">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(255,204,68,0.25),transparent_55%),radial-gradient(circle_at_85%_10%,rgba(77,255,166,0.18),transparent_50%),linear-gradient(180deg,#051f10,#020a05)]" />
         <div className="absolute inset-0 opacity-[0.12] [background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.5)_0_1px,transparent_1px_44px)]" />
@@ -235,7 +215,6 @@ export function SlotMachine({
                 />
               ))}
 
-              {/* zlaté výherní linie */}
               <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <AnimatePresence>
                   {winLines.map((w) => {
@@ -267,31 +246,17 @@ export function SlotMachine({
             <div className="mt-3 flex min-h-6 items-center justify-center text-center">
               {message ? (
                 <span className="flex flex-wrap items-center justify-center gap-2">
-                  <span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">
-                    {message}
-                  </span>
+                  <span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">{message}</span>
                   {onExchange && (
-                    <button
-                      onClick={onExchange}
-                      className="rounded-full border border-hop-gold/50 bg-hop-gold/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-hop-gold"
-                    >
-                      Směnárna
-                    </button>
+                    <button onClick={onExchange} className="rounded-full border border-hop-gold/50 bg-hop-gold/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-hop-gold">Směnárna</button>
                   )}
                 </span>
               ) : lastWin > 0 ? (
-                <motion.span
-                  key={lastWin}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="font-display text-sm tracking-[0.14em] slot-gold-text"
-                >
+                <motion.span key={lastWin} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="font-display text-sm tracking-[0.14em] slot-gold-text">
                   VÝHRA {formatKc(lastWin)} · {(lastWin / bet).toFixed(1)}x
                 </motion.span>
               ) : (
-                <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-hop-neon/60">
-                  5 válců · 3 řady · 5 linií
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-hop-neon/60">5 válců · 3 řady · 5 linií</span>
               )}
             </div>
           </div>
@@ -305,7 +270,7 @@ export function SlotMachine({
             autoLeft={autoLeft}
             onBet={setBet}
             onMaxBet={() => setBet(MAX_BET)}
-            onSpin={doSpin}
+            onSpin={() => void doSpin()}
             onAuto={(n) => setAutoLeft(n)}
             onStopAuto={() => setAutoLeft(0)}
             onInfo={() => setShowPaytable(true)}
@@ -313,14 +278,10 @@ export function SlotMachine({
           />
         </div>
 
-        <aside className="hidden lg:block">
-          <SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} />
-        </aside>
+        <aside className="hidden lg:block"><SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} /></aside>
       </div>
 
-      <div className="mt-4 lg:hidden">
-        <SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} compact />
-      </div>
+      <div className="mt-4 lg:hidden"><SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} compact /></div>
 
       <AnimatePresence>
         {bigWin && <BigWinOverlay amount={bigWin.amount} multiplier={bigWin.multiplier} />}
@@ -328,11 +289,17 @@ export function SlotMachine({
         {pickOptions && (
           <BonusPickModal
             options={pickOptions}
-            onConfirm={(opt) => {
+            onConfirm={async (opt) => {
+              const res = await pickBonus(opt.mult);
+              if (!res.ok) {
+                setMessage(res.error ?? "Volba bonusu se nepovedla.");
+                return;
+              }
               setPickOptions(null);
               setBonusMultiplier(opt.mult);
               setFreeSpinsLeft(opt.spins);
               setBonusSpinsGranted(opt.spins);
+              setBonusTotal(0);
               setAutoLeft(0);
             }}
           />
@@ -351,21 +318,10 @@ export function SlotMachine({
           />
         )}
         {showHof && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowHof(false)}
-          >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowHof(false)}>
             <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} />
-              <button
-                onClick={() => setShowHof(false)}
-                className="mx-auto mt-3 block rounded-full border border-hop-gold/50 px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-hop-gold"
-              >
-                Zavřít
-              </button>
+              <button onClick={() => setShowHof(false)} className="mx-auto mt-3 block rounded-full border border-hop-gold/50 px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-hop-gold">Zavřít</button>
             </div>
           </motion.div>
         )}
