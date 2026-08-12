@@ -20,7 +20,9 @@ function ProfilePage() {
   return (
     <>
       <ProfileView />
-      <AccountSecurity />
+      <div className="mx-auto max-w-6xl px-3 sm:px-4">
+        <AccountSecurity />
+      </div>
     </>
   );
 }
