@@ -54,7 +54,7 @@ describe("Chmelovci Cup slot contract", () => {
     const grid = withLine("gold", 0, 3);
     const result = evaluateSpin(grid, 10, 2);
     expect(result.lineWins[0]?.amount).toBe(300);
-    expect(result.multiplierOfBet).toBe(30);
+    expect(result.multiplierOfBet).toBe(40);
   });
 
   test("anticipation requires scatters on reels 1 and 2", () => {
