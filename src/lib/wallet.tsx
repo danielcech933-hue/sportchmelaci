@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const EXCHANGE_RATE = 100;
 type WalletResult = { ok: boolean; error?: string; gained?: number };
-type DailyBonusResult = { ok: boolean; error?: string; prize?: number; nextClaimAt?: string };
+type DailyBonusResult = { ok: boolean; error?: string; prize?: number; segmentIndex?: number; nextClaimAt?: string };
 type DailyBonusStatus = { ok: boolean; error?: string; nextClaimAt?: string | null };
 
 type SlotSpinRpc = {
@@ -41,7 +41,18 @@ const GUEST_BASE_DOLLARS = 100;
 const SEED_SLOT = 10000;
 
 type RpcWallet = { balance?: number | string; slot_czk?: number | string } | null;
-type DailyBonusRpc = { prize?: number | string; amount?: number | string; reward?: number | string; dollars?: number | string; balance?: number | string; next_claim_at?: string | null } | null;
+
+type DailyBonusRpc = {
+  prize?: number | string;
+  amount?: number | string;
+  reward?: number | string;
+  dollars?: number | string;
+  balance?: number | string;
+  segment_index?: number | string;
+  segmentIndex?: number | string;
+  next_claim_at?: string | null;
+} | null;
+
 type DailyBonusStatusRpc = { next_claim_at?: string | null; can_claim?: boolean } | null;
 
 function normalizeRpcJson<T>(data: unknown): T | null {
@@ -87,26 +98,16 @@ function findRpcValue(data: unknown, keys: string[]): unknown {
 }
 
 function errorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) {
-    return mapDomainError(error.message);
-  }
+  if (error instanceof Error && error.message) return mapDomainError(error.message);
 
-  const value = error as {
-    message?: unknown;
-    details?: unknown;
-    hint?: unknown;
-    code?: unknown;
-  } | null;
-
+  const value = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown } | null;
   const parts = [value?.message, value?.details, value?.hint]
     .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
     .map((part) => part.trim());
-
   const code = typeof value?.code === "string" && value.code ? `[${value.code}] ` : "";
   const message = parts[0] ?? (typeof error === "string" ? error : "");
   const details = parts.slice(1).filter((part) => part !== message);
   const full = `${code}${[message, ...details].join(" — ")}`.trim();
-
   return mapDomainError(full);
 }
 
@@ -151,7 +152,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setSlotBalance(SEED_SLOT);
       }
     }
-
     setReady(true);
   }, [scope, user, loading, profileSlotCZK]);
 
@@ -165,7 +165,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const apply = useCallback(async (deltaDollars: number, deltaSlot: number, reason: string) => {
     const op = ++operationRef.current;
-
     if (!user) {
       const nextBalance = userDollars + deltaDollars;
       const nextSlot = slotBalance + deltaSlot;
@@ -180,15 +179,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       _delta_slot_czk: deltaSlot,
       _reason: reason,
     });
-
     if (error) return { ok: false, error: errorMessage(error) };
 
     const result = normalizeRpcJson<RpcWallet>(data);
     const nextSlot = Number(result?.slot_czk);
-    if (op === operationRef.current && Number.isFinite(nextSlot)) {
-      setSlotBalance(Math.max(0, nextSlot));
-    }
-
+    if (op === operationRef.current && Number.isFinite(nextSlot)) setSlotBalance(Math.max(0, nextSlot));
     await refreshProfile();
     return { ok: true, balance: Number(result?.balance ?? 0), slot: Number.isFinite(nextSlot) ? nextSlot : 0 };
   }, [refreshProfile, slotBalance, user, userDollars]);
@@ -215,13 +210,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const amount = Math.floor(bet);
     if (!user) return { ok: false, error: "Pro hraní automatu se musíš přihlásit." };
     if (!Number.isFinite(amount) || amount < 0) return { ok: false, error: "Neplatná sázka." };
-
     const { data, error } = await supabase.rpc("slot_spin", { _bet: amount });
     if (error) return { ok: false, error: errorMessage(error) };
-
     const result = normalizeRpcJson<SlotSpinRpc>(data);
     if (!result) return { ok: false, error: "Server vrátil neplatný výsledek točky." };
-
     const nextSlot = Number(result.slot_czk);
     if (Number.isFinite(nextSlot)) setSlotBalance(Math.max(0, nextSlot));
     await refreshProfile();
@@ -237,31 +229,31 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const claimDailyBonus = useCallback<WalletState["claimDailyBonus"]>(async () => {
     if (!user) return { ok: false, error: "Pro kolo štěstí se musíš přihlásit." };
-
     const { data, error } = await supabase.rpc("daily_bonus_claim");
     if (error) return { ok: false, error: errorMessage(error) };
 
-    const prizeValue = findRpcValue(data, ["prize", "amount", "reward", "dollars"]);
-    const prize = Number(prizeValue);
+    const rpc = normalizeRpcJson<DailyBonusRpc>(data);
+    const prize = Number(findRpcValue(rpc, ["prize", "amount", "reward", "dollars"]));
     if (![5, 10, 20, 50].includes(prize)) {
       return { ok: false, error: "Server vrátil neplatnou výhru kola štěstí." };
     }
 
-    const nextClaimValue = findRpcValue(data, ["next_claim_at", "nextClaimAt"]);
+    const segmentValue = findRpcValue(rpc, ["segment_index", "segmentIndex"]);
+    const segmentIndex = Number(segmentValue);
+    const nextClaimValue = findRpcValue(rpc, ["next_claim_at", "nextClaimAt"]);
     await refreshProfile();
     return {
       ok: true,
       prize,
+      segmentIndex: Number.isInteger(segmentIndex) && segmentIndex >= 0 && segmentIndex < 8 ? segmentIndex : undefined,
       nextClaimAt: typeof nextClaimValue === "string" ? nextClaimValue : undefined,
     };
   }, [refreshProfile, user]);
 
   const dailyBonusStatus = useCallback<WalletState["dailyBonusStatus"]>(async () => {
     if (!user) return { ok: false, error: "Pro kolo štěstí se musíš přihlásit." };
-
     const { data, error } = await supabase.rpc("daily_bonus_status");
     if (error) return { ok: false, error: errorMessage(error) };
-
     const nextClaimValue = findRpcValue(data, ["next_claim_at", "nextClaimAt"]);
     return { ok: true, nextClaimAt: typeof nextClaimValue === "string" ? nextClaimValue : null };
   }, [user]);
