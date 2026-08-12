@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const EXCHANGE_RATE = 100;
 type WalletResult = { ok: boolean; error?: string; gained?: number };
 type DailyBonusResult = { ok: boolean; error?: string; prize?: number; nextClaimAt?: string };
+type DailyBonusStatus = { ok: boolean; error?: string; nextClaimAt?: string | null };
 
 type SlotSpinRpc = {
   grid: string[][];
@@ -31,6 +32,7 @@ export interface WalletState {
   spinSlot: (bet: number) => Promise<{ ok: boolean; error?: string; result?: SlotSpinRpc }>;
   pickBonus: (multiplier: number) => Promise<WalletResult>;
   claimDailyBonus: () => Promise<DailyBonusResult>;
+  dailyBonusStatus: () => Promise<DailyBonusStatus>;
 }
 
 const Ctx = createContext<WalletState | undefined>(undefined);
@@ -39,12 +41,8 @@ const GUEST_BASE_DOLLARS = 100;
 const SEED_SLOT = 10000;
 
 type RpcWallet = { balance?: number; slot_czk?: number } | null;
-
-type DailyBonusRpc = {
-  prize?: number;
-  balance?: number;
-  next_claim_at?: string;
-} | null;
+type DailyBonusRpc = { prize?: number; balance?: number; next_claim_at?: string } | null;
+type DailyBonusStatusRpc = { next_claim_at?: string | null; can_claim?: boolean } | null;
 
 function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
@@ -181,12 +179,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
 
     await refreshProfile();
-    return {
-      ok: true,
-      prize,
-      nextClaimAt: result?.next_claim_at,
-    };
+    return { ok: true, prize, nextClaimAt: result?.next_claim_at };
   }, [refreshProfile, user]);
+
+  const dailyBonusStatus = useCallback<WalletState["dailyBonusStatus"]>(async () => {
+    if (!user) return { ok: false, error: "Pro kolo štěstí se musíš přihlásit." };
+
+    const { data, error } = await supabase.rpc("daily_bonus_status");
+    if (error) return { ok: false, error: errorMessage(error) };
+
+    const result = data as DailyBonusStatusRpc;
+    return { ok: true, nextClaimAt: result?.next_claim_at ?? null };
+  }, [user]);
 
   const value = useMemo<WalletState>(() => ({
     userDollars,
@@ -197,7 +201,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     spinSlot,
     pickBonus,
     claimDailyBonus,
-  }), [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, spinSlot, pickBonus, claimDailyBonus]);
+    dailyBonusStatus,
+  }), [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, spinSlot, pickBonus, claimDailyBonus, dailyBonusStatus]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
