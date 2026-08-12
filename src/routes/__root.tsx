@@ -22,8 +22,7 @@ import {
   MessagesSquare,
   HeartHandshake,
   MapPin,
-
-
+  Gamepad2,
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
@@ -39,22 +38,19 @@ import { WinCelebrations } from "@/lib/win-toasts";
 import { WalletProvider, useWallet } from "@/lib/wallet";
 import { Toaster } from "@/components/ui/sonner";
 import { StadiumBackdrop } from "@/components/StadiumBackdrop";
-import { CursorSpotlight } from "@/lib/fx";
 import { motion } from "framer-motion";
-
-
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-display text-primary">404</h1>
-        <p className="mt-2 text-sm text-muted-foreground">This page isn't on the scoreboard.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Tahle stránka není na výsledkové tabuli.</p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
         >
-          Back to lobby
+          Zpět do lobby
         </Link>
       </div>
     </div>
@@ -69,13 +65,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-display text-foreground">Match interrupted</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try again.</p>
+        <h1 className="text-xl font-display text-foreground">Hra byla přerušena</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Něco se pokazilo. Zkus stránku načíst znovu.</p>
         <button
           onClick={() => { router.invalidate(); reset(); }}
           className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
         >
-          Try again
+          Zkusit znovu
         </button>
       </div>
     </div>
@@ -93,14 +89,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Chmeloví Sportovci" },
       { name: "format-detection", content: "telephone=no" },
-      { title: "Courtside — Pick a Sport" },
-      { name: "description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
-      { property: "og:title", content: "Courtside — Pick a Sport" },
-      { property: "og:description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
+      { title: "Chmeloví Sportovci — sportovní lobby" },
+      { name: "description", content: "Sportovní scoreboard, turnaje, sázky, chat a herní lobby Chmelových Sportovců." },
+      { property: "og:title", content: "Chmeloví Sportovci — sportovní lobby" },
+      { property: "og:description", content: "Sportovní scoreboard, turnaje, sázky, chat a herní lobby Chmelových Sportovců." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Courtside — Pick a Sport" },
-      { name: "twitter:description", content: "Start a live scoreboard for tennis, volleyball, nohejball, football or padel." },
+      { name: "twitter:title", content: "Chmeloví Sportovci — sportovní lobby" },
+      { name: "twitter:description", content: "Sportovní scoreboard, turnaje, sázky, chat a herní lobby Chmelových Sportovců." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b40a6d80-361c-4f14-9e51-dc3d592157f2" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b40a6d80-361c-4f14-9e51-dc3d592157f2" },
     ],
@@ -116,7 +112,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap",
       },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -126,7 +121,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="cs">
       <head><HeadContent /></head>
       <body>
         {children}
@@ -159,7 +154,6 @@ function RootComponent() {
           <DmProvider>
             <div className="flex min-h-screen flex-col">
               <StadiumBackdrop />
-              <CursorSpotlight />
               <SiteHeader />
               <div className="flex-1">
                 <PageTransition />
@@ -173,10 +167,8 @@ function RootComponent() {
         </WalletProvider>
       </AuthProvider>
     </QueryClientProvider>
-
   );
 }
-
 
 type NavItem = {
   to: string;
@@ -189,19 +181,20 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Lobby", icon: Home, exact: true },
-  { to: "/schedule", label: "Schedule", icon: CalendarDays },
+  { to: "/schedule", label: "Plán", icon: CalendarDays },
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/rankings", label: "Scoreboard", icon: Trophy },
   { to: "/teams", label: "Teams", icon: Users },
   { to: "/venues", label: "Sportoviště", icon: MapPin },
-  { to: "/bets", label: "Bets", icon: Coins },
+  { to: "/bets", label: "Sázky", icon: Coins },
+  { to: "/arcade", label: "Arkáda", icon: Gamepad2 },
+  { to: "/slots", label: "Slots", icon: Coins },
   { to: "/chat", label: "Chat", icon: MessagesSquare },
-  { to: "/history", label: "History", icon: HistoryIcon },
+  { to: "/history", label: "Historie", icon: HistoryIcon },
   { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
-  { to: "/profile", label: "Profile", icon: UserRound, authOnly: true },
+  { to: "/profile", label: "Profil", icon: UserRound, authOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
 ];
-
 
 function matchesRoute(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.to;
@@ -221,9 +214,9 @@ function SiteHeader() {
   const current =
     visible.find((n) => matchesRoute(pathname, n)) ??
     (pathname.startsWith("/match")
-      ? { label: "Live match", icon: Radio, to: "/match", exact: false } as NavItem
+      ? { label: "Live zápas", icon: Radio, to: "/match", exact: false } as NavItem
       : pathname.startsWith("/auth")
-      ? { label: "Sign in", icon: UserRound, to: "/auth", exact: false } as NavItem
+      ? { label: "Přihlášení", icon: UserRound, to: "/auth", exact: false } as NavItem
       : null);
 
   return (
@@ -266,9 +259,6 @@ function SiteHeader() {
             </span>
           </div>
         )}
-
-        {null}
-
       </div>
     </header>
   );
@@ -281,13 +271,13 @@ function AuthNav() {
   if (!user) {
     return (
       <Link to="/auth" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[0_0_16px_-4px_hsl(45_100%_60%/0.7)] sm:text-sm">
-        Sign in
+        Přihlásit
       </Link>
     );
   }
   return (
     <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-      <Link to="/profile" aria-label="Profile" className="shrink-0">
+      <Link to="/profile" aria-label="Profil" className="shrink-0">
         <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
       </Link>
       <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-accent/40 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:px-2 sm:text-xs">
@@ -300,10 +290,10 @@ function AuthNav() {
       )}
       <button
         onClick={() => signOut()}
-        aria-label="Sign out"
+        aria-label="Odhlásit"
         className="shrink-0 rounded-md border border-primary/25 px-2 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:px-2.5 sm:text-sm"
       >
-        <span className="hidden sm:inline">Sign out</span>
+        <span className="hidden sm:inline">Odhlásit</span>
         <span className="sm:hidden" aria-hidden>⎋</span>
       </button>
     </div>
