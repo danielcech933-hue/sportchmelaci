@@ -5,14 +5,30 @@ import { supabase } from "@/integrations/supabase/client";
 export const EXCHANGE_RATE = 100;
 type WalletResult = { ok: boolean; error?: string; gained?: number };
 
+type SlotSpinRpc = {
+  grid: string[][];
+  line_wins: unknown[];
+  scatter_count: number;
+  scatter_amount: number;
+  scatter_cells: [number, number][];
+  total: number;
+  multiplier_of_bet: number;
+  free_spins_triggered: boolean;
+  bonus_options: Array<{ spins: number; mult: number }>;
+  free_spins_left: number;
+  bonus_total: number;
+  bonus_done: boolean;
+  slot_czk: number;
+};
+
 export interface WalletState {
   userDollars: number;
   slotCZK: number;
   ready: boolean;
   exchangeToSlot: (dollars: number) => Promise<WalletResult>;
   exchangeToDollars: (czk: number) => Promise<WalletResult>;
-  betSlot: (amount: number) => boolean;
-  winSlot: (amount: number) => void;
+  spinSlot: (bet: number) => Promise<{ ok: boolean; error?: string; result?: SlotSpinRpc }>;
+  pickBonus: (multiplier: number) => Promise<WalletResult>;
   addDollars: (amount: number) => Promise<WalletResult>;
 }
 
@@ -31,7 +47,10 @@ function errorMessage(error: unknown): string {
   if (message.includes("invalid_daily_bonus")) return "Tato výhra kola štěstí není platná.";
   if (message.includes("invalid_exchange")) return "Neplatná částka směny.";
   if (message.includes("invalid_slot_bet")) return "Neplatná sázka.";
-  if (message.includes("invalid_slot_win")) return "Neplatná výhra.";
+  if (message.includes("bonus_pick_required")) return "Nejdřív vyber bonus.";
+  if (message.includes("no_bonus_pick")) return "Bonus už není dostupný.";
+  if (message.includes("invalid_bonus_pick")) return "Neplatná volba bonusu.";
+  if (message.includes("invalid_free_spin_bet")) return "Free spin nepoužívá další sázku.";
   if (message.includes("not_authenticated")) return "Pro tuto operaci se musíš přihlásit.";
   return "Operace se nepovedla. Zkus to znovu.";
 }
@@ -49,7 +68,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     operationRef.current += 1;
 
     if (user) {
-      // Auth is the source of truth for logged-in users.
       setSlotBalance(Math.max(0, Number(profileSlotCZK ?? SEED_SLOT)));
     } else if (typeof window !== "undefined") {
       try {
@@ -90,37 +108,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       _reason: reason,
     });
 
-    if (error) {
-      return { ok: false, error: errorMessage(error) };
-    }
+    if (error) return { ok: false, error: errorMessage(error) };
 
     const result = data as RpcWallet;
     const nextSlot = Number(result?.slot_czk);
-
-    // The RPC is authoritative. Ignore stale responses from an older request.
     if (op === operationRef.current && Number.isFinite(nextSlot)) {
       setSlotBalance(Math.max(0, nextSlot));
     }
 
-    // Balance, slot CZK and avatar are refreshed together from the same profile row.
     await refreshProfile();
-
-    return {
-      ok: true,
-      balance: Number(result?.balance ?? 0),
-      slot: Number.isFinite(nextSlot) ? nextSlot : 0,
-    };
+    return { ok: true, balance: Number(result?.balance ?? 0), slot: Number.isFinite(nextSlot) ? nextSlot : 0 };
   }, [refreshProfile, slotBalance, user, userDollars]);
 
   const exchangeToSlot = useCallback<WalletState["exchangeToSlot"]>(async (dollars) => {
     const amount = Math.floor(dollars);
     if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Zadej platnou částku." };
     if (amount > userDollars) return { ok: false, error: "Nedostatek dolarů na účtu." };
-
     const res = await apply(-amount, amount * EXCHANGE_RATE, "exchange_to_slot");
-    return res.ok
-      ? { ok: true, gained: amount * EXCHANGE_RATE }
-      : { ok: false, error: res.error };
+    return res.ok ? { ok: true, gained: amount * EXCHANGE_RATE } : { ok: false, error: res.error };
   }, [apply, userDollars]);
 
   const exchangeToDollars = useCallback<WalletState["exchangeToDollars"]>(async (czk) => {
@@ -128,44 +133,37 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Zadej platnou částku." };
     if (amount % EXCHANGE_RATE !== 0) return { ok: false, error: `Směňuj po ${EXCHANGE_RATE} Slot CZK.` };
     if (amount > slotBalance) return { ok: false, error: "Nedostatek Slot CZK v automatu." };
-
     const gained = amount / EXCHANGE_RATE;
     const res = await apply(gained, -amount, "exchange_to_dollars");
     return res.ok ? { ok: true, gained } : { ok: false, error: res.error };
   }, [apply, slotBalance]);
 
-  const betSlot = useCallback<WalletState["betSlot"]>((amount) => {
-    if (!Number.isFinite(amount) || amount <= 0 || slotBalance < amount) return false;
+  const spinSlot = useCallback<WalletState["spinSlot"]>(async (bet) => {
+    const amount = Math.floor(bet);
+    if (!user) return { ok: false, error: "Pro hraní automatu se musíš přihlásit." };
+    if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Neplatná sázka." };
 
-    // Keep the UI responsive, then let the RPC confirm the authoritative value.
-    setSlotBalance((current) => Math.max(0, current - amount));
+    const { data, error } = await supabase.rpc("slot_spin", { _bet: amount });
+    if (error) return { ok: false, error: errorMessage(error) };
 
-    if (user) {
-      void apply(0, -amount, "slot_bet").then((res) => {
-        if (!res.ok) void refreshProfile();
-      });
-    }
+    const result = data as SlotSpinRpc;
+    const nextSlot = Number(result?.slot_czk);
+    if (Number.isFinite(nextSlot)) setSlotBalance(Math.max(0, nextSlot));
+    await refreshProfile();
+    return { ok: true, result };
+  }, [refreshProfile, user]);
 
-    return true;
-  }, [apply, refreshProfile, slotBalance, user]);
-
-  const winSlot = useCallback<WalletState["winSlot"]>((amount) => {
-    if (!Number.isFinite(amount) || amount <= 0) return;
-
-    setSlotBalance((current) => current + amount);
-
-    if (user) {
-      void apply(0, amount, "slot_win").then((res) => {
-        if (!res.ok) void refreshProfile();
-      });
-    }
-  }, [apply, refreshProfile, user]);
+  const pickBonus = useCallback<WalletState["pickBonus"]>(async (multiplier) => {
+    if (!user) return { ok: false, error: "Pro bonus se musíš přihlásit." };
+    const { error } = await supabase.rpc("slot_pick_bonus", { _multiplier: multiplier });
+    if (error) return { ok: false, error: errorMessage(error) };
+    return { ok: true };
+  }, [user]);
 
   const addDollars = useCallback<WalletState["addDollars"]>(async (amount) => {
     if (!Number.isFinite(amount) || ![5, 10, 20, 50].includes(amount)) {
       return { ok: false, error: "Neplatná výhra kola štěstí." };
     }
-
     const res = await apply(amount, 0, "daily_bonus");
     return res.ok ? { ok: true, gained: amount } : { ok: false, error: res.error };
   }, [apply]);
@@ -176,10 +174,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     ready,
     exchangeToSlot,
     exchangeToDollars,
-    betSlot,
-    winSlot,
+    spinSlot,
+    pickBonus,
     addDollars,
-  }), [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, betSlot, winSlot, addDollars]);
+  }), [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, spinSlot, pickBonus, addDollars]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
