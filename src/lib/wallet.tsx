@@ -41,7 +41,7 @@ const GUEST_BASE_DOLLARS = 100;
 const SEED_SLOT = 10000;
 
 type RpcWallet = { balance?: number | string; slot_czk?: number | string } | null;
-type DailyBonusRpc = { prize?: number | string; amount?: number | string; balance?: number | string; next_claim_at?: string | null } | null;
+type DailyBonusRpc = { prize?: number | string; amount?: number | string; reward?: number | string; dollars?: number | string; balance?: number | string; next_claim_at?: string | null } | null;
 type DailyBonusStatusRpc = { next_claim_at?: string | null; can_claim?: boolean } | null;
 
 function normalizeRpcJson<T>(data: unknown): T | null {
@@ -55,6 +55,35 @@ function normalizeRpcJson<T>(data: unknown): T | null {
   }
   if (Array.isArray(data)) return (data[0] ?? null) as T | null;
   return data as T;
+}
+
+function findRpcValue(data: unknown, keys: string[]): unknown {
+  if (data == null) return undefined;
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const found = findRpcValue(item, keys);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  if (typeof data === "string") {
+    try {
+      return findRpcValue(JSON.parse(data), keys);
+    } catch {
+      return undefined;
+    }
+  }
+  if (typeof data !== "object") return undefined;
+
+  const record = data as Record<string, unknown>;
+  for (const key of keys) {
+    if (key in record && record[key] != null) return record[key];
+  }
+  for (const value of Object.values(record)) {
+    const found = findRpcValue(value, keys);
+    if (found !== undefined) return found;
+  }
+  return undefined;
 }
 
 function errorMessage(error: unknown): string {
@@ -212,14 +241,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.rpc("daily_bonus_claim");
     if (error) return { ok: false, error: errorMessage(error) };
 
-    const result = normalizeRpcJson<DailyBonusRpc>(data);
-    const prize = Number(result?.prize ?? result?.amount);
+    const prizeValue = findRpcValue(data, ["prize", "amount", "reward", "dollars"]);
+    const prize = Number(prizeValue);
     if (![5, 10, 20, 50].includes(prize)) {
       return { ok: false, error: "Server vrátil neplatnou výhru kola štěstí." };
     }
 
+    const nextClaimValue = findRpcValue(data, ["next_claim_at", "nextClaimAt"]);
     await refreshProfile();
-    return { ok: true, prize, nextClaimAt: result?.next_claim_at ?? null };
+    return {
+      ok: true,
+      prize,
+      nextClaimAt: typeof nextClaimValue === "string" ? nextClaimValue : undefined,
+    };
   }, [refreshProfile, user]);
 
   const dailyBonusStatus = useCallback<WalletState["dailyBonusStatus"]>(async () => {
@@ -228,8 +262,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.rpc("daily_bonus_status");
     if (error) return { ok: false, error: errorMessage(error) };
 
-    const result = normalizeRpcJson<DailyBonusStatusRpc>(data);
-    return { ok: true, nextClaimAt: result?.next_claim_at ?? null };
+    const nextClaimValue = findRpcValue(data, ["next_claim_at", "nextClaimAt"]);
+    return { ok: true, nextClaimAt: typeof nextClaimValue === "string" ? nextClaimValue : null };
   }, [user]);
 
   const value = useMemo<WalletState>(() => ({
