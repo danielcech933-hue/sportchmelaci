@@ -7,7 +7,7 @@ import { SlotsScoreboard } from "./SlotsScoreboard";
 import { PaytableModal } from "./PaytableModal";
 import { BonusPickModal, BonusRecapModal, type BonusOption } from "./BonusModal";
 import { BigWinOverlay } from "./BigWinOverlay";
-import { MAX_BET, PAYLINES, REELS, ROWS, formatKc, loadBestMultiplier, saveBestMultiplier, spinGrid, type Grid, type LineWin } from "@/lib/slots";
+import { MAX_BET, PAYLINES, REELS, ROWS, formatKc, hasAnticipation, loadBestMultiplier, saveBestMultiplier, spinGrid, type Grid, type LineWin } from "@/lib/slots";
 import { useWallet } from "@/lib/wallet";
 
 const SPIN_DURATION = 2500;
@@ -66,7 +66,21 @@ export function SlotMachine({ playerName, onExchange, onWin }: { playerName: str
     const result = response.result;
     const next = normalizeGrid(result.grid);
     setGrid(next);
-    const stopTimers = Array.from({ length: REELS }, (_, reel) => window.setTimeout(() => { setStoppedReels(reel + 1); if (reel === REELS - 1) { setAnticipation(false); setIsSpinning(false); } }, STOP_BASE + reel * STOP_STEP));
+
+    // SCATTER anticipation: if reels 1+2 already contain scatters, keep the
+    // remaining reels visually alive for the final reveal instead of stopping
+    // them like a normal spin. The server remains authoritative for the result.
+    const nextAnticipation = hasAnticipation(next);
+    setAnticipation(nextAnticipation);
+    if (nextAnticipation) setMessage("SCATTER! Ještě jeden může spustit bonus…");
+
+    const stopTimers = Array.from({ length: REELS }, (_, reel) => window.setTimeout(() => {
+      setStoppedReels(reel + 1);
+      if (reel === REELS - 1) {
+        setAnticipation(false);
+        setIsSpinning(false);
+      }
+    }, STOP_BASE + reel * STOP_STEP));
     timers.current.push(...stopTimers);
     setTimeout(() => {
       const wins = (result.line_wins ?? []) as LineWin[];
@@ -88,11 +102,14 @@ export function SlotMachine({ playerName, onExchange, onWin }: { playerName: str
   const hasWin = winLines.length > 0 || scatterCells.length > 0;
 
   return (
-    <div className="relative" data-slot-spinning={busy ? "true" : "false"}>
+    <div className="relative" data-slot-spinning={busy ? "true" : "false"} data-slot-anticipation={anticipation ? "true" : "false"}>
       <div className="pointer-events-none absolute -inset-8 -z-10 overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_15%_0%,rgba(255,204,68,.28),transparent_38%),radial-gradient(circle_at_90%_12%,rgba(77,255,166,.2),transparent_35%),linear-gradient(160deg,#092d18,#020a05_55%,#07180d)] shadow-[0_35px_100px_-35px_rgba(0,0,0,.95)]" />
       <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-hop-gold/30 bg-black/40 px-4 py-2.5 backdrop-blur-xl">
         <div><p className="font-display text-base tracking-[.18em] slot-gold-text">CHMELOVCI CUP</p><p className="font-mono text-[8px] uppercase tracking-[.24em] text-hop-neon/60">SPORTOVNÍ SLOT · 5 VÁLCŮ / 3 ŘADY</p></div>
-        <div className="hidden rounded-lg border border-hop-gold/20 bg-hop-gold/5 px-3 py-1 text-right sm:block"><p className="font-mono text-[8px] uppercase tracking-widest text-hop-gold/60">STATUS</p><p className={`font-display text-xs ${busy ? "text-hop-gold" : "text-hop-neon"}`}>{busy ? "TOČÍME" : "READY"}</p></div>
+        <div className="flex items-center gap-2">
+          {anticipation && <motion.span className="rounded-full border border-hop-gold/50 bg-hop-gold/10 px-2.5 py-1 font-mono text-[8px] font-black uppercase tracking-[.18em] text-hop-gold" initial={{ opacity: 0, scale: .9 }} animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.03, 0.98] }} transition={{ duration: .8, repeat: Infinity }}>SCATTER ANTICIPACE</motion.span>}
+          <div className="hidden rounded-lg border border-hop-gold/20 bg-hop-gold/5 px-3 py-1 text-right sm:block"><p className="font-mono text-[8px] uppercase tracking-widest text-hop-gold/60">STATUS</p><p className={`font-display text-xs ${busy ? "text-hop-gold" : "text-hop-neon"}`}>{busy ? "TOČÍME" : "READY"}</p></div>
+        </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
         <div>
