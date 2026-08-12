@@ -16,12 +16,20 @@ interface AuthState {
 }
 
 const Ctx = createContext<AuthState | undefined>(undefined);
+const DEFAULT_SLOT_CZK = 10000;
+
+type ProfileRow = {
+  nickname?: string | null;
+  balance?: number | null;
+  slot_czk?: number | null;
+  avatar_path?: string | null;
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0);
-  const [slotCZK, setSlotCZK] = useState<number>(10000);
+  const [slotCZK, setSlotCZK] = useState<number>(DEFAULT_SLOT_CZK);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,35 +38,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!uid) {
       setNickname(null);
       setBalance(0);
-      setSlotCZK(10000);
+      setSlotCZK(DEFAULT_SLOT_CZK);
       setAvatarPath(null);
       setIsAdmin(false);
       return;
     }
 
-    // Keep core profile data working even while the wallet migration is being deployed.
-    // A missing slot_czk column must never make the avatar/balance disappear.
+    // Wallet migration is now installed, so read all profile wallet fields
+    // in one query. This prevents balance/avatar/slot values from getting out
+    // of sync because of multiple overlapping profile requests.
     const [{ data: prof, error: profileError }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("nickname,balance,avatar_path").eq("id", uid).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("nickname,balance,slot_czk,avatar_path")
+        .eq("id", uid)
+        .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
 
-    const p = prof as { nickname?: string; balance?: number; avatar_path?: string | null } | null;
     if (!profileError) {
+      const p = prof as ProfileRow | null;
       setNickname(p?.nickname ?? null);
       setBalance(Number(p?.balance ?? 0));
+      const slotValue = Number(p?.slot_czk);
+      setSlotCZK(Number.isFinite(slotValue) ? slotValue : DEFAULT_SLOT_CZK);
       setAvatarPath(p?.avatar_path ?? null);
     }
-    setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
 
-    // slot_czk is optional until the authoritative wallet migration has run.
-    const { data: walletProfile } = await supabase
-      .from("profiles")
-      .select("slot_czk")
-      .eq("id", uid)
-      .maybeSingle();
-    const slotValue = Number((walletProfile as { slot_czk?: number } | null)?.slot_czk);
-    setSlotCZK(Number.isFinite(slotValue) ? slotValue : 10000);
+    setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
   }
 
   useEffect(() => {
@@ -66,10 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setTimeout(() => loadProfile(s?.user.id), 0);
     });
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       loadProfile(data.session?.user.id).finally(() => setLoading(false));
     });
+
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -82,9 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     avatarPath,
     isAdmin,
     loading,
-    signOut: async () => { await supabase.auth.signOut(); },
+    signOut: async () => {
+      await supabase.auth.signOut();
+    },
     refreshProfile: async () => loadProfile(session?.user.id),
   };
+
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
