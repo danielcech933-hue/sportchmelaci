@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRightLeft, Beer, CircleDot, Club, Sparkles } from "lucide-react";
 import { CurrencyExchangeModal } from "@/components/CurrencyExchangeModal";
 import { DailyBonusWheel } from "@/components/slots/DailyBonusWheel";
-import { LiveRoulette } from "@/components/LiveRoulette";
+import { LiveRouletteServer } from "@/components/LiveRouletteServer";
 import { LivePokerTournament } from "@/components/LivePokerTournament";
 import { CountUp, MagneticText, TiltCard } from "@/lib/fx";
 import { useWallet } from "@/lib/wallet";
@@ -28,7 +28,7 @@ const TABS: { key: Tab; label: string; icon: typeof Beer }[] = [
   { key: "poker", label: "Poker Turnaje", icon: Club },
 ];
 
-/** Herní lobby — sloty, živá ruleta, poker turnaje + směnárna. */
+/** Herní lobby — sloty, živá multiplayer ruleta, poker turnaje + směnárna. */
 export function SlotLobby() {
   const { userDollars, slotCZK } = useWallet();
   const [exchange, setExchange] = useState(false);
@@ -45,7 +45,7 @@ export function SlotLobby() {
             </p>
             <MagneticText text="CASINO" className="mt-1 font-display text-3xl tracking-[0.12em] slot-gold-text sm:text-5xl" />
             <p className="mt-2 max-w-2xl text-sm text-foreground/75">
-              Automat, živá multiplayer ruleta a poker turnaje. Herní kredity (Slot CZK) jsou oddělené od sportovních
+              Automat, serverová multiplayer ruleta a poker turnaje. Herní kredity (Slot CZK) jsou oddělené od sportovních
               dolarů — převádí se ve směnárně kurzem 1 : 100. Ruleta i poker hrají přímo o dolary z profilu.
             </p>
           </div>
@@ -68,7 +68,6 @@ export function SlotLobby() {
         </div>
       </header>
 
-      {/* Přepínač her */}
       <nav className="mt-5 flex flex-wrap gap-2 rounded-2xl border border-hop-gold/25 bg-black/40 p-2 backdrop-blur-xl">
         {TABS.map((t) => {
           const Icon = t.icon;
@@ -129,7 +128,7 @@ export function SlotLobby() {
               </div>
             </>
           )}
-          {tab === "roulette" && <LiveRoulette />}
+          {tab === "roulette" && <LiveRouletteServer />}
           {tab === "poker" && <LivePokerTournament />}
         </motion.section>
       </AnimatePresence>
