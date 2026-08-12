@@ -285,6 +285,10 @@ export type Database = {
       }
       fc_cards: {
         Row: {
+          alt_positions: string[]
+          attrs: Json
+          base_rating: number | null
+          campaign: string | null
           card_type: string
           club: string
           created_at: string
@@ -299,11 +303,21 @@ export type Database = {
           pac: number
           pas: number
           phy: number
+          player_id: string | null
+          playstyles: string[]
+          playstyles_plus: string[]
           position: string
+          quick_sell: number
+          rarity: string
           rating: number
+          roles: string[]
           sho: number
         }
         Insert: {
+          alt_positions?: string[]
+          attrs?: Json
+          base_rating?: number | null
+          campaign?: string | null
           card_type?: string
           club: string
           created_at?: string
@@ -318,11 +332,21 @@ export type Database = {
           pac?: number
           pas?: number
           phy?: number
+          player_id?: string | null
+          playstyles?: string[]
+          playstyles_plus?: string[]
           position: string
+          quick_sell?: number
+          rarity?: string
           rating: number
+          roles?: string[]
           sho?: number
         }
         Update: {
+          alt_positions?: string[]
+          attrs?: Json
+          base_rating?: number | null
+          campaign?: string | null
           card_type?: string
           club?: string
           created_at?: string
@@ -337,11 +361,25 @@ export type Database = {
           pac?: number
           pas?: number
           phy?: number
+          player_id?: string | null
+          playstyles?: string[]
+          playstyles_plus?: string[]
           position?: string
+          quick_sell?: number
+          rarity?: string
           rating?: number
+          roles?: string[]
           sho?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fc_cards_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "fc_players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fc_challenges: {
         Row: {
@@ -382,6 +420,90 @@ export type Database = {
         }
         Relationships: []
       }
+      fc_clubs: {
+        Row: {
+          badge: string
+          club_name: string
+          coins: number
+          created_at: string
+          event_tokens: number
+          kit: string
+          last_daily_spin_at: string | null
+          luck_meter: number
+          spin_tokens: number
+          stadium: string
+          starter_granted: boolean
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          badge?: string
+          club_name: string
+          coins?: number
+          created_at?: string
+          event_tokens?: number
+          kit?: string
+          last_daily_spin_at?: string | null
+          luck_meter?: number
+          spin_tokens?: number
+          stadium?: string
+          starter_granted?: boolean
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          badge?: string
+          club_name?: string
+          coins?: number
+          created_at?: string
+          event_tokens?: number
+          kit?: string
+          last_daily_spin_at?: string | null
+          luck_meter?: number
+          spin_tokens?: number
+          stadium?: string
+          starter_granted?: boolean
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      fc_coin_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          currency: string
+          id: string
+          meta: Json
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          currency?: string
+          id?: string
+          meta?: Json
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          meta?: Json
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fc_packs: {
         Row: {
           created_at: string
@@ -406,6 +528,163 @@ export type Database = {
           pack_type?: string
           source?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      fc_players: {
+        Row: {
+          alt_positions: string[]
+          club: string
+          created_at: string
+          id: string
+          key: string
+          league: string
+          name: string
+          nation: string
+          preferred_foot: string
+          primary_position: string
+          skills: number
+          weak_foot: number
+        }
+        Insert: {
+          alt_positions?: string[]
+          club: string
+          created_at?: string
+          id?: string
+          key: string
+          league: string
+          name: string
+          nation: string
+          preferred_foot?: string
+          primary_position: string
+          skills?: number
+          weak_foot?: number
+        }
+        Update: {
+          alt_positions?: string[]
+          club?: string
+          created_at?: string
+          id?: string
+          key?: string
+          league?: string
+          name?: string
+          nation?: string
+          preferred_foot?: string
+          primary_position?: string
+          skills?: number
+          weak_foot?: number
+        }
+        Relationships: []
+      }
+      fc_spin_probabilities: {
+        Row: {
+          id: string
+          max_rating: number
+          min_rating: number
+          rarity: string
+          spin_type: string
+          weight: number
+        }
+        Insert: {
+          id?: string
+          max_rating?: number
+          min_rating?: number
+          rarity: string
+          spin_type: string
+          weight: number
+        }
+        Update: {
+          id?: string
+          max_rating?: number
+          min_rating?: number
+          rarity?: string
+          spin_type?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_spin_probabilities_spin_type_fkey"
+            columns: ["spin_type"]
+            isOneToOne: false
+            referencedRelation: "fc_spin_types"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      fc_spin_transactions: {
+        Row: {
+          card_id: string | null
+          created_at: string
+          duplicate: boolean
+          id: string
+          pity_used: boolean
+          rarity: string
+          spin_type: string
+          user_id: string
+        }
+        Insert: {
+          card_id?: string | null
+          created_at?: string
+          duplicate?: boolean
+          id?: string
+          pity_used?: boolean
+          rarity: string
+          spin_type: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string | null
+          created_at?: string
+          duplicate?: boolean
+          id?: string
+          pity_used?: boolean
+          rarity?: string
+          spin_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_spin_transactions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "fc_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fc_spin_types: {
+        Row: {
+          cooldown_hours: number | null
+          cost_coins: number
+          cost_event_tokens: number
+          cost_tokens: number
+          enabled: boolean
+          key: string
+          label: string
+          pity_threshold: number
+          sort_order: number
+        }
+        Insert: {
+          cooldown_hours?: number | null
+          cost_coins?: number
+          cost_event_tokens?: number
+          cost_tokens?: number
+          enabled?: boolean
+          key: string
+          label: string
+          pity_threshold?: number
+          sort_order?: number
+        }
+        Update: {
+          cooldown_hours?: number | null
+          cost_coins?: number
+          cost_event_tokens?: number
+          cost_tokens?: number
+          enabled?: boolean
+          key?: string
+          label?: string
+          pity_threshold?: number
+          sort_order?: number
         }
         Relationships: []
       }
@@ -443,19 +722,28 @@ export type Database = {
         Row: {
           card_id: string
           created_at: string
+          favorite: boolean
           id: string
+          locked: boolean
+          source: string
           user_id: string
         }
         Insert: {
           card_id: string
           created_at?: string
+          favorite?: boolean
           id?: string
+          locked?: boolean
+          source?: string
           user_id: string
         }
         Update: {
           card_id?: string
           created_at?: string
+          favorite?: boolean
           id?: string
+          locked?: boolean
+          source?: string
           user_id?: string
         }
         Relationships: [
@@ -967,6 +1255,8 @@ export type Database = {
             }
             Returns: string
           }
+      fc_club_get: { Args: never; Returns: Json }
+      fc_club_rename: { Args: { _name: string }; Returns: undefined }
       fc_create_challenge: {
         Args: { _mode: string; _opponent: string; _ovr_cap: number }
         Returns: string
@@ -976,6 +1266,7 @@ export type Database = {
         Returns: string
       }
       fc_open_pack: { Args: { _pack_id: string }; Returns: Json }
+      fc_quick_sell: { Args: { _user_card_id: string }; Returns: Json }
       fc_respond_challenge: {
         Args: { _accept: boolean; _challenge_id: string }
         Returns: undefined
@@ -989,10 +1280,39 @@ export type Database = {
         }
         Returns: undefined
       }
+      fc_seed_card: {
+        Args: {
+          _alt?: string[]
+          _card_type?: string
+          _club: string
+          _def: number
+          _dri: number
+          _key: string
+          _league: string
+          _name: string
+          _nation: string
+          _pac: number
+          _pas: number
+          _phy: number
+          _playstyles?: string[]
+          _pos: string
+          _rarity: string
+          _rating: number
+          _roles?: string[]
+          _sho: number
+        }
+        Returns: string
+      }
+      fc_seed_catalog: { Args: never; Returns: number }
+      fc_set_card_flags: {
+        Args: { _favorite: boolean; _locked: boolean; _user_card_id: string }
+        Returns: undefined
+      }
       fc_set_ready: {
         Args: { _challenge_id: string; _ready: boolean }
         Returns: undefined
       }
+      fc_spin: { Args: { _spin_type: string }; Returns: Json }
       generate_tournament_notifications: { Args: never; Returns: number }
       has_role: {
         Args: {
