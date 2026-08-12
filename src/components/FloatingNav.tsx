@@ -33,15 +33,15 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/schedule", label: "Plán", icon: CalendarDays },
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" },
-  { to: "/arcade", label: "Arcade", icon: Gamepad2 },
+  { to: "/arcade", label: "Arkáda", icon: Gamepad2 },
   { to: "/ultimate-team", label: "Ultimate", icon: Layers },
   { to: "/slots", label: "Sloty", icon: Beer },
-  { to: "/teams", label: "Teams", icon: Users },
+  { to: "/teams", label: "Týmy", icon: Users },
   { to: "/venues", label: "Sportoviště", icon: MapPin },
-  { to: "/bets", label: "Bets", icon: Coins },
+  { to: "/bets", label: "Sázky", icon: Coins },
   { to: "/chat", label: "Chat", icon: MessagesSquare },
   { to: "/history", label: "Historie", icon: HistoryIcon },
-  { to: "/support", label: "Podpoř", icon: HeartHandshake },
+  { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
   { to: "/profile", label: "Profil", icon: UserRound, authOnly: true },
   { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
 ];
@@ -57,7 +57,6 @@ export function FloatingNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [hidden, setHidden] = useState(false);
 
-  /* Globální scroll listener: dolů = skryj, nahoru = okamžitě zobraz. */
   useEffect(() => {
     let last = window.scrollY;
     let frame = 0;
@@ -80,7 +79,6 @@ export function FloatingNav() {
     };
   }, []);
 
-  /* Při přechodu na jinou stránku lištu vždy odhal. */
   useEffect(() => setHidden(false), [pathname]);
 
   if (loading) return null;
@@ -100,15 +98,12 @@ export function FloatingNav() {
     >
       <div
         onWheel={(e) => {
-          // Smooth horizontal mouse-wheel scrolling when the dock overflows.
           const el = e.currentTarget;
           if (el.scrollWidth <= el.clientWidth) return;
           el.scrollLeft += e.deltaY + e.deltaX;
         }}
         className="nav-dock no-scrollbar flex max-w-[min(72rem,96vw)] items-center gap-0.5 overflow-x-auto rounded-2xl border border-primary/25 bg-background/60 px-2 py-1.5 backdrop-blur-xl sm:gap-1 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible"
       >
-
-
         {visible.map((item) => {
           const active = matchesRoute(pathname, item);
           const Icon = item.icon;
