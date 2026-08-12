@@ -58,6 +58,10 @@ function errorMessage(error: unknown): string {
   if (message.includes("invalid_free_spin_bet")) return "Free spin nepoužívá další sázku.";
   if (message.includes("not_authenticated")) return "Pro tuto operaci se musíš přihlásit.";
   if (message.includes("no_profile")) return "Profil uživatele nebyl nalezen.";
+
+  // Keep unexpected Supabase/RPC errors visible instead of hiding the real cause.
+  // This is especially useful while the database migrations are being synchronized.
+  if (message) return `Operace se nepovedla: ${message}`;
   return "Operace se nepovedla. Zkus to znovu.";
 }
 
