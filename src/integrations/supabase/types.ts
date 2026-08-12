@@ -1303,6 +1303,7 @@ export type Database = {
         }
         Returns: string
       }
+      fc_seed_catalog: { Args: never; Returns: number }
       fc_set_card_flags: {
         Args: { _favorite: boolean; _locked: boolean; _user_card_id: string }
         Returns: undefined
