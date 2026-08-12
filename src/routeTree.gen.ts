@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VenuesRouteImport } from './routes/venues'
+import { Route as UltimateTeamRouteImport } from './routes/ultimate-team'
 import { Route as TournamentsRouteImport } from './routes/tournaments'
 import { Route as TournamentRouteImport } from './routes/tournament'
 import { Route as TeamsRouteImport } from './routes/teams'
@@ -36,6 +37,11 @@ import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 const VenuesRoute = VenuesRouteImport.update({
   id: '/venues',
   path: '/venues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UltimateTeamRoute = UltimateTeamRouteImport.update({
+  id: '/ultimate-team',
+  path: '/ultimate-team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TournamentsRoute = TournamentsRouteImport.update({
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/ultimate-team': typeof UltimateTeamRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/ultimate-team': typeof UltimateTeamRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/teams': typeof TeamsRoute
   '/tournament': typeof TournamentRoute
   '/tournaments': typeof TournamentsRoute
+  '/ultimate-team': typeof UltimateTeamRoute
   '/venues': typeof VenuesRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/ultimate-team'
     | '/venues'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/ultimate-team'
     | '/venues'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/teams'
     | '/tournament'
     | '/tournaments'
+    | '/ultimate-team'
     | '/venues'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   TeamsRoute: typeof TeamsRoute
   TournamentRoute: typeof TournamentRoute
   TournamentsRoute: typeof TournamentsRoute
+  UltimateTeamRoute: typeof UltimateTeamRoute
   VenuesRoute: typeof VenuesRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/venues'
       fullPath: '/venues'
       preLoaderRoute: typeof VenuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ultimate-team': {
+      id: '/ultimate-team'
+      path: '/ultimate-team'
+      fullPath: '/ultimate-team'
+      preLoaderRoute: typeof UltimateTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tournaments': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamsRoute: TeamsRoute,
   TournamentRoute: TournamentRoute,
   TournamentsRoute: TournamentsRoute,
+  UltimateTeamRoute: UltimateTeamRoute,
   VenuesRoute: VenuesRoute,
   ProfileIdRoute: ProfileIdRoute,
   ProfileIndexRoute: ProfileIndexRoute,
@@ -538,13 +559,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

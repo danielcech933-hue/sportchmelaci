@@ -122,17 +122,6 @@ function UltimateTeamPage() {
             <div className="sm:col-span-3 rounded-2xl border border-primary/20 bg-background/50 p-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">Nejlepší hráči</p>
               <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
-                {[...cards]
-                  .sort((a, b) => b.card.rating - a.card.rating)
-                  .slice(0, 12)
-                  .map((c) => (
-                    <img
-                      key={c.id}
-                      alt={c.card.name}
-                      src=""
-                      hidden
-                    />
-                  ))}
                 {!cards.length && (
                   <p className="text-sm text-muted-foreground">Zatím prázdno — začni Card Spinem.</p>
                 )}

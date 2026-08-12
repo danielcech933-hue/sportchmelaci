@@ -14,6 +14,7 @@ import {
   MapPin,
   Gamepad2,
   Beer,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
@@ -33,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" },
   { to: "/arcade", label: "Arcade", icon: Gamepad2 },
+  { to: "/ultimate-team", label: "Ultimate", icon: Layers },
   { to: "/slots", label: "Sloty", icon: Beer },
   { to: "/teams", label: "Teams", icon: Users },
   { to: "/venues", label: "Sportoviště", icon: MapPin },
