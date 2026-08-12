@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const EXCHANGE_RATE = 100;
 type WalletResult = { ok: boolean; error?: string; gained?: number };
+type DailyBonusResult = { ok: boolean; error?: string; prize?: number; nextClaimAt?: string };
 
 type SlotSpinRpc = {
   grid: string[][];
@@ -29,7 +30,7 @@ export interface WalletState {
   exchangeToDollars: (czk: number) => Promise<WalletResult>;
   spinSlot: (bet: number) => Promise<{ ok: boolean; error?: string; result?: SlotSpinRpc }>;
   pickBonus: (multiplier: number) => Promise<WalletResult>;
-  addDollars: (amount: number) => Promise<WalletResult>;
+  claimDailyBonus: () => Promise<DailyBonusResult>;
 }
 
 const Ctx = createContext<WalletState | undefined>(undefined);
@@ -38,6 +39,12 @@ const GUEST_BASE_DOLLARS = 100;
 const SEED_SLOT = 10000;
 
 type RpcWallet = { balance?: number; slot_czk?: number } | null;
+
+type DailyBonusRpc = {
+  prize?: number;
+  balance?: number;
+  next_claim_at?: string;
+} | null;
 
 function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
@@ -52,6 +59,7 @@ function errorMessage(error: unknown): string {
   if (message.includes("invalid_bonus_pick")) return "Neplatná volba bonusu.";
   if (message.includes("invalid_free_spin_bet")) return "Free spin nepoužívá další sázku.";
   if (message.includes("not_authenticated")) return "Pro tuto operaci se musíš přihlásit.";
+  if (message.includes("no_profile")) return "Profil uživatele nebyl nalezen.";
   return "Operace se nepovedla. Zkus to znovu.";
 }
 
@@ -141,7 +149,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const spinSlot = useCallback<WalletState["spinSlot"]>(async (bet) => {
     const amount = Math.floor(bet);
     if (!user) return { ok: false, error: "Pro hraní automatu se musíš přihlásit." };
-    if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Neplatná sázka." };
+    if (!Number.isFinite(amount) || amount < 0) return { ok: false, error: "Neplatná sázka." };
 
     const { data, error } = await supabase.rpc("slot_spin", { _bet: amount });
     if (error) return { ok: false, error: errorMessage(error) };
@@ -160,13 +168,25 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, [user]);
 
-  const addDollars = useCallback<WalletState["addDollars"]>(async (amount) => {
-    if (!Number.isFinite(amount) || ![5, 10, 20, 50].includes(amount)) {
-      return { ok: false, error: "Neplatná výhra kola štěstí." };
+  const claimDailyBonus = useCallback<WalletState["claimDailyBonus"]>(async () => {
+    if (!user) return { ok: false, error: "Pro kolo štěstí se musíš přihlásit." };
+
+    const { data, error } = await supabase.rpc("daily_bonus_claim");
+    if (error) return { ok: false, error: errorMessage(error) };
+
+    const result = data as DailyBonusRpc;
+    const prize = Number(result?.prize);
+    if (![5, 10, 20, 50].includes(prize)) {
+      return { ok: false, error: "Server vrátil neplatnou výhru kola štěstí." };
     }
-    const res = await apply(amount, 0, "daily_bonus");
-    return res.ok ? { ok: true, gained: amount } : { ok: false, error: res.error };
-  }, [apply]);
+
+    await refreshProfile();
+    return {
+      ok: true,
+      prize,
+      nextClaimAt: result?.next_claim_at,
+    };
+  }, [refreshProfile, user]);
 
   const value = useMemo<WalletState>(() => ({
     userDollars,
@@ -176,8 +196,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     exchangeToDollars,
     spinSlot,
     pickBonus,
-    addDollars,
-  }), [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, spinSlot, pickBonus, addDollars]);
+    claimDailyBonus,
+  }), [userDollars, slotCZK, ready, exchangeToSlot, exchangeToDollars, spinSlot, pickBonus, claimDailyBonus]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
