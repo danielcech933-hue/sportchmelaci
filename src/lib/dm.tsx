@@ -79,6 +79,9 @@ export function DmProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const upsert = useCallback((row: Row) => {
+    // Defense in depth: even if a realtime subscription is ever broader than
+    // the current user's RLS scope, never put another user's DM into local state.
+    if (!user || (row.sender_id !== user.id && row.recipient_id !== user.id)) return;
     setMessages((prev) => {
       const dm = toDm(row);
       const i = prev.findIndex((m) => m.id === dm.id);
@@ -87,7 +90,7 @@ export function DmProvider({ children }: { children: ReactNode }) {
       next[i] = dm;
       return next;
     });
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     load();
@@ -198,7 +201,6 @@ export function DmBell() {
     </button>
   );
 }
-
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString("cs-CZ", {
