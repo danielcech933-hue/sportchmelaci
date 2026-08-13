@@ -13,6 +13,7 @@ export function AccountSecurity() {
   const [error, setError] = useState<string | null>(null);
 
   if (!user) return null;
+  const currentEmail = (user.email ?? "").toLowerCase();
 
   function clearMessages() {
     setNotice(null);
@@ -26,7 +27,7 @@ export function AccountSecurity() {
       setError("Zadej nový e-mail.");
       return;
     }
-    if (email === (user.email ?? "").toLowerCase()) {
+    if (email === currentEmail) {
       setError("Tento e-mail už používáš.");
       return;
     }

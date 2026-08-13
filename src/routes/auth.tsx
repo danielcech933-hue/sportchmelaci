@@ -62,7 +62,7 @@ function AuthPage() {
         setNotice("Heslo bylo změněno. Přesměrovávám…");
         setPassword("");
         setConfirmPassword("");
-        setTimeout(() => nav({ to: "/profile/" }), 500);
+        setTimeout(() => nav({ to: "/profile" }), 500);
         return;
       }
 
