@@ -25,15 +25,20 @@ export interface PPlayer {
   folded: boolean;
   allIn: boolean;
   acted: boolean;
+  /** Present only for the authenticated player in the server-sanitized hand. */
+  holeCards?: Card[];
 }
 
 export type Stage = "preflop" | "flop" | "turn" | "river" | "done";
 
 export interface HandState {
   id: string;
-  deck: Card[];
+  /** Present only on the trusted/local hand used by the engine. Never returned to clients from DB. */
+  deck?: Card[];
   players: PPlayer[];
   community: number;
+  /** Server-sanitized community cards; preferred when available. */
+  communityCards?: Card[];
   pot: number;
   stage: Stage;
   toAct: number;
@@ -61,9 +66,14 @@ function shuffled(): Card[] {
 }
 
 export function holeCards(h: HandState, seat: number): Card[] {
+  const player = h.players[seat];
+  if (player?.holeCards) return player.holeCards.filter(Boolean);
+  if (!h.deck) return [];
   return [h.deck[seat * 2], h.deck[seat * 2 + 1]].filter(Boolean);
 }
 export function communityCards(h: HandState): Card[] {
+  if (h.communityCards) return h.communityCards.filter(Boolean);
+  if (!h.deck) return [];
   return h.deck.slice(COMMUNITY_OFFSET, COMMUNITY_OFFSET + h.community);
 }
 
