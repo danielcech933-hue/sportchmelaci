@@ -47,7 +47,6 @@ function MatchPage() {
     { matchId: id },
   );
 
-  // Debounced persistence for owner edits
   useEffect(() => {
     if (!match || !dirty.current) return;
     const t = setTimeout(() => {
@@ -60,7 +59,8 @@ function MatchPage() {
   if (notFound) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-10 text-center">
-        <p className="text-muted-foreground">Match not found.</p>
+        <h1 className="font-display text-3xl tracking-wider text-primary">Zápas nenalezen</h1>
+        <p className="mt-2 text-muted-foreground">Tento zápas už není dostupný.</p>
         <Link to="/" className="mt-4 inline-block text-primary hover:underline">← Lobby</Link>
       </main>
     );
@@ -113,6 +113,15 @@ function MatchPage() {
         </span>
       </div>
 
+      <header className="mb-4">
+        <h1 className="font-display text-3xl tracking-wider text-primary md:text-5xl">
+          {cfg.emoji} {cfg.name} — {match.teamA} vs {match.teamB}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Live scoreboard · {match.endedAt ? "dokončený zápas" : "probíhá právě teď"}
+        </p>
+      </header>
+
       {!isOwner && (
         <div className="panel mb-4 p-3 text-center text-xs text-muted-foreground">
           You're spectating. Only <span className="text-primary">{match.ownerNickname}</span> can update this match.
@@ -121,152 +130,34 @@ function MatchPage() {
 
       <div className="panel p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 md:gap-8">
-          <input
-            value={match.teamA}
-            disabled={!isOwner}
-            list={NICKNAMES_DATALIST_ID}
-            onChange={(e) => update({ ...match, teamA: e.target.value })}
-            className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90"
-          />
-          <input
-            value={match.teamB}
-            disabled={!isOwner}
-            list={NICKNAMES_DATALIST_ID}
-            onChange={(e) => update({ ...match, teamB: e.target.value })}
-            className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90"
-          />
+          <input value={match.teamA} disabled={!isOwner} list={NICKNAMES_DATALIST_ID} onChange={(e) => update({ ...match, teamA: e.target.value })} className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90" />
+          <input value={match.teamB} disabled={!isOwner} list={NICKNAMES_DATALIST_ID} onChange={(e) => update({ ...match, teamB: e.target.value })} className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90" />
         </div>
         <NicknamesDatalist options={nicknames} />
-
         <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
-
-
-        {cfg.hasSets && (
-          <div className="mt-2 grid grid-cols-2 gap-3 text-center text-xs text-muted-foreground md:gap-8">
-            <div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsA}</span></div>
-            <div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsB}</span></div>
-          </div>
-        )}
-
+        {cfg.hasSets && <div className="mt-2 grid grid-cols-2 gap-3 text-center text-xs text-muted-foreground md:gap-8"><div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsA}</span></div><div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsB}</span></div></div>}
         <div className="mt-4 grid grid-cols-2 gap-3 md:gap-8">
           {(["a", "b"] as const).map((side) => {
             const score = side === "a" ? match.scoreA : match.scoreB;
-            return (
-              <div key={side} className="rounded-2xl bg-background/60 p-4 md:p-8">
-                <div className="led-digit text-center text-[6rem] leading-none md:text-[10rem]">{score}</div>
-                {isOwner && (
-                  <div className="mt-4 flex items-center justify-center gap-2">
-                    <button onClick={() => bump(side, -1)} className="h-12 w-12 rounded-full border border-border text-xl hover:bg-surface-2" aria-label="minus">−</button>
-                    <button onClick={() => bump(side, 1)} className="h-16 flex-1 rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_30px_-10px_var(--color-primary)] active:scale-95" aria-label="plus one">+1</button>
-                  </div>
-                )}
-              </div>
-            );
+            return <div key={side} className="rounded-2xl bg-background/60 p-4 md:p-8"><div className="led-digit text-center text-[6rem] leading-none md:text-[10rem]">{score}</div>{isOwner && <div className="mt-4 flex items-center justify-center gap-2"><button onClick={() => bump(side, -1)} className="h-12 w-12 rounded-full border border-border text-xl hover:bg-surface-2" aria-label="minus">−</button><button onClick={() => bump(side, 1)} className="h-16 flex-1 rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_30px_-10px_var(--color-primary)] active:scale-95" aria-label="plus one">+1</button></div>}</div>;
           })}
         </div>
-
-        {match.sets.length > 0 && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-muted-foreground">Previous {cfg.setLabel.toLowerCase()}s:</span>
-            {match.sets.map((s, i) => (
-              <span key={i} className="rounded-md border border-border bg-background/60 px-2 py-1 font-mono">{s.a}–{s.b}</span>
-            ))}
-          </div>
-        )}
-
-        {isOwner && (
-          <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {cfg.hasSets && (
-              <button onClick={finishSet} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/20">
-                End {cfg.setLabel}
-              </button>
-            )}
-            <button onClick={resetScore} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-2">Reset score</button>
-            <button onClick={finishMatch} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Finish match</button>
-            <button onClick={remove} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Delete</button>
-            <Link to="/live" search={{ id: match.id }} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">📱 Live rozhodčí</Link>
-          </div>
-        )}
+        {match.sets.length > 0 && <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm"><span className="text-muted-foreground">Previous {cfg.setLabel.toLowerCase()}s:</span>{match.sets.map((s, i) => <span key={i} className="rounded-md border border-border bg-background/60 px-2 py-1 font-mono">{s.a}–{s.b}</span>)}</div>}
+        {isOwner && <div className="mt-8 flex flex-wrap justify-center gap-2">{cfg.hasSets && <button onClick={finishSet} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/20">End {cfg.setLabel}</button>}<button onClick={resetScore} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-2">Reset score</button><button onClick={finishMatch} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Finish match</button><button onClick={remove} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Delete</button><Link to="/live" search={{ id: match.id }} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">📱 Live rozhodčí</Link></div>}
       </div>
-
       <BettingModule match={match} onRefresh={async () => { const m = await fetchMatch(match.id); if (m) setMatch(m); }} />
     </main>
   );
 }
 
-
-
-function splitPlayers(name: string): string[] {
-  return name.split(/\s*(?:&|\/|,|\+| vs\.? | and )\s*/i).map((s) => s.trim()).filter(Boolean);
-}
+function splitPlayers(name: string): string[] { return name.split(/\s*(?:&|\/|,|\+| vs\.? | and )\s*/i).map((s) => s.trim()).filter(Boolean); }
 
 function Lineup({ teamA, teamB, canEdit, onChange }: { teamA: string; teamB: string; canEdit: boolean; onChange: (a: string, b: string) => void }) {
-  const a = splitPlayers(teamA);
-  const b = splitPlayers(teamB);
-  const total = a.length + b.length;
-  if (total <= 2 && !canEdit) return null;
-
+  const a = splitPlayers(teamA); const b = splitPlayers(teamB); const total = a.length + b.length; if (total <= 2 && !canEdit) return null;
   const join = (arr: string[]) => arr.filter((s) => s.trim()).join(" & ");
-  const setSide = (side: "a" | "b", players: string[]) => {
-    const joined = join(players);
-    if (side === "a") onChange(joined || teamA, teamB);
-    else onChange(teamA, joined || teamB);
-  };
-  const updatePlayer = (side: "a" | "b", i: number, val: string) => {
-    const src = side === "a" ? [...a] : [...b];
-    src[i] = val;
-    setSide(side, src);
-  };
-  const removePlayer = (side: "a" | "b", i: number) => {
-    const src = side === "a" ? [...a] : [...b];
-    src.splice(i, 1);
-    setSide(side, src.length ? src : [""]);
-  };
-  const addPlayer = (side: "a" | "b") => {
-    const src = side === "a" ? [...a, ""] : [...b, ""];
-    setSide(side, src);
-  };
-
-  return (
-    <div className="mt-6 grid grid-cols-2 gap-3 md:gap-8">
-      {[
-        { players: a, key: "a" as const },
-        { players: b, key: "b" as const },
-      ].map((side, idx) => (
-        <div key={idx} className="rounded-2xl border border-border/60 bg-background/40 p-3 md:p-4">
-          <div className="flex items-center justify-between">
-            <span className={`text-[10px] font-mono uppercase tracking-[0.3em] ${idx === 0 ? "text-primary" : "text-accent"}`}>
-              {idx === 0 ? "Team A" : "Team B"}
-            </span>
-            <span className="text-[10px] text-muted-foreground">{side.players.length} {side.players.length === 1 ? "player" : "players"}</span>
-          </div>
-          <ul className="mt-2 space-y-1">
-            {side.players.map((p, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm">
-                <span className={`inline-block h-2 w-2 rounded-full ${idx === 0 ? "bg-primary" : "bg-accent"}`} />
-                {canEdit ? (
-                  <>
-                    <input
-                      value={p}
-                      list={NICKNAMES_DATALIST_ID}
-                      onChange={(e) => updatePlayer(side.key, i, e.target.value)}
-                      className="flex-1 rounded border border-border bg-background/60 px-2 py-1 text-sm outline-none focus:border-primary"
-                    />
-                    <button onClick={() => removePlayer(side.key, i)} className="text-muted-foreground hover:text-foreground" aria-label="Remove player">×</button>
-                  </>
-                ) : (
-                  <span className="truncate"><NickLink nickname={p} /></span>
-                )}
-              </li>
-            ))}
-          </ul>
-          {canEdit && (
-            <button onClick={() => addPlayer(side.key)} className="mt-2 text-xs text-primary hover:underline">
-              + Add player
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+  const setSide = (side: "a" | "b", players: string[]) => { const joined = join(players); if (side === "a") onChange(joined || teamA, teamB); else onChange(teamA, joined || teamB); };
+  const updatePlayer = (side: "a" | "b", i: number, val: string) => { const src = side === "a" ? [...a] : [...b]; src[i] = val; setSide(side, src); };
+  const removePlayer = (side: "a" | "b", i: number) => { const src = side === "a" ? [...a] : [...b]; src.splice(i, 1); setSide(side, src.length ? src : [""]); };
+  const addPlayer = (side: "a" | "b") => { const src = side === "a" ? [...a, ""] : [...b, ""]; setSide(side, src); };
+  return <div className="mt-6 grid grid-cols-2 gap-3 md:gap-8">{[{ players: a, key: "a" as const }, { players: b, key: "b" as const }].map((side, idx) => <div key={idx} className="rounded-2xl border border-border/60 bg-background/40 p-3 md:p-4"><div className="flex items-center justify-between"><span className={`text-[10px] font-mono uppercase tracking-[0.3em] ${idx === 0 ? "text-primary" : "text-accent"}`}>{idx === 0 ? "Team A" : "Team B"}</span><span className="text-[10px] text-muted-foreground">{side.players.length} {side.players.length === 1 ? "player" : "players"}</span></div><ul className="mt-2 space-y-1">{side.players.map((p, i) => <li key={i} className="flex items-center gap-2 text-sm"><span className={`inline-block h-2 w-2 rounded-full ${idx === 0 ? "bg-primary" : "bg-accent"}`} />{canEdit ? <><input value={p} list={NICKNAMES_DATALIST_ID} onChange={(e) => updatePlayer(side.key, i, e.target.value)} className="flex-1 rounded border border-border bg-background/60 px-2 py-1 text-sm outline-none focus:border-primary" /><button onClick={() => removePlayer(side.key, i)} className="text-muted-foreground hover:text-foreground" aria-label="Remove player">×</button></> : <span className="truncate"><NickLink nickname={p} /></span>}</li>)}</ul>{canEdit && <button onClick={() => addPlayer(side.key)} className="mt-2 text-xs text-primary hover:underline">+ Add player</button>}</div>)}</div>;
 }
