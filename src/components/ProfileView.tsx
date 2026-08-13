@@ -10,10 +10,10 @@ import { Upload, Trash2, Swords, MessageSquare, AtSign, Trophy, Flame, Target, C
 import { useDm } from "@/lib/dm";
 import { useWallet } from "@/lib/wallet";
 import { ArcadeProfile } from "@/components/ArcadeProfile";
+import { ProfileBettingLedger } from "@/components/ProfileBettingLedger";
 import { splitPlayers, sideOf, winnerSideOf, playerSplitStats, isSoloMatch } from "@/lib/stats";
 import { NeonStat } from "@/components/NeonStat";
 import { playerEmoji, statEmoji } from "@/lib/emoji";
-
 
 import heroImg from "@/assets/profile-hero.jpg";
 
@@ -21,7 +21,6 @@ type BetStatus = "won" | "lost" | "open";
 type BetRow = Bet & { matchId: string; match: Match; status: BetStatus };
 
 export { splitPlayers };
-
 
 function playsInMatch(nickname: string, m: Match): boolean {
   return sideOf(nickname, m) !== null;
@@ -36,7 +35,6 @@ function matchOutcome(nickname: string | null, m: Match): "win" | "loss" | null 
   return side === w ? "win" : "loss";
 }
 
-
 export function ProfileView({ userId }: { userId?: string }) {
   const { user, nickname: myNickname, avatarPath: myAvatar, refreshProfile, loading: authLoading } = useAuth();
   const { openChat } = useDm();
@@ -44,9 +42,6 @@ export function ProfileView({ userId }: { userId?: string }) {
   const targetId = userId ?? user?.id ?? null;
   const isSelf = !!targetId && targetId === user?.id;
   const [mode, setMode] = useState<"real" | "arcade">("real");
-
-
-
   const [profile, setProfile] = useState<{ nickname: string; avatar_path: string | null } | null>(null);
   const [profileMissing, setProfileMissing] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -55,15 +50,10 @@ export function ProfileView({ userId }: { userId?: string }) {
   useEffect(() => {
     if (!targetId) return;
     setProfileMissing(false);
-    supabase
-      .from("profiles")
-      .select("nickname,avatar_path")
-      .eq("id", targetId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setProfile(data as { nickname: string; avatar_path: string | null });
-        else setProfileMissing(true);
-      });
+    supabase.from("profiles").select("nickname,avatar_path").eq("id", targetId).maybeSingle().then(({ data }) => {
+      if (data) setProfile(data as { nickname: string; avatar_path: string | null });
+      else setProfileMissing(true);
+    });
   }, [targetId, isSelf ? myNickname : null, isSelf ? myAvatar : null]);
 
   useEffect(() => {
@@ -77,9 +67,7 @@ export function ProfileView({ userId }: { userId?: string }) {
 
   const myMatches = useMemo(() => {
     if (!nickname) return [];
-    return matches
-      .filter((m) => playsInMatch(nickname, m))
-      .sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt));
+    return matches.filter((m) => playsInMatch(nickname, m)).sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt));
   }, [matches, nickname]);
 
   const myBets: BetRow[] = useMemo(() => {
@@ -97,12 +85,31 @@ export function ProfileView({ userId }: { userId?: string }) {
     return rows.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }, [matches, nickname]);
 
+  const [ledgerNet, setLedgerNet] = useState(0);
+  const [ledgerLoaded, setLedgerLoaded] = useState(false);
+  useEffect(() => {
+    if (!isSelf) { setLedgerNet(0); setLedgerLoaded(false); return; }
+    let active = true;
+    setLedgerLoaded(false);
+    supabase.rpc("get_my_betting_ledger", { _limit: 200 }).then(({ data, error }) => {
+      if (!active) return;
+      if (error) { setLedgerLoaded(false); return; }
+      const net = (data ?? []).reduce((sum: number, row: any) => {
+        const amount = Number(row.amount ?? 0);
+        return sum + (row.kind === "bet_payout" || row.kind === "bet_refund" ? amount : 0);
+      }, 0);
+      setLedgerNet(Math.round(net * 100) / 100);
+      setLedgerLoaded(true);
+    });
+    return () => { active = false; };
+  }, [isSelf, targetId]);
+
   const stats = useMemo(() => {
-    let betWon = 0, betLost = 0, betOpen = 0, moneyNet = 0, biggestBet = 0;
+    let betWon = 0, betLost = 0, betOpen = 0, biggestBet = 0;
     for (const b of myBets) {
       biggestBet = Math.max(biggestBet, b.amount ?? 0);
-      if (b.status === "won") { betWon++; if (b.amount) moneyNet += b.amount; }
-      else if (b.status === "lost") { betLost++; if (b.amount) moneyNet -= b.amount; }
+      if (b.status === "won") betWon++;
+      else if (b.status === "lost") betLost++;
       else betOpen++;
     }
     const split = playerSplitStats(matches, nickname);
@@ -110,14 +117,15 @@ export function ProfileView({ userId }: { userId?: string }) {
     return {
       solo: split.solo,
       team: split.team,
-      // Strict math: total === wins + losses (only decided matches count)
       total: split.overall.total,
       victories: split.overall.wins,
       losses: split.overall.losses,
-      betWon, betLost, betOpen, moneyNet, biggestBet, sports: sports.size,
+      betWon, betLost, betOpen,
+      // Net $ is intentionally sourced from the authoritative betting ledger.
+      moneyNet: ledgerLoaded ? ledgerNet : 0,
+      biggestBet, sports: sports.size,
     };
-  }, [matches, myMatches, myBets, nickname]);
-
+  }, [matches, myMatches, myBets, nickname, ledgerLoaded, ledgerNet]);
 
   const badges = useMemo(() => {
     const all = [
@@ -139,439 +147,26 @@ export function ProfileView({ userId }: { userId?: string }) {
   }, [targetId]);
 
   if (authLoading) return <main className="mx-auto max-w-6xl px-4 py-10 text-sm text-muted-foreground">Loading…</main>;
-
-  if (!targetId) {
-    return (
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
-          <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-          <p className="relative text-muted-foreground">
-            <Link to="/auth" className="text-primary hover:underline">Přihlas se</Link>, abys viděl svůj profil.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (profileMissing) {
-    return (
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
-          <p className="relative text-muted-foreground">Tento hráč neexistuje.</p>
-        </div>
-      </main>
-    );
-  }
+  if (!targetId) return <main className="mx-auto max-w-6xl px-4 py-10"><div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur"><div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" /><p className="relative text-muted-foreground"><Link to="/auth" className="text-primary hover:underline">Přihlas se</Link>, abys viděl svůj profil.</p></div></main>;
+  if (profileMissing) return <main className="mx-auto max-w-6xl px-4 py-10"><div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur"><p className="relative text-muted-foreground">Tento hráč neexistuje.</p></div></main>;
 
   return (
     <main className="relative mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
-      <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-64" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
-        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8">
-          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
-            <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
-            {isSelf ? "Můj profil" : "Profil hráče"}
-          </div>
-          <div className="mt-2 flex items-center gap-4 sm:gap-6">
-            <div className={`shrink-0 rounded-full ${heroFx}`}>
-              <Avatar path={avatarPath} nickname={nickname} size={96} />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate font-display text-3xl tracking-wider neon-text sm:text-7xl">
-                <span className="mr-2 align-middle text-2xl sm:text-4xl">{playerEmoji(nickname)}</span>
-                <span className="text-primary">{nickname ?? "PLAYER"}</span>
-
-              </h1>
-              <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Zápasy & historie sázek</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {isSelf && (
-        <section className="mt-4 grid grid-cols-2 gap-2 sm:max-w-md">
-          <div className="rounded-xl border border-accent/40 bg-accent/10 p-3">
-            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Sportovní dolary</p>
-            <p className="mt-0.5 font-display text-xl tracking-[0.08em] text-accent">${userDollars.toFixed(0)}</p>
-          </div>
-          <div className="rounded-xl border border-primary/40 bg-primary/10 p-3">
-            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Slot CZK</p>
-            <p className="mt-0.5 font-display text-xl tracking-[0.08em] text-primary">
-              {slotCZK.toLocaleString("cs-CZ")}
-            </p>
-          </div>
-        </section>
-      )}
-
-      <section className="mt-5 flex justify-center">
-        <div className="relative inline-flex rounded-full border border-primary/30 bg-background/60 p-1 backdrop-blur">
-          <span
-            aria-hidden
-            className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/15 shadow-[0_0_20px_-6px_var(--color-primary)] transition-transform duration-300 ease-out ${
-              mode === "arcade" ? "translate-x-full" : "translate-x-0"
-            }`}
-            style={{ left: "0.25rem", right: "0.25rem", width: "calc(50% - 0.25rem)" }}
-          />
-          {(["real", "arcade"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-300 sm:text-sm ${
-                mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}
-              {m === "real" ? "Sport" : "Arcade"}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {mode === "arcade" && targetId ? (
-        <ArcadeProfile userId={targetId} isSelf={isSelf} />
-      ) : (
-      <>
-      {isSelf ? (
-
-        <AvatarSection userId={targetId} avatarPath={avatarPath} onChange={refreshProfile} />
-      ) : (
-        <section className="mt-6 grid gap-2 sm:grid-cols-3">
-          <Link
-            to="/schedule"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-6px_var(--color-primary)]"
-          >
-            <Swords className="h-4 w-4" /> Vyzvat na zápas
-          </Link>
-          <button
-            onClick={() => targetId && openChat(targetId)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
-          >
-            <MessageSquare className="h-4 w-4" /> Soukromá zpráva
-          </button>
-          <Link
-            to="/chat"
-            search={{ to: nickname ?? undefined }}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 px-4 py-3 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
-          >
-            <AtSign className="h-4 w-4" /> Zmínit v Lobby
-          </Link>
-        </section>
-
-      )}
-
-      <section className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <NeonStat label="Zápasy" value={stats.total} tone="cyan" emoji={statEmoji("matches")} hint="Odehrané rozhodnuté zápasy" />
-        <NeonStat label="Výhry" value={stats.victories} tone="gold" emoji={statEmoji("wins")} />
-        <NeonStat label="Prohry" value={stats.losses} tone="rose" emoji={statEmoji("losses")} />
-        <NeonStat label="Sázky +" value={stats.betWon} tone="gold" emoji={statEmoji("bets")} />
-        <NeonStat label="Sázky −" value={stats.betLost} tone="rose" emoji={statEmoji("bets")} />
-        <NeonStat
-          label="Net $"
-          value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)}
-          tone={stats.moneyNet >= 0 ? "violet" : "rose"}
-          emoji={statEmoji("money")}
-        />
-      </section>
-
-      <section className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-primary/20 bg-background/50 p-3 backdrop-blur">
-          <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-primary/70">
-            {statEmoji("solo")} Solo statistiky
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <NeonStat label="Zápasy" value={stats.solo.total} tone="cyan" />
-            <NeonStat label="Výhry" value={stats.solo.wins} tone="gold" />
-            <NeonStat label="Prohry" value={stats.solo.losses} tone="rose" />
-          </div>
-        </div>
-        <div className="rounded-2xl border border-primary/20 bg-background/50 p-3 backdrop-blur">
-          <div className="mb-2 text-[10px] uppercase tracking-[0.25em] text-primary/70">
-            {statEmoji("team")} Týmové statistiky (jednorázové týmy)
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <NeonStat label="Zápasy" value={stats.team.total} tone="cyan" />
-            <NeonStat label="Výhry" value={stats.team.wins} tone="gold" />
-            <NeonStat label="Prohry" value={stats.team.losses} tone="rose" />
-          </div>
-        </div>
-      </section>
-
-
-      <section className="mt-8">
-        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">ODZNAKY A ÚSPĚCHY</h2>
-        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {badges.map((b) => {
-            const Icon = b.icon;
-            return (
-              <li
-                key={b.id}
-                title={b.desc}
-                className={`relative overflow-hidden rounded-xl border p-3 text-center backdrop-blur transition ${
-                  b.earned
-                    ? "border-primary/50 bg-primary/10 shadow-[0_0_24px_-12px_var(--color-primary)]"
-                    : "border-border/50 bg-background/40 opacity-45 grayscale"
-                }`}
-              >
-                <Icon className={`mx-auto h-6 w-6 ${b.earned ? "text-primary" : "text-muted-foreground"}`} />
-                <div className="mt-1.5 font-display text-xs tracking-wider">{b.label}</div>
-                <div className="mt-0.5 text-[10px] leading-tight text-muted-foreground">{b.desc}</div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">
-          {isSelf ? "MOJE ZÁPASY" : "ZÁPASY HRÁČE"}
-        </h2>
-        {loading ? (
-          <p className="mt-4 text-sm text-muted-foreground">Načítám…</p>
-        ) : myMatches.length === 0 ? (
-          <div className="relative mt-4 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
-            <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-            <p className="relative text-sm text-muted-foreground">
-              Zatím žádné zápasy. <Link to="/" className="text-primary hover:underline">Začni →</Link>
-            </p>
-          </div>
-        ) : (
-          <ul className="mt-4 grid gap-3">
-            {myMatches.map((m) => {
-              const cfg = SPORTS[m.sport];
-              const setsA = m.sets.filter((s) => s.a > s.b).length;
-              const setsB = m.sets.filter((s) => s.b > s.a).length;
-              const outcome = matchOutcome(nickname, m);
-              const accent =
-                outcome === "win"
-                  ? "border-accent/50 bg-accent/[0.06]"
-                  : outcome === "loss"
-                    ? "border-destructive/50 bg-destructive/[0.06]"
-                    : "border-primary/25 bg-background/60";
-              return (
-                <li key={m.id} className={`relative overflow-hidden rounded-xl border p-3 backdrop-blur transition hover:border-primary/60 sm:p-4 ${accent}`}>
-                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                  <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
-                        <span>{cfg.emoji} {cfg.name}</span>
-                        <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-primary/80">
-                          {isSoloMatch(m) ? "🧍 Solo" : "🤝 Team"}
-                        </span>
-
-                        <span>·</span>
-                        <span className="hidden sm:inline">{new Date(m.startedAt).toLocaleString()}</span>
-                        <span className="sm:hidden">{new Date(m.startedAt).toLocaleDateString()}</span>
-                        {m.endedAt && <span className="rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">Final</span>}
-                        {outcome && (
-                          <span className={`rounded border px-2 py-0.5 text-[10px] uppercase tracking-widest ${
-                            outcome === "win" ? "border-accent/50 bg-accent/10 text-accent" : "border-destructive/50 bg-destructive/10 text-destructive"
-                          }`}>
-                            {outcome === "win" ? "Výhra" : "Prohra"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
-                        <span className="min-w-0 truncate text-sm sm:text-base"><TeamNames name={m.teamA} /></span>
-                        <span className="led-digit text-xl sm:text-3xl">
-                          {cfg.hasSets && m.sets.length > 0 ? `${setsA} : ${setsB}` : `${m.scoreA} : ${m.scoreB}`}
-                        </span>
-                        <span className="min-w-0 truncate text-right text-sm sm:text-base"><TeamNames name={m.teamB} /></span>
-                      </div>
-                    </div>
-                    <Link
-                      to="/match"
-                      search={{ id: m.id }}
-                      className="shrink-0 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)]"
-                    >
-                      {m.ownerId === user?.id ? (m.endedAt ? "Detail" : "Pokračovat") : "Detail"}
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-display text-xl tracking-[0.25em] text-primary/80 neon-text sm:text-2xl">
-          {isSelf ? "MOJE SÁZKY" : "SÁZKY HRÁČE"}
-        </h2>
-        {loading ? (
-          <p className="mt-4 text-sm text-muted-foreground">Načítám…</p>
-        ) : myBets.length === 0 ? (
-          <div className="relative mt-4 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-8 text-center backdrop-blur">
-            <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-            <p className="relative text-sm text-muted-foreground">Zatím žádné sázky.</p>
-          </div>
-        ) : (
-          <ul className="mt-4 grid gap-3">
-            {myBets.map((b) => {
-              const m = b.match;
-              const cfg = SPORTS[m.sport];
-              const pickTeam = b.pick === "a" ? m.teamA : m.teamB;
-              const tone =
-                b.status === "won" ? "text-accent border-accent/40 bg-accent/10" :
-                b.status === "lost" ? "text-destructive border-destructive/40 bg-destructive/10" :
-                "text-muted-foreground border-primary/25 bg-background/40";
-              const accent =
-                b.status === "won"
-                  ? "border-accent/50 bg-accent/[0.06]"
-                  : b.status === "lost"
-                    ? "border-destructive/50 bg-destructive/[0.06]"
-                    : "border-primary/25 bg-background/60";
-              return (
-                <li key={b.id} className={`relative overflow-hidden rounded-xl border p-3 backdrop-blur transition hover:border-primary/60 sm:p-4 ${accent}`}>
-                  <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-                  <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground sm:text-xs">
-                        <span className="truncate">{cfg.emoji} {m.teamA} vs {m.teamB}</span>
-                        <span>·</span>
-                        <span>{new Date(b.createdAt ?? m.startedAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                        <span>Tip <span className="font-semibold text-primary">{pickTeam}</span></span>
-                        {b.amount ? <span>· ${b.amount}</span> : null}
-                        {b.note ? <span className="text-muted-foreground">· "{b.note}"</span> : null}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
-                      <span className={`rounded border px-2 py-0.5 text-[10px] uppercase tracking-widest ${tone}`}>{b.status}</span>
-                      <Link
-                        to="/match"
-                        search={{ id: m.id }}
-                        className="rounded-md border border-primary/25 px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-foreground"
-                      >
-                        Zápas
-                      </Link>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-      </>
-      )}
+      <section className="relative overflow-hidden rounded-2xl neon-border scanline"><img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-60 sm:h-64" /><div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" /><div className="pointer-events-none absolute inset-0 grid-bg opacity-25" /><div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8"><div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs"><span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />{isSelf ? "Můj profil" : "Profil hráče"}</div><div className="mt-2 flex items-center gap-4 sm:gap-6"><div className={`shrink-0 rounded-full ${heroFx}`}><Avatar path={avatarPath} nickname={nickname} size={96} /></div><div className="min-w-0"><h1 className="truncate font-display text-3xl tracking-wider neon-text sm:text-7xl"><span className="mr-2 align-middle text-2xl sm:text-4xl">{playerEmoji(nickname)}</span><span className="text-primary">{nickname ?? "PLAYER"}</span></h1><p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Zápasy & historie sázek</p></div></div></div></section>
+      {isSelf && <section className="mt-4 grid grid-cols-2 gap-2 sm:max-w-md"><div className="rounded-xl border border-accent/40 bg-accent/10 p-3"><p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Sportovní dolary</p><p className="mt-0.5 font-display text-xl tracking-[0.08em] text-accent">${userDollars.toFixed(0)}</p></div><div className="rounded-xl border border-primary/40 bg-primary/10 p-3"><p className="font-mono text-[9px] uppercase tracking-[0.25em] text-muted-foreground">Slot CZK</p><p className="mt-0.5 font-display text-xl tracking-[0.08em] text-primary">{slotCZK.toLocaleString("cs-CZ")}</p></div></section>}
+      <section className="mt-5 flex justify-center"><div className="relative inline-flex rounded-full border border-primary/30 bg-background/60 p-1 backdrop-blur"><span aria-hidden className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/15 shadow-[0_0_20px_-6px_var(--color-primary)] transition-transform duration-300 ease-out ${mode === "arcade" ? "translate-x-full" : "translate-x-0"}`} style={{ left: "0.25rem", right: "0.25rem", width: "calc(50% - 0.25rem)" }} />{(["real", "arcade"] as const).map((m) => <button key={m} onClick={() => setMode(m)} className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-300 sm:text-sm ${mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>{m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}{m === "real" ? "Sport" : "Arcade"}</button>)}</div></section>
+      {mode === "arcade" && targetId ? <ArcadeProfile userId={targetId} isSelf={isSelf} /> : <><>{isSelf ? <AvatarSection userId={targetId} avatarPath={avatarPath} onChange={refreshProfile} /> : <section className="mt-6 grid gap-2 sm:grid-cols-3"><Link to="/schedule" className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-6px_var(--color-primary)]"><Swords className="h-4 w-4" /> Vyzvat na zápas</Link><button onClick={() => targetId && openChat(targetId)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10"><MessageSquare className="h-4 w-4" /> Soukromá zpráva</button><Link to="/chat" search={{ to: nickname ?? undefined }} className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 px-4 py-3 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"><AtSign className="h-4 w-4" /> Zmínit v Lobby</Link></section>}</></>
+      <section className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6"><NeonStat label="Zápasy" value={stats.total} tone="cyan" emoji={statEmoji("matches")} hint="Odehrané rozhodnuté zápasy" /><NeonStat label="Výhry" value={stats.victories} tone="gold" emoji={statEmoji("wins")} /><NeonStat label="Prohry" value={stats.losses} tone="rose" emoji={statEmoji("losses")} /><NeonStat label="Sázky +" value={stats.betWon} tone="gold" emoji={statEmoji("bets")} /><NeonStat label="Sázky −" value={stats.betLost} tone="rose" emoji={statEmoji("bets")} /><NeonStat label="Net $" value={(stats.moneyNet >= 0 ? "+" : "") + stats.moneyNet.toFixed(0)} tone={stats.moneyNet >= 0 ? "violet" : "rose"} emoji={statEmoji("money")} /></section>
+      {isSelf && <ProfileBettingLedger userId={targetId} />}
+      <section className="mt-4 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border border-primary/20 bg-background/50 p-4"><h2 className="font-display text-lg tracking-wider text-primary">SPORTOVNÍ STATISTIKY</h2><p className="mt-2 text-sm text-muted-foreground">Solo: {stats.solo.total} ({stats.solo.wins}–{stats.solo.losses}) · Team: {stats.team.total} ({stats.team.wins}–{stats.team.losses})</p></div><div className="rounded-2xl border border-primary/20 bg-background/50 p-4"><h2 className="font-display text-lg tracking-wider text-primary">SÁZKY</h2><p className="mt-2 text-sm text-muted-foreground">Výhry: {stats.betWon} · Prohry: {stats.betLost} · Otevřené: {stats.betOpen}</p></div></section>
+      </>}
     </main>
-
   );
 }
 
-function TeamNames({ name }: { name: string }) {
-  const players = splitPlayers(name);
-  return (
-    <>
-      {players.map((p, i) => (
-        <span key={`${p}-${i}`}>
-          {i > 0 && <span className="text-muted-foreground"> & </span>}
-          <NickLink nickname={p} />
-        </span>
-      ))}
-    </>
-  );
-}
-
-
-function AvatarSection({
-  userId,
-  avatarPath,
-  onChange,
-}: {
-  userId: string;
-  avatarPath: string | null;
-  onChange: () => Promise<void>;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
+function AvatarSection({ userId, avatarPath, onChange }: { userId: string; avatarPath: string | null; onChange: () => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setError(null);
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      setError("Pouze PNG, JPEG nebo WebP.");
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      setError("Max velikost 20 MB.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-      if (upErr) throw upErr;
-      const { error: dbErr } = await supabase.from("profiles").update({ avatar_path: path }).eq("id", userId);
-      if (dbErr) throw dbErr;
-      if (avatarPath && avatarPath !== path) {
-        await supabase.storage.from("avatars").remove([avatarPath]);
-        invalidateAvatar(avatarPath);
-      }
-      await onChange();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Nahrání selhalo");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function remove() {
-    if (!avatarPath) return;
-    setBusy(true); setError(null);
-    try {
-      await supabase.storage.from("avatars").remove([avatarPath]);
-      const { error: dbErr } = await supabase.from("profiles").update({ avatar_path: null }).eq("id", userId);
-      if (dbErr) throw dbErr;
-      invalidateAvatar(avatarPath);
-      await onChange();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Odebrání selhalo");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="relative mt-6 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-4 backdrop-blur sm:p-5">
-      <div className="pointer-events-none absolute inset-0 grid-bg opacity-15" />
-      <div className="relative flex flex-wrap items-center gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">// Avatar</p>
-          <p className="mt-1 text-xs text-muted-foreground">PNG, JPEG nebo WebP · max 20 MB. Vidí ho ostatní v chatu i v žebříčku.</p>
-          {error && <p className="mt-1 text-xs text-danger">{error}</p>}
-        </div>
-        <div className="flex items-center gap-2">
-          <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={onPick} />
-          <button
-            onClick={() => inputRef.current?.click()}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-[0_0_20px_-6px_var(--color-primary)] disabled:opacity-50"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {avatarPath ? "Vyměnit" : "Nahrát"}
-          </button>
-          {avatarPath && (
-            <button
-              onClick={remove}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-danger/40 px-3 py-2 text-xs text-danger hover:bg-danger/10 disabled:opacity-50"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Odebrat
-            </button>
-          )}
-        </div>
-      </div>
-    </section>
-  );
+  const upload = async (file: File) => { setBusy(true); try { const ext = file.name.split(".").pop() || "jpg"; const path = `${userId}/avatar-${Date.now()}.${ext}`; const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type }); if (uploadError) throw uploadError; await supabase.from("profiles").update({ avatar_path: path }).eq("id", userId); invalidateAvatar(avatarPath); onChange(); } finally { setBusy(false); } };
+  return <section className="mt-4 flex items-center justify-between rounded-xl border border-border/60 bg-background/40 p-3"><div className="text-xs text-muted-foreground">Profilový avatar</div><><input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }} /><button disabled={busy} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-primary/30 px-3 py-2 text-xs text-primary hover:bg-primary/10"><Upload className="h-4 w-4" /> {busy ? "Nahrávám…" : "Změnit"}</button></></section>;
 }
