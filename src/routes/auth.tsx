@@ -11,7 +11,16 @@ function recoveryUrl() {
   return params.get("reset") === "1" || window.location.hash.includes("type=recovery");
 }
 
+function safeNext(next: string | undefined): string | null {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>): { next?: string; reset?: string } => ({
+    ...(typeof s.next === "string" ? { next: s.next } : {}),
+    ...(typeof s.reset === "string" ? { reset: s.reset } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — Courtside" },
@@ -25,6 +34,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const { session, loading } = useAuth();
+  const { next } = Route.useSearch();
+  const afterAuth = safeNext(next);
   const [mode, setMode] = useState<AuthMode>(() => (recoveryUrl() ? "update-password" : "signin"));
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
@@ -35,8 +46,11 @@ function AuthPage() {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && session && mode !== "update-password") nav({ to: "/" });
-  }, [loading, session, mode, nav]);
+    if (!loading && session && mode !== "update-password") {
+      if (afterAuth) window.location.href = afterAuth;
+      else nav({ to: "/" });
+    }
+  }, [loading, session, mode, nav, afterAuth]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +88,7 @@ function AuthPage() {
           password,
           options: {
             data: { nickname: nick },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: afterAuth ? `${window.location.origin}${afterAuth}` : window.location.origin,
           },
         });
         if (error) throw error;
@@ -85,7 +99,8 @@ function AuthPage() {
         });
         if (error) throw error;
       }
-      nav({ to: "/" });
+      if (afterAuth) window.location.href = afterAuth;
+      else nav({ to: "/" });
     } catch (e2: any) {
       setErr(e2?.message ?? "Something went wrong.");
     } finally {
