@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { SPORTS, type Match, betsPool, uniqueBettors } from "@/lib/matches";
+import { SPORTS, MAX_BET, type Match, betsPool, uniqueBettors } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 
 export const Route = createFileRoute("/bets")({
@@ -42,7 +42,7 @@ function BetsPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-accent">// LIVE BET BOARD</p>
           <h1 className="mt-2 font-display text-4xl tracking-widest neon-text md:text-6xl">💸 BETS</h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Sázet můžeš, dokud zápas neskončí. Max sázka $250 · jedna sázka na hráče a zápas.
+            Sázet můžeš, dokud zápas neskončí. Max sázka ${MAX_BET} · jedna sázka na hráče a zápas.
           </p>
         </div>
       </div>
