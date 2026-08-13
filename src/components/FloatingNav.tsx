@@ -12,7 +12,6 @@ import {
   MessagesSquare,
   HeartHandshake,
   MapPin,
-  Gamepad2,
   Beer,
   Layers,
 } from "lucide-react";
@@ -33,7 +32,6 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/schedule", label: "Plán", icon: CalendarDays },
   { to: "/tournaments", label: "Turnaje", icon: Trophy },
   { to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" },
-  { to: "/arcade", label: "Arkáda", icon: Gamepad2 },
   { to: "/ultimate-team", label: "Ultimate", icon: Layers },
   { to: "/slots", label: "Sloty", icon: Beer },
   { to: "/teams", label: "Týmy", icon: Users },
