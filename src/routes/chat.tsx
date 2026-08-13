@@ -99,10 +99,15 @@ function ChatPage() {
     };
   }, [loadAvatarsFor]);
 
+  // Scrolling is a community-chat concern only; it must not change DM seen state.
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-    markLobbySeen();
   }, [messages]);
+
+  // Mark the community lobby as seen once when entering the page, not on every realtime message.
+  useEffect(() => {
+    void markLobbySeen();
+  }, []);
 
   useEffect(() => { inputRef.current?.focus(); }, [user]);
 
