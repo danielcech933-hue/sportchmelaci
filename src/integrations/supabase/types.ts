@@ -1467,6 +1467,17 @@ export type Database = {
       }
       fc_spin: { Args: { _spin_type: string }; Returns: Json }
       generate_tournament_notifications: { Args: never; Returns: number }
+      get_my_betting_ledger: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          match_id: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
