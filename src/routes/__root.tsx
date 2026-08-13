@@ -22,7 +22,6 @@ import {
   MessagesSquare,
   HeartHandshake,
   MapPin,
-  Gamepad2,
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
@@ -147,7 +146,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Lobby", icon: Home, exact: true }, { to: "/schedule", label: "Plán", icon: CalendarDays },
   { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/rankings", label: "Scoreboard", icon: Trophy },
   { to: "/teams", label: "Teams", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin },
-  { to: "/bets", label: "Sázky", icon: Coins }, { to: "/arcade", label: "Arkáda", icon: Gamepad2 },
+  { to: "/bets", label: "Sázky", icon: Coins },
   { to: "/slots", label: "Slots", icon: Coins }, { to: "/chat", label: "Chat", icon: MessagesSquare },
   { to: "/history", label: "Historie", icon: HistoryIcon }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
   { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
