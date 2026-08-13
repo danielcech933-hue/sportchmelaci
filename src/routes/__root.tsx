@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 import appCss from "../styles.css?url";
+import visualCss from "../visual-polish.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
@@ -46,12 +47,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-display text-primary">404</h1>
         <p className="mt-2 text-sm text-muted-foreground">Tahle stránka není na výsledkové tabuli.</p>
-        <Link
-          to="/"
-          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-        >
-          Zpět do lobby
-        </Link>
+        <Link to="/" className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Zpět do lobby</Link>
       </div>
     </div>
   );
@@ -59,20 +55,13 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+  useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-display text-foreground">Hra byla přerušena</h1>
         <p className="mt-2 text-sm text-muted-foreground">Něco se pokazilo. Zkus stránku načíst znovu.</p>
-        <button
-          onClick={() => { router.invalidate(); reset(); }}
-          className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-        >
-          Zkusit znovu
-        </button>
+        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Zkusit znovu</button>
       </div>
     </div>
   );
@@ -102,15 +91,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: visualCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap",
-      },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" },
     ],
   }),
   shellComponent: RootShell,
@@ -120,26 +107,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="cs">
-      <head><HeadContent /></head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
+  return <html lang="cs"><head><HeadContent /></head><body>{children}<Scripts /></body></html>;
 }
 
 function PageTransition() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-    >
+    <motion.div key={pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: "easeOut" }}>
       <Outlet />
     </motion.div>
   );
@@ -155,9 +129,7 @@ function RootComponent() {
             <div className="flex min-h-screen flex-col">
               <StadiumBackdrop />
               <SiteHeader />
-              <div className="flex-1">
-                <PageTransition />
-              </div>
+              <div className="flex-1"><PageTransition /></div>
               <SiteFooter />
               <FloatingNav />
               <WinCelebrations />
@@ -170,95 +142,33 @@ function RootComponent() {
   );
 }
 
-type NavItem = {
-  to: string;
-  label: string;
-  icon: ComponentType<{ className?: string; size?: number }>;
-  exact?: boolean;
-  admin?: boolean;
-  authOnly?: boolean;
-};
-
+type NavItem = { to: string; label: string; icon: ComponentType<{ className?: string; size?: number }>; exact?: boolean; admin?: boolean; authOnly?: boolean };
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Lobby", icon: Home, exact: true },
-  { to: "/schedule", label: "Plán", icon: CalendarDays },
-  { to: "/tournaments", label: "Turnaje", icon: Trophy },
-  { to: "/rankings", label: "Scoreboard", icon: Trophy },
-  { to: "/teams", label: "Teams", icon: Users },
-  { to: "/venues", label: "Sportoviště", icon: MapPin },
-  { to: "/bets", label: "Sázky", icon: Coins },
-  { to: "/arcade", label: "Arkáda", icon: Gamepad2 },
-  { to: "/slots", label: "Slots", icon: Coins },
-  { to: "/chat", label: "Chat", icon: MessagesSquare },
-  { to: "/history", label: "Historie", icon: HistoryIcon },
-  { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
-  { to: "/profile", label: "Profil", icon: UserRound, authOnly: true },
-  { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
+  { to: "/", label: "Lobby", icon: Home, exact: true }, { to: "/schedule", label: "Plán", icon: CalendarDays },
+  { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/rankings", label: "Scoreboard", icon: Trophy },
+  { to: "/teams", label: "Teams", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin },
+  { to: "/bets", label: "Sázky", icon: Coins }, { to: "/arcade", label: "Arkáda", icon: Gamepad2 },
+  { to: "/slots", label: "Slots", icon: Coins }, { to: "/chat", label: "Chat", icon: MessagesSquare },
+  { to: "/history", label: "Historie", icon: HistoryIcon }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
+  { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
 ];
-
-function matchesRoute(pathname: string, item: NavItem): boolean {
-  if (item.exact) return pathname === item.to;
-  return pathname === item.to || pathname.startsWith(item.to + "/");
-}
+function matchesRoute(pathname: string, item: NavItem): boolean { return item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/"); }
 
 function SiteHeader() {
   const { user, isAdmin, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-
-  const visible = NAV_ITEMS.filter((n) => {
-    if (n.admin) return !!user && isAdmin;
-    if (n.authOnly) return !!user;
-    return true;
-  });
-
-  const current =
-    visible.find((n) => matchesRoute(pathname, n)) ??
-    (pathname.startsWith("/match")
-      ? { label: "Live zápas", icon: Radio, to: "/match", exact: false } as NavItem
-      : pathname.startsWith("/auth")
-      ? { label: "Přihlášení", icon: UserRound, to: "/auth", exact: false } as NavItem
-      : null);
-
+  const visible = NAV_ITEMS.filter((n) => n.admin ? !!user && isAdmin : n.authOnly ? !!user : true);
+  const current = visible.find((n) => matchesRoute(pathname, n)) ?? (pathname.startsWith("/match") ? { label: "Live zápas", icon: Radio, to: "/match", exact: false } as NavItem : pathname.startsWith("/auth") ? { label: "Přihlášení", icon: UserRound, to: "/auth", exact: false } as NavItem : null);
   return (
     <header className="sticky top-0 z-40 border-b border-primary/25 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
       <div className="relative mx-auto max-w-6xl px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <Link to="/" className="group flex min-w-0 items-center gap-2">
-            <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/40 bg-primary/10">
-              <span aria-hidden className="sport-cycle text-base leading-none">
-                <span>⚽</span>
-                <span>🎾</span>
-                <span>🏐</span>
-                <span>🏓</span>
-              </span>
-              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
-            </span>
-            <span className="brand-shimmer truncate font-display text-base tracking-wide neon-text sm:text-2xl sm:tracking-widest">
-              CHMELOVÍ SPORTOVCI
-            </span>
-          </Link>
-
-          {current && (
-            <div className="hidden min-w-0 items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 md:flex">
-              <current.icon className="h-3.5 w-3.5 text-primary" />
-              <span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">
-                {current.label}
-              </span>
-            </div>
-          )}
-
+          <Link to="/" className="group flex min-w-0 items-center gap-2"><span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/40 bg-primary/10"><span aria-hidden className="sport-cycle text-base leading-none"><span>⚽</span><span>🎾</span><span>🏐</span><span>🏓</span></span><span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" /></span><span className="brand-shimmer truncate font-display text-base tracking-wide neon-text sm:text-2xl sm:tracking-widest">CHMELOVÍ SPORTOVCI</span></Link>
+          {current && <div className="hidden min-w-0 items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 md:flex"><current.icon className="h-3.5 w-3.5 text-primary" /><span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">{current.label}</span></div>}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2"><DmBell /><NotificationsBell /><AuthNav /></div>
         </div>
-
-        {current && (
-          <div className="mt-2 flex items-center gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1 md:hidden">
-            <current.icon className="h-3.5 w-3.5 text-primary" />
-            <span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">
-              // {current.label}
-            </span>
-          </div>
-        )}
+        {current && <div className="mt-2 flex items-center gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1 md:hidden"><current.icon className="h-3.5 w-3.5 text-primary" /><span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">// {current.label}</span></div>}
       </div>
     </header>
   );
@@ -268,34 +178,13 @@ function AuthNav() {
   const { user, nickname, avatarPath, signOut, loading } = useAuth();
   const { userDollars } = useWallet();
   if (loading) return null;
-  if (!user) {
-    return (
-      <Link to="/auth" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[0_0_16px_-4px_hsl(45_100%_60%/0.7)] sm:text-sm">
-        Přihlásit
-      </Link>
-    );
-  }
+  if (!user) return <Link to="/auth" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[0_0_16px_-4px_hsl(45_100%_60%/0.7)] sm:text-sm">Přihlásit</Link>;
   return (
     <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-      <Link to="/profile" aria-label="Profil" className="shrink-0">
-        <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
-      </Link>
-      <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-accent/40 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:px-2 sm:text-xs">
-        💰 ${userDollars.toFixed(0)}
-      </span>
-      {nickname && (
-        <span className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:inline">
-          as <span className="text-primary neon-text">{nickname}</span>
-        </span>
-      )}
-      <button
-        onClick={() => signOut()}
-        aria-label="Odhlásit"
-        className="shrink-0 rounded-md border border-primary/25 px-2 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:px-2.5 sm:text-sm"
-      >
-        <span className="hidden sm:inline">Odhlásit</span>
-        <span className="sm:hidden" aria-hidden>⎋</span>
-      </button>
+      <Link to="/profile" aria-label="Profil" className="shrink-0"><Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} /></Link>
+      <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-accent/40 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:px-2 sm:text-xs">💰 ${userDollars.toFixed(0)}</span>
+      {nickname && <span className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:inline">as <span className="text-primary neon-text">{nickname}</span></span>}
+      <button onClick={() => signOut()} aria-label="Odhlásit" className="shrink-0 rounded-md border border-primary/25 px-2 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:px-2.5 sm:text-sm"><span className="hidden sm:inline">Odhlásit</span><span className="sm:hidden" aria-hidden>⎋</span></button>
     </div>
   );
 }
