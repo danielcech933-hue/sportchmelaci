@@ -51,7 +51,7 @@ export function matchesRoute(pathname: string, item: NavItem): boolean {
   return pathname === item.to || pathname.startsWith(item.to + "/");
 }
 
-/** Compact floating navigation dock — smart hide on scroll down, glassmorphism. */
+/** Premium responsive navigation dock with scroll-aware motion. */
 export function FloatingNav() {
   const { user, isAdmin, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -92,8 +92,8 @@ export function FloatingNav() {
   return (
     <nav
       aria-label="Hlavní navigace"
-      className={`fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 transition-transform duration-300 ease-out will-change-transform sm:bottom-5 ${
-        hidden ? "translate-y-[150%]" : "translate-y-0"
+      className={`fixed inset-x-0 bottom-3 z-50 flex justify-center px-2 transition-[transform,opacity] duration-300 ease-out will-change-transform sm:bottom-5 ${
+        hidden ? "translate-y-[150%] opacity-0" : "translate-y-0 opacity-100"
       }`}
     >
       <div
@@ -102,8 +102,9 @@ export function FloatingNav() {
           if (el.scrollWidth <= el.clientWidth) return;
           el.scrollLeft += e.deltaY + e.deltaX;
         }}
-        className="nav-dock no-scrollbar flex max-w-[min(72rem,96vw)] items-center gap-0.5 overflow-x-auto rounded-2xl border border-primary/25 bg-background/60 px-2 py-1.5 backdrop-blur-xl sm:gap-1 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible"
+        className="nav-dock relative flex max-w-[min(78rem,97vw)] items-center gap-1 overflow-x-auto rounded-[1.35rem] px-2 py-2 shadow-2xl sm:gap-1.5 sm:px-3 md:flex-wrap md:justify-center md:gap-1.5 md:overflow-visible"
       >
+        <span aria-hidden className="pointer-events-none absolute inset-x-10 -top-px h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent opacity-80" />
         {visible.map((item) => {
           const active = matchesRoute(pathname, item);
           const Icon = item.icon;
@@ -112,12 +113,17 @@ export function FloatingNav() {
               key={item.to}
               to={item.to}
               activeOptions={item.exact ? { exact: true } : undefined}
-              className={`nav-chip group relative flex shrink-0 flex-col items-center gap-0.5 rounded-xl px-2.5 py-1.5 transition-all duration-300 sm:px-3 ${
-                active ? "nav-chip-active text-primary" : "text-muted-foreground hover:text-primary"
+              aria-current={active ? "page" : undefined}
+              title={item.label}
+              className={`nav-chip group relative flex min-w-[3.8rem] shrink-0 flex-col items-center gap-1 rounded-xl px-2.5 py-2 transition-[transform,color,background,box-shadow] duration-200 sm:min-w-[4.4rem] sm:px-3 ${
+                active
+                  ? "nav-chip-active text-primary shadow-[0_8px_24px_-12px_color-mix(in_oklab,var(--color-primary)_80%,transparent)]"
+                  : "text-muted-foreground hover:-translate-y-0.5 hover:text-foreground"
               }`}
             >
-              <span className="relative inline-flex">
-                <Icon className={`h-[18px] w-[18px] transition-transform duration-300 ${item.fx === "trophy" ? "group-hover:trophy-pop" : "group-hover:scale-125"}`} />
+              <span className="relative inline-flex h-5 items-center justify-center">
+                <Icon className={`h-[18px] w-[18px] transition-transform duration-200 ${active ? "scale-110" : "group-hover:scale-110"} ${item.fx === "trophy" ? "group-hover:trophy-pop" : ""}`} />
+                {active && <span aria-hidden className="absolute -bottom-1 h-0.5 w-4 rounded-full bg-primary shadow-[0_0_10px_var(--color-primary)]" />}
                 {item.fx === "trophy" && (
                   <span aria-hidden className="pointer-events-none absolute -inset-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     {Array.from({ length: 6 }).map((_, i) => (
@@ -126,7 +132,7 @@ export function FloatingNav() {
                   </span>
                 )}
               </span>
-              <span className="text-[9px] font-medium uppercase tracking-[0.12em] sm:text-[10px]">{item.label}</span>
+              <span className="text-[8px] font-semibold uppercase tracking-[0.11em] sm:text-[9px]">{item.label}</span>
             </Link>
           );
         })}
