@@ -94,15 +94,25 @@ export function ProfileView({ userId }: { userId?: string }) {
     supabase.rpc("get_my_betting_ledger", { _limit: 200 }).then(({ data, error }) => {
       if (!active) return;
       if (error) { setLedgerLoaded(false); return; }
-      const net = (data ?? []).reduce((sum: number, row: any) => {
+      const payoutNet = (data ?? []).reduce((sum: number, row: any) => {
         const amount = Number(row.amount ?? 0);
         return sum + (row.kind === "bet_payout" || row.kind === "bet_refund" ? amount : 0);
       }, 0);
+
+      // The authoritative betting ledger records money returned to the wallet
+      // (payout/refund), while the original stake lives in matches.bets. A true
+      // betting profit therefore needs both sides: returned money minus the
+      // stake of every settled bet. Refunds naturally net to zero.
+      const settledStake = myBets.reduce((sum, bet) => {
+        return sum + (bet.status === "won" || bet.status === "lost" ? Number(bet.amount ?? 0) : 0);
+      }, 0);
+
+      const net = payoutNet - settledStake;
       setLedgerNet(Math.round(net * 100) / 100);
       setLedgerLoaded(true);
     });
     return () => { active = false; };
-  }, [isSelf, targetId]);
+  }, [isSelf, targetId, myBets]);
 
   const stats = useMemo(() => {
     let betWon = 0, betLost = 0, betOpen = 0, biggestBet = 0;
@@ -121,7 +131,6 @@ export function ProfileView({ userId }: { userId?: string }) {
       victories: split.overall.wins,
       losses: split.overall.losses,
       betWon, betLost, betOpen,
-      // Net $ is intentionally sourced from the authoritative betting ledger.
       moneyNet: ledgerLoaded ? ledgerNet : 0,
       biggestBet, sports: sports.size,
     };
