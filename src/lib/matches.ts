@@ -59,6 +59,12 @@ export const SPORT_LIST = Object.values(SPORTS);
 export const CLASSIC_SPORTS = SPORT_LIST.filter((s) => !s.esport);
 export const ESPORT_SPORTS = SPORT_LIST.filter((s) => !!s.esport);
 
+/** Canonical betting/finance constants shared by betting UI and services. */
+export const BET_CURRENCY = "USD" as const;
+export const GAME_CURRENCY = "CZK" as const;
+export const USD_TO_CZK = 100;
+export const MAX_BET = 250;
+export const MIN_BET = 1;
 
 export interface SetScore { a: number; b: number }
 export interface Bet {
@@ -97,13 +103,9 @@ export interface Match {
   teamBRef?: string | null;
 }
 
-export const MAX_BET = 250;
-export const MIN_BET = 1;
-export const STARTING_BALANCE = 1000;
 export function betsPool(bets: Bet[]): number {
   return bets.reduce((s, b) => s + (b.amount ?? 0), 0);
 }
 export function uniqueBettors(bets: Bet[]): number {
   return new Set(bets.map((b) => b.userId ?? b.bettor)).size;
 }
-
