@@ -256,6 +256,21 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_bonus_claims: {
+        Row: {
+          last_claim_at: string
+          user_id: string
+        }
+        Insert: {
+          last_claim_at?: string
+          user_id: string
+        }
+        Update: {
+          last_claim_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       direct_messages: {
         Row: {
           content: string
@@ -688,6 +703,57 @@ export type Database = {
         }
         Relationships: []
       }
+      fc_squad_players: {
+        Row: {
+          created_at: string
+          id: string
+          is_captain: boolean
+          position: string
+          slot_key: string
+          squad_role: string
+          squad_user_id: string
+          updated_at: string
+          user_card_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_captain?: boolean
+          position: string
+          slot_key: string
+          squad_role?: string
+          squad_user_id: string
+          updated_at?: string
+          user_card_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_captain?: boolean
+          position?: string
+          slot_key?: string
+          squad_role?: string
+          squad_user_id?: string
+          updated_at?: string
+          user_card_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_squad_players_card_fk"
+            columns: ["user_card_id"]
+            isOneToOne: false
+            referencedRelation: "fc_user_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fc_squad_players_squad_fk"
+            columns: ["squad_user_id"]
+            isOneToOne: false
+            referencedRelation: "fc_squads"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       fc_squads: {
         Row: {
           chemistry: number
@@ -966,6 +1032,7 @@ export type Database = {
           elo: number
           id: string
           nickname: string
+          slot_czk: number
           updated_at: string
         }
         Insert: {
@@ -976,6 +1043,7 @@ export type Database = {
           elo?: number
           id: string
           nickname: string
+          slot_czk?: number
           updated_at?: string
         }
         Update: {
@@ -986,6 +1054,7 @@ export type Database = {
           elo?: number
           id?: string
           nickname?: string
+          slot_czk?: number
           updated_at?: string
         }
         Relationships: []
@@ -1044,6 +1113,72 @@ export type Database = {
           created_at?: string
           result?: number
           round_no?: number
+        }
+        Relationships: []
+      }
+      slot_bonus_sessions: {
+        Row: {
+          base_bet: number | null
+          created_at: string
+          multiplier: number | null
+          options: Json
+          pending_pick: boolean
+          spins_remaining: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_bet?: number | null
+          created_at?: string
+          multiplier?: number | null
+          options?: Json
+          pending_pick?: boolean
+          spins_remaining?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_bet?: number | null
+          created_at?: string
+          multiplier?: number | null
+          options?: Json
+          pending_pick?: boolean
+          spins_remaining?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      slot_sessions: {
+        Row: {
+          bet_amount: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          result: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          bet_amount: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          result?: Json | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          bet_amount?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          result?: Json | null
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1192,6 +1327,21 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_bonus_claims: {
+        Row: {
+          last_claim_at: string | null
+          user_id: string
+        }
+        Insert: {
+          last_claim_at?: string | null
+          user_id: string
+        }
+        Update: {
+          last_claim_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1255,6 +1405,9 @@ export type Database = {
             }
             Returns: string
           }
+      daily_bonus_claim: { Args: never; Returns: Json }
+      daily_bonus_spin: { Args: never; Returns: Json }
+      daily_bonus_status: { Args: never; Returns: Json }
       fc_club_get: { Args: never; Returns: Json }
       fc_club_rename: { Args: { _name: string }; Returns: undefined }
       fc_create_challenge: {
@@ -1349,6 +1502,7 @@ export type Database = {
         Args: { _stacks: Json; _tournament_id: string }
         Returns: undefined
       }
+      roulette_cancel_bets: { Args: { _round_no: number }; Returns: Json }
       roulette_place_bet: {
         Args: {
           _amount: number
@@ -1365,7 +1519,17 @@ export type Database = {
         Returns: undefined
       }
       settle_match: { Args: { _match_id: string }; Returns: undefined }
+      slot_pick_bonus: { Args: { _multiplier: number }; Returns: Json }
+      slot_spin: { Args: { _bet: number }; Returns: Json }
       sync_match_elo: { Args: { _match_id: string }; Returns: undefined }
+      wallet_apply: {
+        Args: {
+          _delta_dollars?: number
+          _delta_slot_czk?: number
+          _reason?: string
+        }
+        Returns: Json
+      }
       withdraw_bet: { Args: { _match_id: string }; Returns: Json }
       write_audit: {
         Args: {
