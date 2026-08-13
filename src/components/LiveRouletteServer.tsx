@@ -137,7 +137,7 @@ export function LiveRouletteServer() {
     const { data, error } = await supabase.rpc("roulette_place_bet", {
       _round_no: round,
       _bet_type: mapped.type,
-      _bet_value: mapped.value,
+      _bet_value: (mapped.value ?? null) as unknown as string,
       _amount: selectedChip,
     });
     if (error) {
