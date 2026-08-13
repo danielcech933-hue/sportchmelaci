@@ -98,18 +98,18 @@ export async function createMatch(input: {
   return data.id;
 }
 
+/**
+ * Score changes are server-authoritative. The browser never writes score,
+ * sets or ended_at columns directly; the RPC validates ownership and state.
+ */
 export async function saveMatch(m: Match): Promise<void> {
-  const { error } = await supabase
-    .from("matches")
-    .update({
-      team_a: m.teamA,
-      team_b: m.teamB,
-      score_a: m.scoreA,
-      score_b: m.scoreB,
-      sets: m.sets as unknown as never,
-      ended_at: m.endedAt ? new Date(m.endedAt).toISOString() : null,
-    })
-    .eq("id", m.id);
+  const { error } = await supabase.rpc("save_match_score" as never, {
+    _match_id: m.id,
+    _score_a: m.scoreA,
+    _score_b: m.scoreB,
+    _sets: m.sets as unknown as never,
+    _ended_at: m.endedAt ? new Date(m.endedAt).toISOString() : null,
+  } as never);
   if (error) throw error;
 }
 
@@ -147,7 +147,6 @@ export async function removeBetFromMatch(matchId: string, betId: string): Promis
   } as never);
   if (error) throw error;
 }
-
 
 export async function updateMatchFixture(
   id: string,
