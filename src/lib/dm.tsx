@@ -9,12 +9,14 @@ import {
   type ReactNode,
 } from "react";
 import { Link } from "@tanstack/react-router";
-import { MessageCircle, X, Send, ArrowLeft, Users, Phone } from "lucide-react";
+import { MessageCircle, X, ArrowLeft, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { useProfileDirectory } from "@/lib/profile-links";
 import { DirectCallButton, GroupChatHub } from "@/components/GroupChatAndCalls";
+import { ChatComposer } from "@/components/ChatComposer";
+import { ChatMessageBubble } from "@/components/ChatMessageBubble";
 
 export interface DirectMessage {
   id: string;
@@ -264,7 +266,7 @@ function InboxPane({ onClose, onOpenChat, onOpenGroups }: { onClose: () => void;
               <Avatar path={p?.avatar_path ?? null} nickname={p?.nickname ?? "?"} size={36} zoomable={false} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2"><span className="truncate text-sm font-semibold text-foreground">{p?.nickname ?? "Hráč"}</span><span className="shrink-0 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">{formatTime(c.last.createdAt)}</span></span>
-                <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{c.last.senderId === user?.id ? "Ty: " : ""}{c.last.content}</span>
+                <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{c.last.senderId === user?.id ? "Ty: " : ""}{c.last.content.startsWith("__SC_MEDIA__:") ? "📎 Příloha" : c.last.content}</span>
               </span>
               {c.unread > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[9px] font-bold text-background">{c.unread > 9 ? "9+" : c.unread}</span>}
             </button>
@@ -277,11 +279,9 @@ function InboxPane({ onClose, onOpenChat, onOpenGroups }: { onClose: () => void;
 
 function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => void; onClose: () => void }) {
   const { user } = useAuth();
-  const { messages, reload, applyRow } = useDm();
+  const { messages, reload } = useDm();
   const { profiles } = useProfileDirectory();
   const peer = profiles.find((p) => p.id === peerId);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const thread = useMemo(() => messages.filter((m) => m.senderId === peerId || m.recipientId === peerId), [messages, peerId]);
 
@@ -291,15 +291,6 @@ function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => v
     if (!unread.length) return;
     supabase.from("direct_messages").update({ read_at: new Date().toISOString() }).in("id", unread).then(() => reload());
   }, [thread, user?.id, reload]);
-
-  const send = async () => {
-    const content = text.trim();
-    if (!content || !user || sending) return;
-    setSending(true); setText("");
-    const { data, error } = await supabase.from("direct_messages").insert({ sender_id: user.id, recipient_id: peerId, content }).select("id,sender_id,recipient_id,content,read_at,created_at").single();
-    setSending(false);
-    if (error) setText(content); else if (data) applyRow(data as Row); else reload();
-  };
 
   return (
     <>
@@ -312,16 +303,10 @@ function ChatPane({ peerId, onBack, onClose }: { peerId: string; onBack: () => v
       </header>
       <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {thread.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Napiš první zprávu 👋</p>}
-        {thread.map((m) => {
-          const mine = m.senderId === user?.id;
-          return <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}><div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "border border-primary/20 bg-primary/5 text-foreground"}`}><p className="whitespace-pre-wrap break-words">{m.content}</p><p className={`mt-1 font-mono text-[9px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground/70"}`}>{formatTime(m.createdAt)}</p></div></div>;
-        })}
+        {thread.map((m) => <ChatMessageBubble key={m.id} message={{ id: m.id, content: m.content, createdAt: m.createdAt, mine: m.senderId === user?.id }} />)}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="flex items-center gap-2 border-t border-primary/20 p-2.5">
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Napsat zprávu…" className="min-w-0 flex-1 rounded-xl border border-primary/25 bg-background/60 px-3 py-2.5 text-sm outline-none focus:border-primary/60" />
-        <button type="submit" disabled={!text.trim() || sending} aria-label="Odeslat" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-40"><Send className="h-4 w-4" /></button>
-      </form>
+      {user && <ChatComposer userId={user.id} peerId={peerId} onSent={() => void reload()} />}
     </>
   );
 }
