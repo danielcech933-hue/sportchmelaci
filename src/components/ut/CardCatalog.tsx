@@ -47,7 +47,7 @@ export function CardCatalog() {
       if (!q) return true;
       return [card.name, card.club, card.nation, card.league, card.position, card.rarity].some((v) => v.toLowerCase().includes(q));
     }).sort((a, b) => sort === "rating" ? (b.rating - a.rating) || a.name.localeCompare(b.name) : a.name.localeCompare(b.name));
-  }, [cards, minRating, position, q, rarity, search, sort]);
+  }, [cards, minRating, position, rarity, search, sort]);
 
   return (
     <div className="space-y-4">
