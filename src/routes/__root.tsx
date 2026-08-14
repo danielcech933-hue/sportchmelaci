@@ -31,6 +31,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
 import { NotificationsBell } from "@/lib/notifications";
 import { DmProvider, DmBell } from "@/lib/dm";
+import { PhoneVerificationGate } from "@/components/PhoneVerificationGate";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingNav } from "@/components/FloatingNav";
@@ -128,7 +129,7 @@ function RootComponent() {
             <div className="flex min-h-screen flex-col">
               <StadiumBackdrop />
               <SiteHeader />
-              <div className="flex-1"><PageTransition /></div>
+              <div className="flex-1"><PhoneVerificationGate><PageTransition /></PhoneVerificationGate></div>
               <SiteFooter />
               <FloatingNav />
               <WinCelebrations />
