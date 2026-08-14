@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
+type SupportVerificationResult = { paidAmountInCents: number; currency: string } | { error: string };
 
 export const createSupportCheckout = createServerFn({ method: "POST" })
   .inputValidator((data: {
@@ -44,6 +45,40 @@ export const createSupportCheckout = createServerFn({ method: "POST" })
       });
 
       return { clientSecret: session.client_secret ?? "" };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
+
+/**
+ * Verifies a completed support payment on the server.
+ * This does not alter the user's wallet or game balances; the support page
+ * only confirms the Stripe payment and the paid amount.
+ */
+export const verifySiteCreditCheckout = createServerFn({ method: "POST" })
+  .inputValidator((data: { sessionId: string; environment: StripeEnv }) => {
+    const sessionId = data.sessionId.trim();
+    if (!sessionId || sessionId.length > 255) {
+      throw new Error("Neplatné ID platební relace.");
+    }
+    return { ...data, sessionId };
+  })
+  .handler(async ({ data }): Promise<SupportVerificationResult> => {
+    try {
+      const stripe = createStripeClient(data.environment);
+      const session = await stripe.checkout.sessions.retrieve(data.sessionId);
+
+      if (session.mode !== "payment" || session.status !== "complete" || session.payment_status !== "paid") {
+        return { error: "Platba zatím není potvrzena jako uhrazená." };
+      }
+
+      const amount = Number(session.amount_total ?? 0);
+      const currency = String(session.currency ?? "").toLowerCase();
+      if (!Number.isInteger(amount) || amount <= 0 || currency !== "czk") {
+        return { error: "Platební relace nemá očekávané údaje podpory." };
+      }
+
+      return { paidAmountInCents: amount, currency };
     } catch (error) {
       return { error: getStripeErrorMessage(error) };
     }
