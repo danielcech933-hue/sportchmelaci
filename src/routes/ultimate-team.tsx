@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { Coins, Ticket, Sparkles, Layers, Shield, Users, RefreshCw, Trophy } from "lucide-react";
 import { CardSpinPanel } from "@/components/ut/CardSpinPanel";
 import { CollectionBrowser } from "@/components/ut/CollectionBrowser";
