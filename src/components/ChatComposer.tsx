@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState } from "react";
-import { FileImage, ImagePlus, Loader2, Smile, Send, Search, X } from "lucide-react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
+import { ImagePlus, Loader2, Smile, Send, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EMOJI, SPORTS_GIF_QUERIES, encodeMediaMessage, type MediaMessage } from "@/lib/dm-media";
 
 type SentCallback = () => void;
-
 type GifItem = { id: string; title: string; url: string; preview: string };
 
 function extFor(file: File) {
@@ -120,7 +119,7 @@ export function ChatComposer({ userId, peerId, onSent }: { userId: string; peerI
     }
   };
 
-  const submitGifSearch = (event: React.FormEvent) => {
+  const submitGifSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const q = gifQuery.trim();
     if (q) void searchGifs(q);
