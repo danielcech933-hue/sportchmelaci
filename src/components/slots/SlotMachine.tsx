@@ -33,7 +33,14 @@ export function SlotMachine({ playerName, onExchange, onWin }: { playerName: str
     const isFree = freeSpinsLeft > 0;
     if (!isFree && slotCZK < bet) { setMessage("Nedostatek Slot CZK — sniž sázku nebo použij směnárnu."); setAutoLeft(0); return; }
     setMessage(null); setWinLines([]); setScatterCells([]); setLastWin(0); setBigWin(null); setIsSpinning(true); setStoppedReels(0); setAnticipation(false);
-    const response = await spinSlot(isFree ? 0 : bet);
+    let response = await spinSlot(isFree ? 0 : bet);
+    // A persisted free-spin session can survive a page reload while the local
+    // counter starts at zero. The server rejects the stale paid-spin attempt
+    // without changing state, so safely retry once as a free spin and let the
+    // authoritative response resync the client counters.
+    if (!response.ok && response.error?.includes("Free spin nepoužívá další sázku.")) {
+      response = await spinSlot(0);
+    }
     if (!response.ok || !response.result) { setIsSpinning(false); setStoppedReels(REELS); setMessage(response.error ?? "Točka se nepovedla. Zkus to znovu."); setAutoLeft(0); return; }
     const result = response.result; const next = normalizeGrid(result.grid); setGrid(next);
     const nextAnticipation = hasAnticipation(next); setAnticipation(nextAnticipation); if (nextAnticipation) setMessage("SCATTER! Ještě jeden může spustit bonus…");
