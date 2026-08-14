@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileView } from "@/components/ProfileView";
+import { PlayerLocator } from "@/components/PlayerLocator";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/profile/$id")({
   head: () => ({
@@ -17,5 +19,15 @@ export const Route = createFileRoute("/profile/$id")({
 
 function PublicProfile() {
   const { id } = Route.useParams();
-  return <ProfileView userId={id} />;
+  const { user } = useAuth();
+  return (
+    <>
+      <ProfileView userId={id} />
+      {user && <LocatorWrapper userId={id} isSelf={user.id === id} />}
+    </>
+  );
+}
+
+function LocatorWrapper({ userId, isSelf }: { userId: string; isSelf: boolean }) {
+  return <PlayerLocator userId={userId} isSelf={isSelf} nickname={null} />;
 }
