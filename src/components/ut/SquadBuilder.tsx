@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, Save, Users } from "lucide-react";
+import { RefreshCw, RotateCcw, Save, Users } from "lucide-react";
 import { UltimateCard } from "@/components/ut/UltimateCard";
 import { supabase } from "@/integrations/supabase/client";
 import type { UtOwnedCard } from "@/types/ut";
@@ -30,9 +30,9 @@ function mapRpcError(error: unknown): string {
   const raw = String((error as { message?: string })?.message ?? error ?? "");
   if (raw.includes("card_not_owned")) return "Tuto kartu nevlastníš.";
   if (raw.includes("invalid_player_position")) return "Tahle karta nemůže hrát na zvolené pozici.";
-  if (raw.includes("squad_version_conflict")) return "Sestava se mezitím změnila. Obnov ji a zkus to znovu.";
+  if (raw.includes("squad_version_conflict")) return "Sestava se mezitím změnila. Obnov serverovou verzi a zkontroluj změny před uložením.";
   if (raw.includes("INVALID_STARTING_XI")) return "Sestava musí mít přesně 11 hráčů.";
-  if (raw.includes("squad_not_found")) return "Sestava už neexistuje. Obnov FUT a vytvoř ji znovu.";
+  if (raw.includes("squad_not_found")) return "Sestava už neexistuje. Obnov serverový stav a vytvoř ji znovu.";
   if (raw.includes("not_authenticated")) return "Přihlas se.";
   return raw || "Uložení sestavy se nepovedlo.";
 }
@@ -46,10 +46,11 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
   const [metrics, setMetrics] = useState<Metrics>({ starting_xi: 0, team_ovr: 0, chemistry: 0 });
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const hydrate = (row: SquadRow) => {
+  const hydrate = (row: SquadRow, preserveLocal = false) => {
     const next = { ...EMPTY_SQUAD };
     for (const player of row.players ?? []) {
       const key = player.slot_key as SlotKey;
@@ -57,35 +58,35 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
     }
     setSquadId(row.id);
     setVersion(row.version);
-    setSquad(next);
+    if (!preserveLocal) setSquad(next);
     setSavedSquad(next);
     setMetrics((current) => ({ ...current, starting_xi: Object.values(next).filter(Boolean).length }));
-    setSaved(true);
+    setSaved(!preserveLocal);
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
+  async function loadServerSquad(preserveLocal = false) {
+    setRefreshing(true);
+    setError(null);
+    try {
       const { data, error: getError } = await supabase.rpc("fc_squad_get_active" as never, {} as never);
-      if (cancelled) return;
-      if (getError) {
-        setError(mapRpcError(getError));
-        setLoading(false);
-        return;
-      }
+      if (getError) throw getError;
       if (!data) {
         const { data: created, error: createError } = await supabase.rpc("fc_squad_create" as never, { _name: "Main Squad", _formation: "4-3-3" } as never);
-        if (cancelled) return;
-        if (createError) setError(mapRpcError(createError));
-        else hydrate(created as unknown as SquadRow);
+        if (createError) throw createError;
+        hydrate(created as unknown as SquadRow);
       } else {
-        hydrate(data as unknown as SquadRow);
+        hydrate(data as unknown as SquadRow, preserveLocal);
       }
+    } catch (e) {
+      setError(mapRpcError(e));
+    } finally {
+      setRefreshing(false);
       setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    }
+  }
+
+  useEffect(() => {
+    void loadServerSquad();
   }, []);
 
   useEffect(() => {
@@ -196,8 +197,9 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
       <aside className="rounded-3xl border border-border/60 bg-background/60 p-4">
         <div className="flex items-center justify-between gap-2"><div><p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Sestava</p><h3 className="font-display text-xl uppercase">Výběr hráče</h3></div><Users className="h-5 w-5 text-primary" /></div>
         {active ? <><div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-3"><p className="font-mono text-[10px] uppercase tracking-widest text-primary/70">Pozice</p><p className="mt-1 font-display text-lg text-primary">{active.label}</p><p className="mt-1 text-xs text-muted-foreground">Vhodné: {active.positions.join(" · ")}</p></div><div className="mt-3 max-h-[560px] space-y-2 overflow-y-auto pr-1">{!candidates.length && <p className="text-xs text-muted-foreground">Nemáš vhodnou kartu pro tuto pozici.</p>}{candidates.map((card) => <button key={card.id} type="button" onClick={() => assign(card.id)} className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/60 p-2 text-left hover:border-primary/40"><UltimateCard card={card.card} size="sm" /><span className="min-w-0"><span className="block truncate font-display text-sm uppercase">{card.card.name}</span><span className="font-mono text-[10px] text-muted-foreground">{card.card.rating} OVR · {card.card.position}</span></span></button>)}</div></> : <p className="mt-5 rounded-xl border border-primary/15 bg-primary/5 p-3 text-xs text-muted-foreground">Klikni na pozici na hřišti a vyber hráče ze své sbírky. Pravým klikem kartu z pozice odebereš.</p>}
-        <div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => void save()} disabled={saving || localStartingXi !== 11 || !dirty} className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-primary disabled:opacity-40"><Save className="h-3.5 w-3.5" /> {saving ? "Ukládám…" : saved ? "Uloženo" : "Uložit sestavu"}</button><button type="button" onClick={reset} disabled={!dirty || saving} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground disabled:opacity-40"><RotateCcw className="h-3.5 w-3.5" /> Zrušit změny</button></div>
-        {error && <p className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300">{error}</p>}
+        <div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => void save()} disabled={saving || refreshing || localStartingXi !== 11 || !dirty} className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-primary disabled:opacity-40"><Save className="h-3.5 w-3.5" /> {saving ? "Ukládám…" : saved ? "Uloženo" : "Uložit sestavu"}</button><button type="button" onClick={reset} disabled={!dirty || saving || refreshing} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground disabled:opacity-40"><RotateCcw className="h-3.5 w-3.5" /> Zrušit změny</button></div>
+        <button type="button" onClick={() => void loadServerSquad(false)} disabled={refreshing || saving} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/50 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition hover:border-primary/40 hover:text-primary disabled:opacity-40"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /> {refreshing ? "Obnovuji serverový stav…" : "Obnovit serverovou sestavu"}</button>
+        {error && <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300"><p>{error}</p>{(error.includes("změnila") || error.includes("neexistuje")) && <button type="button" onClick={() => void loadServerSquad(false)} className="mt-2 font-mono text-[10px] uppercase tracking-widest text-red-200 underline underline-offset-4">Načíst serverovou verzi</button>}</div>}
       </aside>
     </div>
   );
