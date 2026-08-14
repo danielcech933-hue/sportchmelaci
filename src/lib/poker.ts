@@ -1,4 +1,10 @@
-/** Zjednodušený Texas Hold'em engine — sdílený stav rozdané hry (jeden pot, bez side potů). */
+/**
+ * Local Hold'em rules/evaluation helper.
+ *
+ * The live poker UI does NOT trust this module for money movement, cards,
+ * actions or winners; those are server RPCs. This helper is kept for
+ * deterministic UI/contract tests and non-authoritative simulations.
+ */
 
 export type Suit = "s" | "h" | "d" | "c";
 export interface Card {
@@ -33,7 +39,7 @@ export type Stage = "preflop" | "flop" | "turn" | "river" | "done";
 
 export interface HandState {
   id: string;
-  /** Present only on the trusted/local hand used by the engine. Never returned to clients from DB. */
+  /** Local-only deck for helper/testing state; never trust or persist this on the client. */
   deck?: Card[];
   players: PPlayer[];
   community: number;
@@ -54,12 +60,20 @@ export interface HandState {
 export const TURN_SECONDS = 25;
 const COMMUNITY_OFFSET = 18; // až 9 hráčů × 2 karty
 
+function secureRandomUnit(): number {
+  const cryptoApi = globalThis.crypto;
+  if (!cryptoApi?.getRandomValues) throw new Error("secure_random_unavailable");
+  const value = new Uint32Array(1);
+  cryptoApi.getRandomValues(value);
+  return value[0] / 0x100000000;
+}
+
 function shuffled(): Card[] {
   const deck: Card[] = [];
   const suits: Suit[] = ["s", "h", "d", "c"];
   for (const s of suits) for (let r = 2; r <= 14; r++) deck.push({ r, s });
   for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(secureRandomUnit() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   return deck;
@@ -105,8 +119,12 @@ export function startHand(
     acted: false,
   }));
 
+  if (players.length < 2) throw new Error("at_least_two_players_required");
+  if (blind <= 0) throw new Error("positive_blind_required");
+  if (!Number.isInteger(dealer) || dealer < 0) throw new Error("invalid_dealer");
+
   const h: HandState = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: typeof globalThis.crypto?.randomUUID === "function" ? globalThis.crypto.randomUUID() : `${Date.now()}-${secureRandomUnit().toString(36).slice(2, 8)}`,
     deck: shuffled(),
     players,
     community: 0,
@@ -262,7 +280,6 @@ function finish(h: HandState, alive: PPlayer[]): HandState {
   return h;
 }
 
-/* ============ Vyhodnocení kombinací ============ */
 const CATEGORY_LABEL = [
   "Vysoká karta",
   "Pár",
