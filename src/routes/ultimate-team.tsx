@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Coins, Ticket, Sparkles, Layers, Shield, Users, RefreshCw, Trophy } from "lucide-react";
+import { Coins, Ticket, Sparkles, Layers, Shield, Users, RefreshCw, Trophy, Database } from "lucide-react";
 import { CardSpinPanel } from "@/components/ut/CardSpinPanel";
 import { CollectionBrowser } from "@/components/ut/CollectionBrowser";
+import { CardCatalog } from "@/components/ut/CardCatalog";
 import { SquadBuilder } from "@/components/ut/SquadBuilder";
 import { FutSquadReadiness } from "@/components/ut/FutSquadReadiness";
 import { FutMatchPanel } from "@/components/ut/FutMatchPanel";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/ultimate-team")({
       { title: "Ultimate Team — SportChmeláci fotbalové karty" },
       { name: "description", content: "Sbírej fotbalové karty, roztáčej Card Spin, spravuj svůj klub a buduj sestavu v Ultimate Teamu Chmelových Sportovců." },
       { property: "og:title", content: "Ultimate Team — SportChmeláci fotbalové karty" },
-      { property: "og:description", content: "Card Spin, 200+ karet, luck meter a vlastní klub — kompletní Ultimate Team zážitek." },
+      { property: "og:description", content: "Card Spin, 220+ karet, luck meter a vlastní klub — kompletní Ultimate Team zážitek." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/ultimate-team")({
   component: UltimateTeamPage,
 });
 
-type Tab = "club" | "squad" | "match" | "spin" | "collection";
+type Tab = "club" | "squad" | "match" | "spin" | "collection" | "catalog";
 
 function UltimateTeamPage() {
   const { user, loading } = useAuth();
@@ -68,6 +69,7 @@ function UltimateTeamPage() {
     { key: "match", label: "FUT Match", icon: Trophy },
     { key: "spin", label: "Card Spin", icon: Sparkles },
     { key: "collection", label: "Sbírka", icon: Layers },
+    { key: "catalog", label: "Katalog karet", icon: Database },
   ];
   const topCards = [...cards].sort((a, b) => b.card.rating - a.card.rating).slice(0, 12);
 
@@ -101,6 +103,7 @@ function UltimateTeamPage() {
         {tab === "match" && <div className="space-y-4"><FutMatchPanel /><FutMatchHistory /></div>}
         {tab === "spin" && club && <CardSpinPanel club={club} onClubChange={(patch) => setClub((c) => (c ? { ...c, ...patch } : c))} onCardWon={() => void reload()} />}
         {tab === "collection" && <CollectionBrowser cards={cards} onChanged={() => void reload()} onCoins={(coins) => setClub((c) => (c ? { ...c, coins } : c))} />}
+        {tab === "catalog" && <CardCatalog />}
       </section>
     </main>
   );
