@@ -1,0 +1,3 @@
+-- Compatibility note: the current database derives betting ledger entries from
+-- public.matches.bets. The historical wallet_betting_ledger backfill migration
+-- is not applicable to this schema. Do not create or populate a second ledger.
