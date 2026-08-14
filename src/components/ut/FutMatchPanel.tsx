@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dice5, Play, RefreshCw, Trophy } from "lucide-react";
+import { Play, RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -14,13 +14,19 @@ type Match = {
   reward_coins: number;
   reward_xp: number;
   result?: "WIN" | "DRAW" | "LOSS";
+  team_ovr?: number;
+  chemistry?: number;
+  captain_bonus?: number;
+  attack_rating?: number;
+  midfield_rating?: number;
+  defense_rating?: number;
+  simulation_engine?: string;
 };
 
 function errorText(error: unknown): string {
   const raw = String((error as { message?: string })?.message ?? error ?? "");
   if (raw.includes("squad_not_ready")) return "Sestava není připravená na zápas.";
   if (raw.includes("squad_changed_since_match_creation")) return "Sestava se od vytvoření zápasu změnila. Vytvoř nový zápas.";
-  if (raw.includes("squad_changed_during_match")) return "Sestava se během zápasu změnila. Výsledek nelze simulovat.";
   if (raw.includes("active_match_exists")) return "Už máš rozehraný FUT zápas.";
   if (raw.includes("match_not_in_progress")) return "Zápas není právě rozehraný.";
   if (raw.includes("club_not_found")) return "FUT klub nebyl nalezen.";
@@ -113,7 +119,7 @@ export function FutMatchPanel() {
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">FUT Match</p>
           <h2 className="font-display text-2xl uppercase tracking-[0.08em] text-primary">Zápasový režim</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Výsledek určuje server podle síly sestavy a soupeře. Klient už nemůže ručně nastavit skóre.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Výsledek počítá server podle OVR, Chemistry, formace a kapitána.</p>
         </div>
         <button type="button" onClick={() => void refresh()} disabled={!match || loading || busy} className="inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground disabled:opacity-40"><RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> Obnovit</button>
       </div>
@@ -122,10 +128,11 @@ export function FutMatchPanel() {
         <button type="button" onClick={() => void createMatch()} disabled={busy} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-40"><Play className="h-4 w-4" /> Vytvořit zápas</button>
       ) : (
         <div className="mt-5 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-4">
             <Stat label="Soupeř" value={`${match.opponent_name} · ${match.opponent_ovr} OVR`} />
             <Stat label="Stav" value={match.status === "IN_PROGRESS" ? "Probíhá" : match.status === "READY" ? "Připraven" : match.status} />
             <Stat label="Skóre" value={`${match.user_score} : ${match.opponent_score}`} />
+            <Stat label="Výpočet" value={match.simulation_engine ?? "Server"} />
           </div>
 
           {match.status === "READY" && (
@@ -133,16 +140,20 @@ export function FutMatchPanel() {
           )}
 
           {match.status === "IN_PROGRESS" && (
-            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-              <div className="text-center">
-                <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Serverová simulace</p>
-                <p className="mt-2 font-display text-6xl text-primary">{match.user_score} : {match.opponent_score}</p>
-                <p className="mt-2 text-xs text-muted-foreground">Síla sestavy a OVR soupeře ovlivní výsledek. Simulaci lze spustit pouze serverem.</p>
+            <div className="space-y-4 rounded-2xl border border-border/60 bg-background/60 p-4">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div><p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Ty</p><p className="mt-1 font-display text-6xl text-primary">{match.user_score}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{match.opponent_name}</p><p className="mt-1 font-display text-6xl text-primary">{match.opponent_score}</p></div>
               </div>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                <button type="button" onClick={() => void simulateMatch()} disabled={busy} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary disabled:opacity-40"><Dice5 className="h-4 w-4" /> Simulovat zápas</button>
-                <button type="button" onClick={() => void completeMatch()} disabled={busy || (match.user_score === 0 && match.opponent_score === 0)} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary disabled:opacity-40"><Trophy className="h-4 w-4" /> Dokončit a vyzvednout reward</button>
+              <div className="grid gap-2 sm:grid-cols-5 text-center text-xs">
+                <Stat label="Team OVR" value={String(match.team_ovr ?? "—")} />
+                <Stat label="Chemistry" value={String(match.chemistry ?? "—")} />
+                <Stat label="Kapitán" value={`+${match.captain_bonus ?? 0}`} />
+                <Stat label="Útok" value={String(match.attack_rating ?? "—")} />
+                <Stat label="Obrana" value={String(match.defense_rating ?? "—")} />
               </div>
+              <button type="button" onClick={() => void simulateMatch()} disabled={busy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-40"><Play className="h-4 w-4" /> Simulovat zápas</button>
+              <button type="button" onClick={() => void completeMatch()} disabled={busy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary disabled:opacity-40"><Trophy className="h-4 w-4" /> Dokončit a vyzvednout reward</button>
             </div>
           )}
 
