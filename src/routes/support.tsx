@@ -31,7 +31,7 @@ function SupportPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.rpc("site_credit_get_balance").then(({ data }) => setCredits(Number(data ?? 0)));
+    (supabase as any).rpc("site_credit_get_balance").then(({ data }: { data: unknown }) => setCredits(Number(data ?? 0)));
   }, [user]);
 
   const effective = custom.trim() ? Number(custom) : amount;
