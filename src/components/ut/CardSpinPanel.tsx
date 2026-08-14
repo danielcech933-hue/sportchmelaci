@@ -29,13 +29,20 @@ export function CardSpinPanel({ club, onClubChange, onCardWon }: Props) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
+    let cancelled = false;
     fetchSpinTypes()
       .then((t) => {
+        if (cancelled) return;
         setTypes(t);
-        if (t.length && !t.some((x) => x.key === active)) setActive(t[0].key);
+        setActive((current) => (t.length && !t.some((x) => x.key === current) ? t[0].key : current));
       })
-      .catch((e) => setError(utErrorMessage(e)));
-  }, [active]);
+      .catch((e) => {
+        if (!cancelled) setError(utErrorMessage(e));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
