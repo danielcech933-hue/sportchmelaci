@@ -9,6 +9,9 @@ type Match = {
   squad_version: number;
   opponent_name: string;
   opponent_ovr: number;
+  opponent_chemistry?: number;
+  opponent_tier?: "UNDERDOG" | "RIVAL" | "ELITE";
+  opponent_style?: "BALANCED" | "ATTACKING" | "DEFENSIVE";
   user_score: number;
   opponent_score: number;
   reward_coins: number;
@@ -31,6 +34,18 @@ function errorText(error: unknown): string {
   if (raw.includes("match_not_in_progress")) return "Zápas není právě rozehraný.";
   if (raw.includes("club_not_found")) return "FUT klub nebyl nalezen.";
   return raw || "Operace se nepodařila.";
+}
+
+function tierLabel(tier?: Match["opponent_tier"]): string {
+  if (tier === "UNDERDOG") return "Underdog";
+  if (tier === "ELITE") return "Elite";
+  return "Rival";
+}
+
+function styleLabel(style?: Match["opponent_style"]): string {
+  if (style === "ATTACKING") return "Ofenzivní";
+  if (style === "DEFENSIVE") return "Defenzivní";
+  return "Vyvážený";
 }
 
 export function FutMatchPanel() {
@@ -119,17 +134,23 @@ export function FutMatchPanel() {
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">FUT Match</p>
           <h2 className="font-display text-2xl uppercase tracking-[0.08em] text-primary">Zápasový režim</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Výsledek počítá server podle OVR, Chemistry, formace a kapitána.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Soupeř se páruje serverově podle síly tvého klubu.</p>
         </div>
         <button type="button" onClick={() => void refresh()} disabled={!match || loading || busy} className="inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground disabled:opacity-40"><RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> Obnovit</button>
       </div>
 
       {!match ? (
-        <button type="button" onClick={() => void createMatch()} disabled={busy} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-40"><Play className="h-4 w-4" /> Vytvořit zápas</button>
+        <button type="button" onClick={() => void createMatch()} disabled={busy} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-40"><Play className="h-4 w-4" /> Najít soupeře</button>
       ) : (
         <div className="mt-5 space-y-4">
           <div className="grid gap-3 sm:grid-cols-4">
             <Stat label="Soupeř" value={`${match.opponent_name} · ${match.opponent_ovr} OVR`} />
+            <Stat label="Tier" value={tierLabel(match.opponent_tier)} />
+            <Stat label="Chemistry" value={`${match.opponent_chemistry ?? "—"}/33`} />
+            <Stat label="Styl" value={styleLabel(match.opponent_style)} />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
             <Stat label="Stav" value={match.status === "IN_PROGRESS" ? "Probíhá" : match.status === "READY" ? "Připraven" : match.status} />
             <Stat label="Skóre" value={`${match.user_score} : ${match.opponent_score}`} />
             <Stat label="Výpočet" value={match.simulation_engine ?? "Server"} />
