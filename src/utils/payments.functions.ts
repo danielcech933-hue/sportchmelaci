@@ -89,7 +89,7 @@ export const claimSiteCreditCheckout = createServerFn({ method: "POST" })
       if (credits !== amountCzk) return { error: "Částka platby nesouhlasí s kredity." };
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: balance, error } = await supabaseAdmin.rpc("site_credit_apply_checkout", {
+      const { data: balance, error } = await (supabaseAdmin as any).rpc("site_credit_apply_checkout", {
         _user_id: data.userId,
         _stripe_session_id: data.sessionId,
         _amount_czk: credits,
