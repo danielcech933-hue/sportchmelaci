@@ -25,7 +25,7 @@ describe("poker contract", () => {
     expect(wheel.label).toBe("Straight");
   });
 
-  test("starts a bounded hold'em hand with blinds and a turn", () => {
+  test("starts a bounded hold'em hand with unique cards and blinds", () => {
     const hand = startHand(
       [
         { userId: "u1", nickname: "A", chips: 1000 },
@@ -41,6 +41,15 @@ describe("poker contract", () => {
     expect(hand.currentBet).toBe(20);
     expect(hand.pot).toBe(0);
     expect(hand.deck).toHaveLength(52);
+    expect(new Set(hand.deck?.map((card) => `${card.r}:${card.s}`)).size).toBe(52);
     expect(hand.players.filter((p) => p.bet > 0)).toHaveLength(2);
+  });
+
+  test("rejects impossible hand setup instead of creating a corrupt state", () => {
+    expect(() => startHand([{ userId: "u1", nickname: "A", chips: 1000 }], 0, 10)).toThrow("at_least_two_players_required");
+    expect(() => startHand([
+      { userId: "u1", nickname: "A", chips: 1000 },
+      { userId: "u2", nickname: "B", chips: 1000 },
+    ], 0, 0)).toThrow("positive_blind_required");
   });
 });
