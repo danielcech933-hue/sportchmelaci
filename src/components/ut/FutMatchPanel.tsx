@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play, RefreshCw, Trophy } from "lucide-react";
+import { Dice5, Play, RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,7 @@ function errorText(error: unknown): string {
   const raw = String((error as { message?: string })?.message ?? error ?? "");
   if (raw.includes("squad_not_ready")) return "Sestava není připravená na zápas.";
   if (raw.includes("squad_changed_since_match_creation")) return "Sestava se od vytvoření zápasu změnila. Vytvoř nový zápas.";
+  if (raw.includes("squad_changed_during_match")) return "Sestava se během zápasu změnila. Výsledek nelze simulovat.";
   if (raw.includes("active_match_exists")) return "Už máš rozehraný FUT zápas.";
   if (raw.includes("match_not_in_progress")) return "Zápas není právě rozehraný.";
   if (raw.includes("club_not_found")) return "FUT klub nebyl nalezen.";
@@ -33,10 +34,10 @@ export function FutMatchPanel() {
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
+    if (!match) return;
     setLoading(true);
     setError(null);
     try {
-      if (!match) return;
       const { data, error: rpcError } = await supabase.rpc("fc_match_get" as never, { _match_id: match.id } as never);
       if (rpcError) throw rpcError;
       setMatch(data as unknown as Match);
@@ -76,16 +77,12 @@ export function FutMatchPanel() {
     }
   }
 
-  async function setScore(userScore: number, opponentScore: number) {
+  async function simulateMatch() {
     if (!match) return;
     setBusy(true);
     setError(null);
     try {
-      const { data, error: rpcError } = await supabase.rpc("fc_match_set_score" as never, {
-        _match_id: match.id,
-        _user_score: Math.max(0, userScore),
-        _opponent_score: Math.max(0, opponentScore),
-      } as never);
+      const { data, error: rpcError } = await supabase.rpc("fc_match_simulate" as never, { _match_id: match.id } as never);
       if (rpcError) throw rpcError;
       setMatch(data as unknown as Match);
     } catch (e) {
@@ -116,7 +113,7 @@ export function FutMatchPanel() {
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">FUT Match</p>
           <h2 className="font-display text-2xl uppercase tracking-[0.08em] text-primary">Zápasový režim</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Start a skóre jsou server-authoritative. Výhra při dokončení připíše reward do FUT klubu.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Výsledek určuje server podle síly sestavy a soupeře. Klient už nemůže ručně nastavit skóre.</p>
         </div>
         <button type="button" onClick={() => void refresh()} disabled={!match || loading || busy} className="inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground disabled:opacity-40"><RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> Obnovit</button>
       </div>
@@ -137,13 +134,15 @@ export function FutMatchPanel() {
 
           {match.status === "IN_PROGRESS" && (
             <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-              <div className="grid grid-cols-2 gap-4">
-                {["Ty", match.opponent_name].map((label, index) => {
-                  const score = index === 0 ? match.user_score : match.opponent_score;
-                  return <div key={label} className="text-center"><p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p><p className="mt-1 font-display text-5xl text-primary">{score}</p><div className="mt-3 flex justify-center gap-2"><button type="button" onClick={() => void setScore(index === 0 ? score - 1 : match.user_score, index === 1 ? score - 1 : match.opponent_score)} disabled={busy} className="h-10 w-10 rounded-full border border-border">−</button><button type="button" onClick={() => void setScore(index === 0 ? score + 1 : match.user_score, index === 1 ? score + 1 : match.opponent_score)} disabled={busy} className="h-10 w-10 rounded-full border border-primary/40 bg-primary/10 text-primary">+</button></div></div>;
-                })}
+              <div className="text-center">
+                <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Serverová simulace</p>
+                <p className="mt-2 font-display text-6xl text-primary">{match.user_score} : {match.opponent_score}</p>
+                <p className="mt-2 text-xs text-muted-foreground">Síla sestavy a OVR soupeře ovlivní výsledek. Simulaci lze spustit pouze serverem.</p>
               </div>
-              <button type="button" onClick={() => void completeMatch()} disabled={busy} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary disabled:opacity-40"><Trophy className="h-4 w-4" /> Dokončit zápas a vyzvednout reward</button>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => void simulateMatch()} disabled={busy} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary disabled:opacity-40"><Dice5 className="h-4 w-4" /> Simulovat zápas</button>
+                <button type="button" onClick={() => void completeMatch()} disabled={busy || (match.user_score === 0 && match.opponent_score === 0)} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary disabled:opacity-40"><Trophy className="h-4 w-4" /> Dokončit a vyzvednout reward</button>
+              </div>
             </div>
           )}
 
