@@ -1,0 +1,4 @@
+-- The active betting ledger is derived from public.matches.bets.
+-- get_my_betting_ledger is fixed in 20260814062346_fix_betting_ledger_created_at.sql.
+-- No wallet_betting_ledger table exists in the active schema, so no historical
+-- ledger backfill is required and wallet balances must not be modified.
