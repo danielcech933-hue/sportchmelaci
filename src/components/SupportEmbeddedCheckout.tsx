@@ -4,7 +4,6 @@ import { createSupportCheckout } from "@/utils/payments.functions";
 
 interface Props {
   amountInCents: number;
-  userId: string;
   supporterNickname?: string;
   customerEmail?: string;
   returnUrl?: string;
@@ -12,7 +11,6 @@ interface Props {
 
 export function SupportEmbeddedCheckout({
   amountInCents,
-  userId,
   supporterNickname,
   customerEmail,
   returnUrl,
@@ -21,7 +19,6 @@ export function SupportEmbeddedCheckout({
     const result = await createSupportCheckout({
       data: {
         amountInCents,
-        userId,
         supporterNickname,
         customerEmail,
         returnUrl: returnUrl || window.location.href,
