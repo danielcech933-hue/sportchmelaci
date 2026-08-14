@@ -106,7 +106,7 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
   const candidates = active
     ? cards
         .filter((card) => !usedIds.has(card.id) || card.id === squad[active.key])
-        .filter((card) => active.positions.includes(card.card.position) || active.positions.some((p) => card.card.altPositions.includes(p)))
+        .filter((card) => card.card.position === active.label || card.card.altPositions.includes(active.label))
         .sort((a, b) => b.card.rating - a.card.rating)
     : [];
 
