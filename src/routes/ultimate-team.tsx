@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Coins, Ticket, Sparkles, Layers, Shield, Users, RefreshCw } from "lucide-react";
+import { Coins, Ticket, Sparkles, Layers, Shield, Users, RefreshCw, Trophy } from "lucide-react";
 import { CardSpinPanel } from "@/components/ut/CardSpinPanel";
 import { CollectionBrowser } from "@/components/ut/CollectionBrowser";
 import { SquadBuilder } from "@/components/ut/SquadBuilder";
 import { FutSquadReadiness } from "@/components/ut/FutSquadReadiness";
+import { FutMatchPanel } from "@/components/ut/FutMatchPanel";
 import { fetchCollection, getClub, utErrorMessage } from "@/lib/ut";
 import type { UtClub, UtOwnedCard } from "@/types/ut";
 import { useAuth } from "@/lib/auth";
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/ultimate-team")({
   component: UltimateTeamPage,
 });
 
-type Tab = "club" | "squad" | "spin" | "collection";
+type Tab = "club" | "squad" | "match" | "spin" | "collection";
 
 function UltimateTeamPage() {
   const { user, loading } = useAuth();
@@ -62,6 +63,7 @@ function UltimateTeamPage() {
   const tabs: Array<{ key: Tab; label: string; icon: typeof Shield }> = [
     { key: "club", label: "Můj klub", icon: Shield },
     { key: "squad", label: "Sestava", icon: Users },
+    { key: "match", label: "FUT Match", icon: Trophy },
     { key: "spin", label: "Card Spin", icon: Sparkles },
     { key: "collection", label: "Sbírka", icon: Layers },
   ];
@@ -94,6 +96,7 @@ function UltimateTeamPage() {
       <section className="mt-5">
         {tab === "club" && <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-3"><Stat label="Karty ve sbírce" value={cards.length} /><Stat label="Nejlepší rating" value={cards.reduce((a, c) => Math.max(a, c.card.rating), 0)} /><Stat label="Luck meter" value={club?.luckMeter ?? 0} /></div><div className="rounded-3xl border border-primary/20 bg-background/50 p-4 sm:p-5"><div className="flex items-end justify-between gap-3"><div><p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/80">Klubová sbírka</p><h2 className="mt-1 font-display text-xl uppercase tracking-[0.08em]">Nejlepší hráči</h2></div><button type="button" onClick={() => setTab("collection")} className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">Otevřít sbírku</button></div><div className="mt-4 flex gap-3 overflow-x-auto pb-2">{!topCards.length && <p className="text-sm text-muted-foreground">Zatím prázdno — začni Card Spinem.</p>}{topCards.map((c) => <button key={c.id} type="button" onClick={() => setTab("collection")} className="shrink-0 rounded-2xl border border-border/60 bg-background/60 p-3 text-left transition hover:-translate-y-0.5 hover:border-primary/40"><span className="font-display text-2xl text-primary">{c.card.rating}</span><span className="ml-2 font-mono text-[10px] uppercase text-muted-foreground">{c.card.position}</span><p className="mt-1 max-w-[120px] truncate text-sm font-medium">{c.card.name}</p><p className="mt-0.5 max-w-[120px] truncate text-[10px] text-muted-foreground">{c.card.club}</p></button>)}</div></div></div>}
         {tab === "squad" && <><FutSquadReadiness /><SquadBuilder cards={cards} /></>}
+        {tab === "match" && <FutMatchPanel />}
         {tab === "spin" && club && <CardSpinPanel club={club} onClubChange={(patch) => setClub((c) => (c ? { ...c, ...patch } : c))} onCardWon={() => void reload()} />}
         {tab === "collection" && <CollectionBrowser cards={cards} onChanged={() => void reload()} onCoins={(coins) => setClub((c) => (c ? { ...c, coins } : c))} />}
       </section>
