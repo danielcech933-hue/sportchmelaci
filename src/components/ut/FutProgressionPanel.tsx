@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, Trophy } from "lucide-react";
+import { Gift, RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,12 @@ type Progression = {
   draws: number;
   losses: number;
   win_rate: number;
+  next_level_reward?: {
+    type: string;
+    amount: number;
+    unlocks_elite_opponents_at: number;
+    next_level: number;
+  };
 };
 
 export function FutProgressionPanel() {
@@ -34,6 +40,9 @@ export function FutProgressionPanel() {
   const progress = progression
     ? Math.min(100, Math.round((progression.xp / Math.max(1, progression.required_xp)) * 100))
     : 0;
+
+  const nextReward = progression?.next_level_reward;
+  const eliteUnlocked = progression ? progression.level >= (nextReward?.unlocks_elite_opponents_at ?? 3) : false;
 
   return (
     <section className="rounded-3xl border border-primary/20 bg-background/50 p-4 sm:p-5">
@@ -64,6 +73,17 @@ export function FutProgressionPanel() {
 
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/50">
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
+              <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/80"><Gift className="h-4 w-4" /> Další level</div>
+              <p className="mt-1 text-sm text-foreground">+{nextReward?.amount ?? 1} Spin Token</p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Elite soupeři</p>
+              <p className="mt-1 text-sm font-medium text-foreground">{eliteUnlocked ? "Odemčeno" : `Od levelu ${nextReward?.unlocks_elite_opponents_at ?? 3}`}</p>
+            </div>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
