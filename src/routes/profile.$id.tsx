@@ -19,15 +19,15 @@ export const Route = createFileRoute("/profile/$id")({
 
 function PublicProfile() {
   const { id } = Route.useParams();
-  const { user } = useAuth();
+  const { user, nickname } = useAuth();
   return (
     <>
       <ProfileView userId={id} />
-      {user && <LocatorWrapper userId={id} isSelf={user.id === id} />}
+      {user && <LocatorWrapper userId={id} isSelf={user.id === id} nickname={user.id === id ? nickname : null} />}
     </>
   );
 }
 
-function LocatorWrapper({ userId, isSelf }: { userId: string; isSelf: boolean }) {
-  return <PlayerLocator userId={userId} isSelf={isSelf} nickname={null} />;
+function LocatorWrapper({ userId, isSelf, nickname }: { userId: string; isSelf: boolean; nickname: string | null }) {
+  return <PlayerLocator userId={userId} isSelf={isSelf} nickname={nickname} />;
 }
