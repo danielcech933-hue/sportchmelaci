@@ -32,6 +32,7 @@ function mapRpcError(error: unknown): string {
   if (raw.includes("invalid_player_position")) return "Tahle karta nemůže hrát na zvolené pozici.";
   if (raw.includes("squad_version_conflict")) return "Sestava se mezitím změnila. Obnov ji a zkus to znovu.";
   if (raw.includes("INVALID_STARTING_XI")) return "Sestava musí mít přesně 11 hráčů.";
+  if (raw.includes("squad_not_found")) return "Sestava už neexistuje. Obnov FUT a vytvoř ji znovu.";
   if (raw.includes("not_authenticated")) return "Přihlas se.";
   return raw || "Uložení sestavy se nepovedlo.";
 }
@@ -40,6 +41,7 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
   const [squadId, setSquadId] = useState<string | null>(null);
   const [version, setVersion] = useState(1);
   const [squad, setSquad] = useState<Squad>(EMPTY_SQUAD);
+  const [savedSquad, setSavedSquad] = useState<Squad>(EMPTY_SQUAD);
   const [activeSlot, setActiveSlot] = useState<SlotKey | null>(null);
   const [metrics, setMetrics] = useState<Metrics>({ starting_xi: 0, team_ovr: 0, chemistry: 0 });
   const [saved, setSaved] = useState(false);
@@ -56,6 +58,9 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
     setSquadId(row.id);
     setVersion(row.version);
     setSquad(next);
+    setSavedSquad(next);
+    setMetrics((current) => ({ ...current, starting_xi: Object.values(next).filter(Boolean).length }));
+    setSaved(true);
   };
 
   useEffect(() => {
@@ -84,7 +89,7 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
   }, []);
 
   useEffect(() => {
-    if (!squadId) return;
+    if (!squadId || !saved) return;
     let cancelled = false;
     supabase.rpc("fc_squad_metrics" as never, { _squad_id: squadId } as never).then(({ data, error: metricError }) => {
       if (cancelled) return;
@@ -92,9 +97,11 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
       else setMetrics(data as unknown as Metrics);
     });
     return () => { cancelled = true; };
-  }, [squadId, squad, saved]);
+  }, [squadId, saved]);
 
   const usedIds = useMemo(() => new Set(Object.values(squad).filter(Boolean)), [squad]);
+  const localStartingXi = useMemo(() => Object.values(squad).filter(Boolean).length, [squad]);
+  const dirty = useMemo(() => (Object.keys(EMPTY_SQUAD) as SlotKey[]).some((key) => squad[key] !== savedSquad[key]), [squad, savedSquad]);
   const active = SLOTS.find((slot) => slot.key === activeSlot) ?? null;
   const candidates = active
     ? cards
@@ -111,15 +118,30 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
       next[activeSlot] = cardId;
       return next;
     });
+    setSaved(false);
     setActiveSlot(null);
+    setError(null);
   }
 
   function clearSlot(slot: SlotKey) {
     setSquad((current) => ({ ...current, [slot]: null }));
+    setSaved(false);
+    setError(null);
+  }
+
+  function reset() {
+    setSquad(savedSquad);
+    setActiveSlot(null);
+    setSaved(true);
+    setError(null);
   }
 
   async function save() {
     if (!squadId || saving) return;
+    if (localStartingXi !== 11) {
+      setError("Sestava musí mít přesně 11 hráčů.");
+      return;
+    }
     setSaving(true);
     setError(null);
     setSaved(false);
@@ -132,8 +154,6 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
         is_captain: slot.key === "ST",
       })).filter((p) => p.user_card_id);
 
-      if (players.length !== 11) throw new Error("INVALID_STARTING_XI");
-
       const { data, error: saveError } = await supabase.rpc("fc_squad_save" as never, {
         _squad_id: squadId,
         _expected_version: version,
@@ -142,8 +162,7 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
         _players: players,
       } as never);
       if (saveError) throw saveError;
-      const next = data as unknown as SquadRow;
-      hydrate(next);
+      hydrate(data as unknown as SquadRow);
       setSaved(true);
     } catch (e) {
       setError(mapRpcError(e));
@@ -159,15 +178,16 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
       <section className="rounded-3xl border border-primary/25 bg-background/60 p-3 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div><p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Server Authoritative Squad</p><h2 className="font-display text-2xl uppercase tracking-[0.08em] text-primary">4-3-3 · Základní sestava</h2></div>
-          <div className="flex items-center gap-3 font-mono text-xs"><span><b className="text-primary">{metrics.team_ovr}</b> OVR</span><span><b className="text-primary">{metrics.chemistry}</b>/33 CHEM</span><span className="text-muted-foreground">{metrics.starting_xi}/11</span></div>
+          <div className="flex items-center gap-3 font-mono text-xs"><span><b className="text-primary">{metrics.team_ovr}</b> OVR</span><span><b className="text-primary">{metrics.chemistry}</b>/33 CHEM</span><span className={cn("text-muted-foreground", localStartingXi === 11 && "text-emerald-300")}>{localStartingXi}/11</span></div>
         </div>
+        {dirty && <div className="mb-3 rounded-xl border border-amber-300/20 bg-amber-300/5 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-amber-200">Neuložené změny · OVR/CHEM se přepočítají po uložení</div>}
 
         <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-emerald-300/25 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.12),transparent_60%),linear-gradient(180deg,rgba(5,46,22,0.8),rgba(2,15,9,0.95))]">
           <div className="absolute inset-[6%] rounded-[48%] border border-emerald-200/20" /><div className="absolute left-[25%] right-[25%] top-0 h-[17%] rounded-b-[50%] border-x border-b border-emerald-200/20" /><div className="absolute left-1/2 top-1/2 h-px w-[88%] -translate-x-1/2 bg-emerald-200/15" /><div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-200/15" />
           {SLOTS.map((slot) => {
             const owned = cards.find((card) => card.id === squad[slot.key]);
             return <button key={slot.key} type="button" onClick={() => setActiveSlot(slot.key)} onContextMenu={(event) => { event.preventDefault(); clearSlot(slot.key); }} className={cn("absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-xl border p-1 transition hover:scale-105", owned ? "border-primary/50 bg-black/30" : "border-dashed border-emerald-200/30 bg-black/20")} style={{ left: `${slot.x}%`, top: `${slot.y}%` }} title={owned ? `${owned.card.name} · pravým tlačítkem odebrat` : `Přidat ${slot.label}`}>
-              {owned ? <UltimateCard card={owned.card} size="sm" badge={slot.label} /> : <span className="flex h-[118px] w-[104px] flex-col items-center justify-center gap-1 text-emerald-100/60"><span className="text-2xl">+</span><span className="font-mono text-[9px] uppercase tracking-widest">{slot.label}</span></span>}
+              {owned ? <UltimateCard card={owned.card} size="sm" badge={slot.key === "ST" ? "C" : slot.label} /> : <span className="flex h-[118px] w-[104px] flex-col items-center justify-center gap-1 text-emerald-100/60"><span className="text-2xl">+</span><span className="font-mono text-[9px] uppercase tracking-widest">{slot.label}</span></span>}
             </button>;
           })}
         </div>
@@ -176,7 +196,7 @@ export function SquadBuilder({ cards }: { cards: UtOwnedCard[] }) {
       <aside className="rounded-3xl border border-border/60 bg-background/60 p-4">
         <div className="flex items-center justify-between gap-2"><div><p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/70">Sestava</p><h3 className="font-display text-xl uppercase">Výběr hráče</h3></div><Users className="h-5 w-5 text-primary" /></div>
         {active ? <><div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-3"><p className="font-mono text-[10px] uppercase tracking-widest text-primary/70">Pozice</p><p className="mt-1 font-display text-lg text-primary">{active.label}</p><p className="mt-1 text-xs text-muted-foreground">Vhodné: {active.positions.join(" · ")}</p></div><div className="mt-3 max-h-[560px] space-y-2 overflow-y-auto pr-1">{!candidates.length && <p className="text-xs text-muted-foreground">Nemáš vhodnou kartu pro tuto pozici.</p>}{candidates.map((card) => <button key={card.id} type="button" onClick={() => assign(card.id)} className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/60 p-2 text-left hover:border-primary/40"><UltimateCard card={card.card} size="sm" /><span className="min-w-0"><span className="block truncate font-display text-sm uppercase">{card.card.name}</span><span className="font-mono text-[10px] text-muted-foreground">{card.card.rating} OVR · {card.card.position}</span></span></button>)}</div></> : <p className="mt-5 rounded-xl border border-primary/15 bg-primary/5 p-3 text-xs text-muted-foreground">Klikni na pozici na hřišti a vyber hráče ze své sbírky. Pravým klikem kartu z pozice odebereš.</p>}
-        <div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => void save()} disabled={saving || metrics.starting_xi !== 11} className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-primary disabled:opacity-40"><Save className="h-3.5 w-3.5" /> {saving ? "Ukládám…" : saved ? "Uloženo" : "Uložit sestavu"}</button><button type="button" onClick={() => setSquad(EMPTY_SQUAD)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground"><RotateCcw className="h-3.5 w-3.5" /> Reset</button></div>
+        <div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => void save()} disabled={saving || localStartingXi !== 11 || !dirty} className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-primary disabled:opacity-40"><Save className="h-3.5 w-3.5" /> {saving ? "Ukládám…" : saved ? "Uloženo" : "Uložit sestavu"}</button><button type="button" onClick={reset} disabled={!dirty || saving} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground disabled:opacity-40"><RotateCcw className="h-3.5 w-3.5" /> Zrušit změny</button></div>
         {error && <p className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300">{error}</p>}
       </aside>
     </div>
