@@ -1530,6 +1530,16 @@ export type Database = {
         Returns: undefined
       }
       settle_match: { Args: { _match_id: string }; Returns: undefined }
+      slot_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          best_multiplier: number
+          best_win: number
+          nickname: string
+          spins: number
+          user_id: string
+        }[]
+      }
       slot_pick_bonus: { Args: { _multiplier: number }; Returns: Json }
       slot_spin: { Args: { _bet: number }; Returns: Json }
       sync_match_elo: { Args: { _match_id: string }; Returns: undefined }
