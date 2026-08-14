@@ -19,6 +19,13 @@ describe("Chmelovci Cup slot contract", () => {
     expect(grid.every((column) => column.length === 3)).toBe(true);
   });
 
+  test("all five paylines are independently evaluated", () => {
+    for (let line = 0; line < PAYLINES.length; line++) {
+      const result = evaluateSpin(withLine("gold", line, 3), 10);
+      expect(result.lineWins.some((win) => win.line === line && win.symbol === "gold" && win.count === 3 && win.amount === 150)).toBe(true);
+    }
+  });
+
   test("pays three, four and five matching symbols from left to right", () => {
     expect(evaluateSpin(withLine("gold", 0, 3), 10).lineWins.some((win) => win.symbol === "gold" && win.count === 3 && win.amount === 150)).toBe(true);
     expect(evaluateSpin(withLine("gold", 0, 4), 10).lineWins.some((win) => win.symbol === "gold" && win.count === 4 && win.amount === 400)).toBe(true);
