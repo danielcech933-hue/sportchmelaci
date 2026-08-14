@@ -10,17 +10,18 @@ function formatTime(iso: string) {
 
 export function ChatMessageBubble({ message }: { message: Message }) {
   const media = parseMediaMessage(message.content);
+  const imagePath = media?.type === "image" ? media.path : null;
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     setSignedUrl(null);
-    if (!media || media.type !== "image") return;
-    void supabase.storage.from("dm-media").createSignedUrl(media.path, 60 * 60).then(({ data }) => {
+    if (!imagePath) return;
+    void supabase.storage.from("dm-media").createSignedUrl(imagePath, 60 * 60).then(({ data }) => {
       if (alive) setSignedUrl(data?.signedUrl ?? null);
     });
     return () => { alive = false; };
-  }, [media]);
+  }, [imagePath]);
 
   const boxClass = `max-w-[82%] rounded-2xl px-3 py-2 text-sm ${message.mine ? "bg-primary text-primary-foreground" : "border border-primary/20 bg-primary/5 text-foreground"}`;
 
