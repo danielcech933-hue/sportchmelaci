@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_gif_requests: {
+        Row: {
+          created_at: string
+          id: string
+          moderation_status: string
+          output_path: string | null
+          prompt: string
+          source_path: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          moderation_status?: string
+          output_path?: string | null
+          prompt?: string
+          source_path: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          moderation_status?: string
+          output_path?: string | null
+          prompt?: string
+          source_path?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       arcade_inventory: {
         Row: {
           created_at: string
@@ -202,6 +238,111 @@ export type Database = {
         }
         Relationships: []
       }
+      call_participants: {
+        Row: {
+          call_id: string
+          joined_at: string
+          left_at: string | null
+          user_id: string
+        }
+        Insert: {
+          call_id: string
+          joined_at?: string
+          left_at?: string | null
+          user_id: string
+        }
+        Update: {
+          call_id?: string
+          joined_at?: string
+          left_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_participants_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "call_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_rooms: {
+        Row: {
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          group_id: string | null
+          id: string
+          kind: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ended_at?: string | null
+          group_id?: string | null
+          id?: string
+          kind: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ended_at?: string | null
+          group_id?: string | null
+          id?: string
+          kind?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_rooms_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "dm_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_signals: {
+        Row: {
+          call_id: string
+          created_at: string
+          id: string
+          payload: Json
+          recipient_id: string | null
+          sender_id: string
+          signal_type: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          recipient_id?: string | null
+          sender_id: string
+          signal_type: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          recipient_id?: string | null
+          sender_id?: string
+          signal_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_signals_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "call_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       casino_chat: {
         Row: {
           content: string | null
@@ -295,6 +436,88 @@ export type Database = {
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
+        }
+        Relationships: []
+      }
+      dm_group_members: {
+        Row: {
+          group_id: string
+          is_admin: boolean
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          is_admin?: boolean
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          is_admin?: boolean
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "dm_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_group_messages: {
+        Row: {
+          content: string
+          created_at: string
+          group_id: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          group_id: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "dm_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -759,28 +982,40 @@ export type Database = {
           chemistry: number
           created_at: string
           formation: string
+          id: string
+          is_active: boolean
+          name: string
           slots: Json
           team_ovr: number
           updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
           chemistry?: number
           created_at?: string
           formation?: string
+          id?: string
+          is_active?: boolean
+          name?: string
           slots?: Json
           team_ovr?: number
           updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
           chemistry?: number
           created_at?: string
           formation?: string
+          id?: string
+          is_active?: boolean
+          name?: string
           slots?: Json
           team_ovr?: number
           updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: []
       }
@@ -822,6 +1057,89 @@ export type Database = {
           },
         ]
       }
+      match_notification_jobs: {
+        Row: {
+          channel: string
+          created_at: string
+          dedupe_key: string
+          error_message: string | null
+          id: string
+          match_id: string
+          match_scheduled_at: string | null
+          opponent: string | null
+          scheduled_for: string
+          sent_at: string | null
+          sport: string | null
+          status: string
+          user_id: string
+          venue_address: string | null
+          venue_name: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          dedupe_key: string
+          error_message?: string | null
+          id?: string
+          match_id: string
+          match_scheduled_at?: string | null
+          opponent?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          sport?: string | null
+          status?: string
+          user_id: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          dedupe_key?: string
+          error_message?: string | null
+          id?: string
+          match_id?: string
+          match_scheduled_at?: string | null
+          opponent?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          sport?: string | null
+          status?: string
+          user_id?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_notification_jobs_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_notification_preferences: {
+        Row: {
+          reminder_minutes: number
+          sms_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          reminder_minutes?: number
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          reminder_minutes?: number
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           bets: Json
@@ -846,6 +1164,7 @@ export type Database = {
           team_b_ref: string | null
           tournament_id: string | null
           updated_at: string
+          venue_id: string | null
         }
         Insert: {
           bets?: Json
@@ -870,6 +1189,7 @@ export type Database = {
           team_b_ref?: string | null
           tournament_id?: string | null
           updated_at?: string
+          venue_id?: string | null
         }
         Update: {
           bets?: Json
@@ -894,6 +1214,7 @@ export type Database = {
           team_b_ref?: string | null
           tournament_id?: string | null
           updated_at?: string
+          venue_id?: string | null
         }
         Relationships: [
           {
@@ -901,6 +1222,13 @@ export type Database = {
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
@@ -1306,6 +1634,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_locations: {
+        Row: {
+          accuracy_m: number | null
+          enabled: boolean
+          latitude: number
+          longitude: number
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          enabled?: boolean
+          latitude: number
+          longitude: number
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          enabled?: boolean
+          latitude?: number
+          longitude?: number
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1324,6 +1682,63 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      venues: {
+        Row: {
+          address: string | null
+          booking_url: string | null
+          city: string
+          created_at: string
+          hours: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          map_url: string | null
+          name: string
+          note: string
+          phone: string | null
+          sort_order: number
+          sports: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          booking_url?: string | null
+          city: string
+          created_at?: string
+          hours?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          map_url?: string | null
+          name: string
+          note?: string
+          phone?: string | null
+          sort_order?: number
+          sports?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          booking_url?: string | null
+          city?: string
+          created_at?: string
+          hours?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          map_url?: string | null
+          name?: string
+          note?: string
+          phone?: string | null
+          sort_order?: number
+          sports?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1370,9 +1785,25 @@ export type Database = {
         Args: { _opponent: string; _score_a: number; _score_b: number }
         Returns: string
       }
+      call_participant_snapshot: {
+        Args: { _call_id: string }
+        Returns: {
+          joined_at: string
+          nickname: string
+          user_id: string
+        }[]
+      }
       confirm_match: {
         Args: { _confirm: boolean; _match_id: string }
         Returns: undefined
+      }
+      create_call: {
+        Args: { _group_id?: string; _peer_id?: string }
+        Returns: string
+      }
+      create_dm_group: {
+        Args: { _member_ids: string[]; _name: string }
+        Returns: string
       }
       create_tournament:
         | {
@@ -1466,6 +1897,23 @@ export type Database = {
         Returns: undefined
       }
       fc_spin: { Args: { _spin_type: string }; Returns: Json }
+      fc_squad_create: {
+        Args: { _formation?: string; _name?: string }
+        Returns: Json
+      }
+      fc_squad_get_active: { Args: never; Returns: Json }
+      fc_squad_match_readiness: { Args: { _squad_id: string }; Returns: Json }
+      fc_squad_metrics: { Args: { _squad_id: string }; Returns: Json }
+      fc_squad_save: {
+        Args: {
+          _expected_version: number
+          _formation: string
+          _name: string
+          _players: Json
+          _squad_id: string
+        }
+        Returns: Json
+      }
       generate_tournament_notifications: { Args: never; Returns: number }
       get_my_betting_ledger: {
         Args: { _limit?: number }
@@ -1478,6 +1926,31 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_match_notification_jobs: {
+        Args: never
+        Returns: {
+          id: string
+          match_id: string
+          match_scheduled_at: string
+          opponent: string
+          scheduled_for: string
+          sport: string
+          status: string
+          venue_address: string
+          venue_name: string
+        }[]
+      }
+      get_public_user_location: {
+        Args: { _user_id: string }
+        Returns: {
+          accuracy_m: number
+          latitude: number
+          longitude: number
+          stale: boolean
+          updated_at: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1485,6 +1958,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_call_participant: {
+        Args: { _call_id: string; _user_id?: string }
+        Returns: boolean
+      }
+      is_dm_group_member: {
+        Args: { _group_id: string; _user_id?: string }
+        Returns: boolean
+      }
+      join_call: { Args: { _call_id: string }; Returns: boolean }
+      leave_call: { Args: { _call_id: string }; Returns: boolean }
       notify_win: {
         Args: { _body: string; _kind: string; _title: string; _user_id: string }
         Returns: undefined
@@ -1498,6 +1981,15 @@ export type Database = {
         }
         Returns: Json
       }
+      poker_action: {
+        Args: { _action: string; _amount?: number; _tournament_id: string }
+        Returns: Json
+      }
+      poker_board_from_deck: { Args: { _deck: Json }; Returns: Json }
+      poker_cancel_tournament: {
+        Args: { _tournament_id: string }
+        Returns: Json
+      }
       poker_cash_out: { Args: { _tournament_id: string }; Returns: Json }
       poker_create_tournament: {
         Args: {
@@ -1508,11 +2000,26 @@ export type Database = {
         }
         Returns: string
       }
+      poker_eval7: { Args: { _cards: Json }; Returns: Json }
+      poker_finish_hand: { Args: { _hand: Json }; Returns: Json }
       poker_join: { Args: { _tournament_id: string }; Returns: Json }
+      poker_list_tournaments: { Args: never; Returns: Json[] }
+      poker_next_player: {
+        Args: { _from: number; _players: Json }
+        Returns: number
+      }
+      poker_post: {
+        Args: { _amount: number; _hand: Json; _idx: number }
+        Returns: Json
+      }
+      poker_public_hand: { Args: { _hand: Json; _uid: string }; Returns: Json }
+      poker_score5: { Args: { _cards: Json }; Returns: Json }
+      poker_start_hand: { Args: { _tournament_id: string }; Returns: Json }
       poker_sync_chips: {
         Args: { _stacks: Json; _tournament_id: string }
         Returns: undefined
       }
+      poker_tick: { Args: { _tournament_id: string }; Returns: Json }
       roulette_cancel_bets: { Args: { _round_no: number }; Returns: Json }
       roulette_place_bet: {
         Args: {
@@ -1525,6 +2032,10 @@ export type Database = {
       }
       roulette_result: { Args: { _round_no: number }; Returns: number }
       roulette_settle: { Args: { _round_no: number }; Returns: Json }
+      schedule_match_sms_reminder: {
+        Args: { _match_id: string }
+        Returns: number
+      }
       set_tournament_schedule: {
         Args: { _scheduled_at: string; _tournament_id: string }
         Returns: undefined

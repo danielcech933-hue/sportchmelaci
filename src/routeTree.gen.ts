@@ -23,6 +23,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as GifStudioRouteImport } from './routes/gif-studio'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -107,6 +108,11 @@ const LiveRoute = LiveRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GifStudioRoute = GifStudioRouteImport.update({
+  id: '/gif-studio',
+  path: '/gif-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
+  '/gif-studio': typeof GifStudioRoute
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
+  '/gif-studio': typeof GifStudioRoute
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
+  '/gif-studio': typeof GifStudioRoute
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
@@ -290,6 +299,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bets'
     | '/chat'
+    | '/gif-studio'
     | '/history'
     | '/live'
     | '/match'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bets'
     | '/chat'
+    | '/gif-studio'
     | '/history'
     | '/live'
     | '/match'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bets'
     | '/chat'
+    | '/gif-studio'
     | '/history'
     | '/live'
     | '/match'
@@ -383,6 +395,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BetsRoute: typeof BetsRoute
   ChatRoute: typeof ChatRoute
+  GifStudioRoute: typeof GifStudioRoute
   HistoryRoute: typeof HistoryRoute
   LiveRoute: typeof LiveRoute
   MatchRoute: typeof MatchRoute
@@ -503,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gif-studio': {
+      id: '/gif-studio'
+      path: '/gif-studio'
+      fullPath: '/gif-studio'
+      preLoaderRoute: typeof GifStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -643,6 +663,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BetsRoute: BetsRoute,
   ChatRoute: ChatRoute,
+  GifStudioRoute: GifStudioRoute,
   HistoryRoute: HistoryRoute,
   LiveRoute: LiveRoute,
   MatchRoute: MatchRoute,
