@@ -30,19 +30,21 @@ function MatchPage() {
   const nicknames = useNicknames();
   const [match, setMatch] = useState<Match | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [finishBusy, setFinishBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const dirty = useRef(false);
 
   useEffect(() => {
     fetchMatch(id).then((m) => {
       if (!m) setNotFound(true);
       else setMatch(m);
-    });
+    }).catch((e) => setActionError(e instanceof Error ? e.message : "Zápas se nepodařilo načíst."));
   }, [id]);
 
   useMatchesRealtime(
     () => {
       if (dirty.current) return;
-      fetchMatch(id).then((m) => m && setMatch(m));
+      fetchMatch(id).then((m) => m && setMatch(m)).catch(() => undefined);
     },
     { matchId: id },
   );
@@ -72,27 +74,44 @@ function MatchPage() {
 
   function update(next: Match) {
     dirty.current = true;
+    setActionError(null);
     setMatch(next);
   }
 
   const bump = (side: "a" | "b", delta: number) => {
-    if (!isOwner) return;
+    if (!isOwner || match.endedAt) return;
     const key = side === "a" ? "scoreA" : "scoreB";
     update({ ...match, [key]: Math.max(0, match[key] + delta) });
   };
   const finishSet = () => {
-    if (!isOwner) return;
+    if (!isOwner || match.endedAt) return;
     update({ ...match, sets: [...match.sets, { a: match.scoreA, b: match.scoreB }], scoreA: 0, scoreB: 0 });
   };
   const finishMatch = async () => {
-    if (!isOwner) return;
+    if (!isOwner || finishBusy || match.endedAt) return;
+    setActionError(null);
+    setFinishBusy(true);
     const next = { ...match, endedAt: Date.now() };
     setMatch(next);
     dirty.current = false;
-    await saveMatch(next);
-    navigate({ to: "/history" });
+    try {
+      await saveMatch(next);
+      const persisted = await fetchMatch(match.id);
+      if (!persisted?.endedAt) {
+        throw new Error("Zápas se nepodařilo v databázi označit jako ukončený. Zkus to znovu.");
+      }
+      setMatch(persisted);
+      navigate({ to: "/admin", hash: "pending-approvals" });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Ukončení zápasu se nepodařilo.";
+      setActionError(message);
+      const persisted = await fetchMatch(match.id).catch(() => null);
+      if (persisted) setMatch(persisted);
+    } finally {
+      setFinishBusy(false);
+    }
   };
-  const resetScore = () => isOwner && update({ ...match, scoreA: 0, scoreB: 0 });
+  const resetScore = () => isOwner && !match.endedAt && update({ ...match, scoreA: 0, scoreB: 0 });
   const remove = async () => {
     if (!isOwner) return;
     if (!confirm("Delete this match? Any open bets will be refunded.")) return;
@@ -118,9 +137,15 @@ function MatchPage() {
           {cfg.emoji} {cfg.name} — {match.teamA} vs {match.teamB}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Live scoreboard · {match.endedAt ? "dokončený zápas" : "probíhá právě teď"}
+          {match.endedAt ? "Čeká na schválení adminem" : "Live scoreboard · probíhá právě teď"}
         </p>
       </header>
+
+      {actionError && (
+        <div className="panel mb-4 border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {actionError}
+        </div>
+      )}
 
       {!isOwner && (
         <div className="panel mb-4 p-3 text-center text-xs text-muted-foreground">
@@ -130,20 +155,20 @@ function MatchPage() {
 
       <div className="panel p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 md:gap-8">
-          <input value={match.teamA} disabled={!isOwner} list={NICKNAMES_DATALIST_ID} onChange={(e) => update({ ...match, teamA: e.target.value })} className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90" />
-          <input value={match.teamB} disabled={!isOwner} list={NICKNAMES_DATALIST_ID} onChange={(e) => update({ ...match, teamB: e.target.value })} className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90" />
+          <input value={match.teamA} disabled={!isOwner || !!match.endedAt} list={NICKNAMES_DATALIST_ID} onChange={(e) => update({ ...match, teamA: e.target.value })} className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90" />
+          <input value={match.teamB} disabled={!isOwner || !!match.endedAt} list={NICKNAMES_DATALIST_ID} onChange={(e) => update({ ...match, teamB: e.target.value })} className="w-full bg-transparent text-center font-display text-2xl tracking-wider outline-none focus:text-primary md:text-4xl disabled:opacity-90" />
         </div>
         <NicknamesDatalist options={nicknames} />
-        <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
+        <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin && !match.endedAt} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
         {cfg.hasSets && <div className="mt-2 grid grid-cols-2 gap-3 text-center text-xs text-muted-foreground md:gap-8"><div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsA}</span></div><div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsB}</span></div></div>}
         <div className="mt-4 grid grid-cols-2 gap-3 md:gap-8">
-          {(["a", "b"] as const).map((side) => {
+          {["a", "b" as const].map((side) => {
             const score = side === "a" ? match.scoreA : match.scoreB;
-            return <div key={side} className="rounded-2xl bg-background/60 p-4 md:p-8"><div className="led-digit text-center text-[6rem] leading-none md:text-[10rem]">{score}</div>{isOwner && <div className="mt-4 flex items-center justify-center gap-2"><button onClick={() => bump(side, -1)} className="h-12 w-12 rounded-full border border-border text-xl hover:bg-surface-2" aria-label="minus">−</button><button onClick={() => bump(side, 1)} className="h-16 flex-1 rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_30px_-10px_var(--color-primary)] active:scale-95" aria-label="plus one">+1</button></div>}</div>;
+            return <div key={side} className="rounded-2xl bg-background/60 p-4 md:p-8"><div className="led-digit text-center text-[6rem] leading-none md:text-[10rem]">{score}</div>{isOwner && !match.endedAt && <div className="mt-4 flex items-center justify-center gap-2"><button onClick={() => bump(side, -1)} className="h-12 w-12 rounded-full border border-border text-xl hover:bg-surface-2" aria-label="minus">−</button><button onClick={() => bump(side, 1)} className="h-16 flex-1 rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_30px_-10px_var(--color-primary)] active:scale-95" aria-label="plus one">+1</button></div>}</div>;
           })}
         </div>
         {match.sets.length > 0 && <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm"><span className="text-muted-foreground">Previous {cfg.setLabel.toLowerCase()}s:</span>{match.sets.map((s, i) => <span key={i} className="rounded-md border border-border bg-background/60 px-2 py-1 font-mono">{s.a}–{s.b}</span>)}</div>}
-        {isOwner && <div className="mt-8 flex flex-wrap justify-center gap-2">{cfg.hasSets && <button onClick={finishSet} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/20">End {cfg.setLabel}</button>}<button onClick={resetScore} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-2">Reset score</button><button onClick={finishMatch} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Finish match</button><button onClick={remove} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Delete</button><Link to="/live" search={{ id: match.id }} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">📱 Live rozhodčí</Link></div>}
+        {isOwner && <div className="mt-8 flex flex-wrap justify-center gap-2">{cfg.hasSets && !match.endedAt && <button onClick={finishSet} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/20">End {cfg.setLabel}</button>}{!match.endedAt && <button onClick={resetScore} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-2">Reset score</button>}{!match.endedAt && <button onClick={finishMatch} disabled={finishBusy} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60">{finishBusy ? "Ukončuji…" : "Finish match"}</button>}<button onClick={remove} className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Delete</button>{!match.endedAt && <Link to="/live" search={{ id: match.id }} className="rounded-md border border-accent bg-accent/10 px-4 py-2 text-sm font-semibold text-accent">📱 Live rozhodčí</Link>}</div>}
       </div>
       <BettingModule match={match} onRefresh={async () => { const m = await fetchMatch(match.id); if (m) setMatch(m); }} />
     </main>
