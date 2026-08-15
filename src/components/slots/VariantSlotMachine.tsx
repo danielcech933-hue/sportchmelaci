@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Loader2, Sparkles, Trophy, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/lib/wallet";
 import type { SlotVariantId } from "@/components/slots/SlotVariantFrame";
 import { cn } from "@/lib/utils";
@@ -18,8 +17,7 @@ type SpinResult = { game_id: SlotVariantId; grid: string[][]; columns: number; r
 
 export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; playerName: string }) {
   const meta = META[game];
-  const { slotCZK, ready } = useWallet();
-  const [balance, setBalance] = useState(slotCZK);
+  const { slotCZK, ready, spinVariantSlot } = useWallet();
   const [bet, setBet] = useState(10);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<SpinResult | null>(null);
@@ -30,25 +28,22 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
 
   async function spin() {
     if (!ready || spinning) return;
-    const currentBalance = Number.isFinite(balance) ? balance : slotCZK;
-    if (bet > currentBalance) { setMessage("Nedostatek Slot CZK — použij Směnárnu."); return; }
+    if (bet > slotCZK) { setMessage("Nedostatek Slot CZK — použij Směnárnu."); return; }
     setSpinning(true); setMessage("TOČÍME…"); setResult(null);
-    const { data, error } = await supabase.rpc("slot_variant_spin", { _game_id: game, _bet: bet });
-    if (error) {
-      setMessage(error.message || "Hru se nepodařilo spustit.");
+    const response = await spinVariantSlot(game, bet);
+    if (!response.ok || !response.result) {
+      setMessage(response.error ?? "Hru se nepodařilo spustit.");
       setSpinning(false);
       return;
     }
-    const parsed = Array.isArray(data) ? data[0] : data;
-    const next = parsed as SpinResult | null;
-    if (!next?.grid || !next.columns || !next.rows || !Number.isFinite(Number(next.slot_czk))) {
-      setMessage("Server nevrátil platný výsledek hry.");
+    const next = response.result as SpinResult;
+    if (!next.grid || next.columns !== meta.columns || next.rows !== meta.rows || !Number.isFinite(Number(next.slot_czk))) {
+      setMessage("Server vrátil neplatný výsledek hry.");
       setSpinning(false);
       return;
     }
-    setTimeout(() => {
+    window.setTimeout(() => {
       setResult(next);
-      setBalance(Number(next.slot_czk));
       setMessage(next.total > 0 ? `${next.feature} · VÝHRA ${next.total.toLocaleString("cs-CZ")} CZK` : next.feature);
       setSpinning(false);
       if (next.total > 0) toast.success(`${next.feature}: +${next.total.toLocaleString("cs-CZ")} CZK`);
@@ -61,14 +56,14 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
     <div className="rounded-[1.6rem] border border-white/10 bg-black/45 p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2">
         <div><p className="font-mono text-[8px] uppercase tracking-[.22em] text-white/40">Hráč</p><p className="font-display text-sm text-white">{playerName}</p></div>
-        <div className="text-right"><p className="font-mono text-[8px] uppercase tracking-[.22em] text-white/40">Slot CZK</p><p className="font-mono text-sm font-black text-hop-gold">{(Number.isFinite(balance) ? balance : slotCZK).toLocaleString("cs-CZ")} Kč</p></div>
+        <div className="text-right"><p className="font-mono text-[8px] uppercase tracking-[.22em] text-white/40">Slot CZK</p><p className="font-mono text-sm font-black text-hop-gold">{slotCZK.toLocaleString("cs-CZ")} Kč</p></div>
       </div>
 
       <div className={cn("mx-auto grid max-w-4xl gap-1.5 rounded-2xl border bg-black/55 p-2 transition", accent)} style={{ gridTemplateColumns: `repeat(${meta.columns}, minmax(0, 1fr))` }}>
         {grid.flatMap((col, c) => col.map((symbol, r) => {
           const active = !spinning && result?.grid?.[c]?.[r] === symbol;
           return <div key={`${c}-${r}`} className={cn("flex aspect-square items-center justify-center rounded-xl border border-white/5 bg-gradient-to-b from-white/[0.07] to-black/60 font-display text-lg text-white sm:text-2xl", spinning ? "animate-pulse opacity-70" : "", active && result?.total ? "ring-1 ring-hop-gold/60" : "")}>
-            <span className={symbol === "wild" ? "text-hop-gold drop-shadow-[0_0_14px_rgba(255,204,68,.9)]" : ""}>{meta.symbols[symbol] ?? symbol}</span>
+            <span className={symbol === "wild" || symbol === "mystery" ? "text-hop-gold drop-shadow-[0_0_14px_rgba(255,204,68,.9)]" : ""}>{meta.symbols[symbol] ?? symbol}</span>
           </div>;
         }))}
       </div>
