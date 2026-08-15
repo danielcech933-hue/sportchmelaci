@@ -1563,6 +1563,66 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_link_sessions: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_verifications: {
+        Row: {
+          created_at: string
+          notifications_enabled: boolean
+          phone_hash: string
+          phone_last4: string
+          telegram_chat_id: number | null
+          telegram_user_id: number
+          telegram_username: string | null
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          created_at?: string
+          notifications_enabled?: boolean
+          phone_hash: string
+          phone_last4: string
+          telegram_chat_id?: number | null
+          telegram_user_id: number
+          telegram_username?: string | null
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          created_at?: string
+          notifications_enabled?: boolean
+          phone_hash?: string
+          phone_last4?: string
+          telegram_chat_id?: number | null
+          telegram_user_id?: number
+          telegram_username?: string | null
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       tournament_teams: {
         Row: {
           created_at: string
@@ -2054,6 +2114,24 @@ export type Database = {
       slot_pick_bonus: { Args: { _multiplier: number }; Returns: Json }
       slot_spin: { Args: { _bet: number }; Returns: Json }
       sync_match_elo: { Args: { _match_id: string }; Returns: undefined }
+      telegram_complete_link: {
+        Args: {
+          _phone_hash: string
+          _phone_last4: string
+          _telegram_chat_id: number
+          _telegram_user_id: number
+          _telegram_username: string
+          _token: string
+        }
+        Returns: string
+      }
+      telegram_start_link: {
+        Args: never
+        Returns: {
+          expires_at: string
+          token: string
+        }[]
+      }
       wallet_apply: {
         Args: {
           _delta_dollars?: number
