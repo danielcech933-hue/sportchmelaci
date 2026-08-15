@@ -33,11 +33,9 @@ BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'not_authenticated'; END IF;
   IF game NOT IN ('neon-pints','hop-highway','golden-chmel','cursed-kegs','stadium-legends') THEN RAISE EXCEPTION 'invalid_slot_game'; END IF;
   IF bet NOT IN (5,10,20,50,100,200,500) THEN RAISE EXCEPTION 'invalid_slot_bet'; END IF;
-
   SELECT slot_czk INTO bal FROM public.profiles WHERE id = uid FOR UPDATE;
   IF bal IS NULL THEN RAISE EXCEPTION 'no_profile'; END IF;
   IF bal < bet THEN RAISE EXCEPTION 'insufficient_slot'; END IF;
-
   cols := CASE game WHEN 'neon-pints' THEN 6 WHEN 'cursed-kegs' THEN 6 ELSE 5 END;
   rows := CASE game WHEN 'neon-pints' THEN 5 WHEN 'cursed-kegs' THEN 4 WHEN 'stadium-legends' THEN 4 ELSE 3 END;
 
@@ -54,7 +52,7 @@ BEGIN
         sym := CASE floor(random()*10)::int WHEN 0 THEN 'cursed_keg' WHEN 1 THEN 'wild' WHEN 2 THEN 'skull' WHEN 3 THEN 'chain' WHEN 4 THEN 'ball' WHEN 5 THEN 'k' WHEN 6 THEN 'q' WHEN 7 THEN 'j' WHEN 8 THEN 'ten' ELSE 'mystery' END;
       ELSE
         sym := CASE floor(random()*10)::int WHEN 0 THEN 'legend' WHEN 1 THEN 'trophy_gold' WHEN 2 THEN 'wild' WHEN 3 THEN 'ball' WHEN 4 THEN 'boot' WHEN 5 THEN 'k' WHEN 6 THEN 'q' WHEN 7 THEN 'j' WHEN 8 THEN 'ten' ELSE 'champion' END;
-      END CASE;
+      END IF;
       IF sym = 'wild' THEN wilds := wilds + 1; END IF;
       IF sym = 'mystery' OR sym = 'cursed_keg' THEN mystery := mystery + 1; END IF;
       col := col || jsonb_build_array(sym);
