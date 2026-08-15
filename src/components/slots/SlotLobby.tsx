@@ -1,11 +1,14 @@
-import { Sparkles, Trophy, WalletCards } from "lucide-react";
+import { useState } from "react";
+import { ArrowRightLeft, Sparkles, Trophy, WalletCards } from "lucide-react";
+import { CurrencyExchangeModal } from "@/components/CurrencyExchangeModal";
 import { DailyBonusWheel } from "@/components/slots/DailyBonusWheel";
 import { CountUp } from "@/lib/fx";
 import { useWallet } from "@/lib/wallet";
 
-/** Minimal slot lobby: only the Wheel Fortune experience remains. */
+/** Minimal slot lobby: Wheel Fortune + currency exchange. */
 export function SlotLobby() {
   const { userDollars, slotCZK } = useWallet();
+  const [exchangeOpen, setExchangeOpen] = useState(false);
 
   return (
     <main className="mx-auto max-w-5xl px-3 py-6 pb-32 sm:px-4 sm:py-10">
@@ -22,23 +25,32 @@ export function SlotLobby() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:min-w-[17rem]">
-            <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2.5">
-              <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-[0.18em] text-emerald-200/70">
-                <WalletCards className="h-3.5 w-3.5" /> Sport Dollars
+          <div className="flex flex-col gap-2 sm:min-w-[17rem]">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2.5">
+                <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-[0.18em] text-emerald-200/70">
+                  <WalletCards className="h-3.5 w-3.5" /> Sport Dollars
+                </div>
+                <div className="mt-1 font-mono text-lg font-bold text-emerald-200">
+                  <CountUp value={userDollars} prefix="$" />
+                </div>
               </div>
-              <div className="mt-1 font-mono text-lg font-bold text-emerald-200">
-                <CountUp value={userDollars} prefix="$" />
+              <div className="rounded-xl border border-hop-gold/35 bg-hop-gold/10 px-3 py-2.5">
+                <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-[0.18em] text-hop-gold/70">
+                  <Trophy className="h-3.5 w-3.5" /> Slot CZK
+                </div>
+                <div className="mt-1 font-mono text-lg font-bold text-hop-gold">
+                  <CountUp value={slotCZK} suffix=" CZK" />
+                </div>
               </div>
             </div>
-            <div className="rounded-xl border border-hop-gold/35 bg-hop-gold/10 px-3 py-2.5">
-              <div className="flex items-center gap-2 text-[9px] font-mono uppercase tracking-[0.18em] text-hop-gold/70">
-                <Trophy className="h-3.5 w-3.5" /> Slot CZK
-              </div>
-              <div className="mt-1 font-mono text-lg font-bold text-hop-gold">
-                <CountUp value={slotCZK} suffix=" CZK" />
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setExchangeOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-hop-gold/45 bg-hop-gold/10 px-4 py-2.5 font-mono text-[10px] font-black uppercase tracking-[0.2em] text-hop-gold transition hover:border-hop-gold/70 hover:bg-hop-gold/20 hover:shadow-[0_0_28px_-10px_rgba(255,204,68,.9)]"
+            >
+              <ArrowRightLeft className="h-4 w-4" /> Směnárna
+            </button>
           </div>
         </div>
       </section>
@@ -46,6 +58,8 @@ export function SlotLobby() {
       <section className="mt-5 rounded-3xl border border-hop-gold/25 bg-black/35 p-2 backdrop-blur-xl sm:p-3">
         <DailyBonusWheel />
       </section>
+
+      <CurrencyExchangeModal open={exchangeOpen} onClose={() => setExchangeOpen(false)} />
     </main>
   );
 }
