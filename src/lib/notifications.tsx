@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -56,8 +57,9 @@ export function useNotifications() {
   const markAllRead = useCallback(async () => {
     const unread = items.filter((i) => !i.readAt).map((i) => i.id);
     if (!unread.length) return;
-    setItems((prev) => prev.map((i) => (i.readAt ? i : { ...i, readAt: new Date().toISOString() })));
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).in("id", unread);
+    const now = new Date().toISOString();
+    setItems((prev) => prev.map((i) => (i.readAt ? i : { ...i, readAt: now })));
+    await supabase.from("notifications").update({ read_at: now }).in("id", unread);
   }, [items]);
 
   return { items, unread: items.filter((i) => !i.readAt).length, reload: load, markAllRead };
@@ -72,72 +74,75 @@ export function NotificationsBell() {
   const { user } = useAuth();
   const { items, unread, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   if (!user) return null;
 
-  return (
-    <div className="relative shrink-0" ref={ref}>
-      <button
-        aria-label="Notifikace"
-        onClick={() => { setOpen((o) => !o); if (!open) markAllRead(); }}
-        className="relative rounded-md border border-primary/25 p-1.5 text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
-      >
-        <Bell className="h-4 w-4" />
-        {unread > 0 && (
-          <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[9px] font-bold text-background shadow-[0_0_10px_-2px_var(--color-accent)]">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[min(20rem,85vw)] overflow-hidden rounded-md border border-primary/30 bg-background/95 shadow-[0_0_30px_-10px_var(--color-primary)] backdrop-blur">
-          <div className="border-b border-primary/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">
-            Notifikace
+  const panel = open && typeof document !== "undefined"
+    ? createPortal(
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label="Notifikace"
+          className="fixed right-3 top-[4.4rem] z-[120] w-[min(22rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-primary/30 bg-background/95 shadow-[0_0_35px_-10px_var(--color-primary)] backdrop-blur-xl sm:right-4"
+        >
+          <div className="flex items-center justify-between border-b border-primary/20 px-3 py-2.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">Notifikace</span>
+            {unread > 0 && <span className="font-mono text-[9px] uppercase tracking-widest text-accent">{unread} nové</span>}
           </div>
-          <div className="max-h-80 overflow-y-auto">
-            {items.length === 0 && (
-              <p className="px-3 py-4 text-xs text-muted-foreground">Zatím žádné notifikace.</p>
-            )}
+          <div className="max-h-[min(24rem,70vh)] overflow-y-auto">
+            {items.length === 0 && <p className="px-3 py-5 text-xs text-muted-foreground">Zatím žádné notifikace.</p>}
             {items.map((n) => {
               const inner = (
                 <>
                   <p className="text-xs font-semibold text-foreground">{n.title}</p>
-                  {n.body && <p className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</p>}
-                  <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
-                    {formatTime(n.createdAt)}
-                  </p>
+                  {n.body && <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{n.body}</p>}
+                  <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">{formatTime(n.createdAt)}</p>
                 </>
               );
               return n.tournamentId ? (
-                <Link
-                  key={n.id}
-                  to="/tournament"
-                  search={{ id: n.tournamentId }}
-                  onClick={() => setOpen(false)}
-                  className="block border-b border-primary/10 px-3 py-2 transition hover:bg-primary/5"
-                >
+                <Link key={n.id} to="/tournament" search={{ id: n.tournamentId }} onClick={() => setOpen(false)} className={`block border-b border-primary/10 px-3 py-2.5 transition hover:bg-primary/5 ${!n.readAt ? "bg-primary/5" : ""}`}>
                   {inner}
                 </Link>
               ) : (
-                <div key={n.id} className="border-b border-primary/10 px-3 py-2">
-                  {inner}
-                </div>
+                <div key={n.id} className={`border-b border-primary/10 px-3 py-2.5 ${!n.readAt ? "bg-primary/5" : ""}`}>{inner}</div>
               );
             })}
           </div>
-        </div>
-      )}
-    </div>
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        aria-label="Notifikace"
+        aria-expanded={open}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (next) void markAllRead();
+        }}
+        className="relative shrink-0 rounded-md border border-primary/25 p-1.5 text-muted-foreground transition hover:border-primary/60 hover:text-foreground"
+      >
+        <Bell className="h-4 w-4" />
+        {unread > 0 && <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-mono text-[9px] font-bold text-background shadow-[0_0_10px_-2px_var(--color-accent)]">{unread > 9 ? "9+" : unread}</span>}
+      </button>
+      {panel}
+    </>
   );
 }
