@@ -31,12 +31,13 @@ type Pending = {
   issuedAt: number;
   expiresAt: number;
   attempts: number;
+  otpHash?: string;
 };
 
 type Verified = {
   phone: string;
   verifiedAt: string;
-  source: "test_admin" | "sms";
+  source: "test_admin" | "sms" | "test_email";
 };
 
 export function readPending(metadata: Record<string, unknown>): Pending | null {
@@ -44,7 +45,7 @@ export function readPending(metadata: Record<string, unknown>): Pending | null {
   if (!p || typeof p !== "object") return null;
   const x = p as Record<string, unknown>;
   if (typeof x.phone !== "string" || typeof x.issuedAt !== "number" || typeof x.expiresAt !== "number" || typeof x.attempts !== "number") return null;
-  return { phone: x.phone, issuedAt: x.issuedAt, expiresAt: x.expiresAt, attempts: x.attempts };
+  return { phone: x.phone, issuedAt: x.issuedAt, expiresAt: x.expiresAt, attempts: x.attempts, otpHash: typeof x.otpHash === "string" ? x.otpHash : undefined };
 }
 
 export function readVerified(metadata: Record<string, unknown>): Verified | null {
@@ -52,7 +53,7 @@ export function readVerified(metadata: Record<string, unknown>): Verified | null
   if (!v || typeof v !== "object") return null;
   const x = v as Record<string, unknown>;
   if (typeof x.phone !== "string" || typeof x.verifiedAt !== "string") return null;
-  const source = x.source === "sms" ? "sms" : "test_admin";
+  const source = x.source === "sms" ? "sms" : x.source === "test_email" ? "test_email" : "test_admin";
   return { phone: x.phone, verifiedAt: x.verifiedAt, source };
 }
 
