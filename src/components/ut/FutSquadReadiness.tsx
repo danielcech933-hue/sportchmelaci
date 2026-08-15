@@ -46,7 +46,7 @@ export function FutSquadReadiness() {
         return;
       }
 
-      const { data, error: readinessError } = await supabase.rpc("fc_squad_match_readiness" as never, { _squad_id: squad.id } as never);
+      const { data, error: readinessError } = await supabase.rpc("fc_squad_match_readiness" as never, { _squad_id: (squad as { id: string }).id } as never);
       if (readinessError) throw readinessError;
       setState(data as unknown as Readiness);
     } catch (e) {

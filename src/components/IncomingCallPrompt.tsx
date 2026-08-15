@@ -114,7 +114,7 @@ function IncomingVoiceCall({ callId, onClose }: { callId: string; onClose: () =>
 
   const sendSignal = useCallback(async (recipientId: string | null, signal_type: string, payload: Record<string, unknown>) => {
     if (!user) return;
-    await supabase.from("call_signals").insert({ call_id: callId, sender_id: user.id, recipient_id: recipientId, signal_type, payload });
+    await supabase.from("call_signals").insert({ call_id: callId, sender_id: user.id, recipient_id: recipientId, signal_type, payload: payload as never });
   }, [callId, user]);
 
   const ensurePeer = useCallback((peerId: string) => {

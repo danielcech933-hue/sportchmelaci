@@ -23,6 +23,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as GifStudioRouteImport } from './routes/gif-studio'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as BetsRouteImport } from './routes/bets'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -38,6 +39,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
 const VenuesRoute = VenuesRouteImport.update({
   id: '/venues',
@@ -107,6 +109,11 @@ const LiveRoute = LiveRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GifStudioRoute = GifStudioRouteImport.update({
+  id: '/gif-studio',
+  path: '/gif-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -187,6 +194,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -195,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
+  '/gif-studio': typeof GifStudioRoute
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
@@ -218,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/slots/': typeof SlotsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -226,6 +241,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
+  '/gif-studio': typeof GifStudioRoute
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
@@ -248,6 +264,7 @@ export interface FileRoutesByTo {
   '/slots': typeof SlotsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -257,6 +274,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bets': typeof BetsRoute
   '/chat': typeof ChatRoute
+  '/gif-studio': typeof GifStudioRoute
   '/history': typeof HistoryRoute
   '/live': typeof LiveRoute
   '/match': typeof MatchRoute
@@ -280,6 +298,7 @@ export interface FileRoutesById {
   '/slots/': typeof SlotsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -290,6 +309,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bets'
     | '/chat'
+    | '/gif-studio'
     | '/history'
     | '/live'
     | '/match'
@@ -313,6 +333,7 @@ export interface FileRouteTypes {
     | '/slots/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -321,6 +342,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bets'
     | '/chat'
+    | '/gif-studio'
     | '/history'
     | '/live'
     | '/match'
@@ -343,6 +365,7 @@ export interface FileRouteTypes {
     | '/slots'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/telegram/webhook'
   id:
     | '__root__'
     | '/'
@@ -351,6 +374,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bets'
     | '/chat'
+    | '/gif-studio'
     | '/history'
     | '/live'
     | '/match'
@@ -374,6 +398,7 @@ export interface FileRouteTypes {
     | '/slots/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -383,6 +408,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BetsRoute: typeof BetsRoute
   ChatRoute: typeof ChatRoute
+  GifStudioRoute: typeof GifStudioRoute
   HistoryRoute: typeof HistoryRoute
   LiveRoute: typeof LiveRoute
   MatchRoute: typeof MatchRoute
@@ -403,6 +429,7 @@ export interface RootRouteChildren {
   ProfileIndexRoute: typeof ProfileIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -503,6 +530,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gif-studio': {
+      id: '/gif-studio'
+      path: '/gif-studio'
+      fullPath: '/gif-studio'
+      preLoaderRoute: typeof GifStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -610,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -643,6 +684,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BetsRoute: BetsRoute,
   ChatRoute: ChatRoute,
+  GifStudioRoute: GifStudioRoute,
   HistoryRoute: HistoryRoute,
   LiveRoute: LiveRoute,
   MatchRoute: MatchRoute,
@@ -664,6 +706,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileIndexRoute: ProfileIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

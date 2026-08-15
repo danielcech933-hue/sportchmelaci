@@ -10,7 +10,7 @@ export function DirectCallButton({ peerId }: { peerId: string }) {
   const start = async () => {
     if (busy) return;
     setBusy(true);
-    const { data, error } = await supabase.rpc("create_call", { _peer_id: peerId, _group_id: null });
+    const { data, error } = await supabase.rpc("create_call", { _peer_id: peerId, _group_id: undefined });
     setBusy(false);
     if (!error && data) setCallId(String(data));
   };
@@ -23,7 +23,7 @@ export function GroupCallButton({ groupId }: { groupId: string }) {
   const start = async () => {
     if (busy) return;
     setBusy(true);
-    const { data, error } = await supabase.rpc("create_call", { _peer_id: null, _group_id: groupId });
+    const { data, error } = await supabase.rpc("create_call", { _peer_id: undefined, _group_id: groupId });
     setBusy(false);
     if (!error && data) setCallId(String(data));
   };
@@ -139,7 +139,7 @@ function CallOverlay({ callId, onClose }: { callId: string; onClose: () => void 
 
   const refreshParticipants = useCallback(async () => { const { data } = await supabase.rpc("call_participant_snapshot", { _call_id: callId }); setParticipants((data ?? []) as Array<{ user_id:string; nickname:string; joined_at:string }>); }, [callId]);
 
-  const sendSignal = useCallback(async (recipientId: string | null, signal_type: string, payload: Record<string, unknown>) => { if (!user) return; await supabase.from("call_signals").insert({ call_id: callId, sender_id: user.id, recipient_id: recipientId, signal_type, payload }); }, [callId, user]);
+  const sendSignal = useCallback(async (recipientId: string | null, signal_type: string, payload: Record<string, unknown>) => { if (!user) return; await supabase.from("call_signals").insert({ call_id: callId, sender_id: user.id, recipient_id: recipientId, signal_type, payload: payload as never }); }, [callId, user]);
 
   const createPeer = useCallback((peerId: string) => {
     if (!user || peerId === user.id || peersRef.current.has(peerId)) return peersRef.current.get(peerId) ?? null;
