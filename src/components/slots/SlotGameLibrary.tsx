@@ -132,7 +132,7 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
             </button>
           </div>
 
-          <div className="[&>div>div.mb-3:first-of-type]:hidden">
+          <div className="[&>div>div.mb-3:nth-child(2)]:hidden">
             <SlotMachine playerName={nickname ?? "Hráč"} onExchange={onExchange} />
           </div>
         </div>
