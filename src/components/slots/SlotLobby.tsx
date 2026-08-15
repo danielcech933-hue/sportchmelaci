@@ -2,10 +2,11 @@ import { useState } from "react";
 import { ArrowRightLeft, Sparkles, Trophy, WalletCards } from "lucide-react";
 import { CurrencyExchangeModal } from "@/components/CurrencyExchangeModal";
 import { DailyBonusWheel } from "@/components/slots/DailyBonusWheel";
+import { SlotGameLibrary } from "@/components/slots/SlotGameLibrary";
 import { CountUp } from "@/lib/fx";
 import { useWallet } from "@/lib/wallet";
 
-/** Minimal slot lobby: Wheel Fortune + currency exchange. */
+/** Slot lobby: Wheel Fortune, currency exchange and the original SportChmeláci game library. */
 export function SlotLobby() {
   const { userDollars, slotCZK } = useWallet();
   const [exchangeOpen, setExchangeOpen] = useState(false);
@@ -17,11 +18,11 @@ export function SlotLobby() {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.32em] text-hop-neon/80">
-              <Sparkles className="h-4 w-4" /> Wheel Fortune
+              <Sparkles className="h-4 w-4" /> Slot Arena
             </div>
-            <h1 className="mt-1 font-display text-4xl tracking-[0.12em] slot-gold-text sm:text-6xl">KOLO ŠTĚSTÍ</h1>
+            <h1 className="mt-1 font-display text-4xl tracking-[0.12em] slot-gold-text sm:text-6xl">SLOTY</h1>
             <p className="mt-2 max-w-2xl text-sm text-foreground/70 sm:text-base">
-              Jediná herní aktivita v sekci Sloty. Každých 8 hodin můžeš roztočit kolo a získat garantovanou dolarovou odměnu.
+              Wheel Fortune a originální slotové hry SportChmeláci. Vše funguje pouze s herní měnou Slot CZK.
             </p>
           </div>
 
@@ -58,6 +59,8 @@ export function SlotLobby() {
       <section className="mt-5 rounded-3xl border border-hop-gold/25 bg-black/35 p-2 backdrop-blur-xl sm:p-3">
         <DailyBonusWheel />
       </section>
+
+      <SlotGameLibrary onExchange={() => setExchangeOpen(true)} />
 
       <CurrencyExchangeModal open={exchangeOpen} onClose={() => setExchangeOpen(false)} />
     </main>
