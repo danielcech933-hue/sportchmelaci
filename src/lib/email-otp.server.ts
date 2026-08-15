@@ -1,9 +1,14 @@
 import { createHmac } from "node:crypto";
 
+const DEFAULT_FROM = "SportChmeláci <noreply@sportchmelovci.chmelovci.com>";
+
 function config() {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) return null;
+  // Lovable secret setup may provide only the API key while the verified
+  // SportChmeláci domain is already configured in Resend. Keep the sender
+  // server-side and use the verified domain as the safe fallback.
+  const from = process.env.RESEND_FROM_EMAIL || DEFAULT_FROM;
+  if (!apiKey) return null;
   return { apiKey, from };
 }
 
@@ -40,6 +45,11 @@ export async function sendVerificationCodeEmail(to: string, otp: string) {
 }
 
 export function randomOtp() {
+  const bytes = new Uint32Array(1);
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    crypto.getRandomValues(bytes);
+    return String(bytes[0] % 1_000_000).padStart(6, "0");
+  }
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
 }
 
