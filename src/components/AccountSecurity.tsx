@@ -101,7 +101,7 @@ export function AccountSecurity() {
 
   async function saveSms(enabled: boolean) {
     clearMessages(); if (!phoneVerified) return setError("Nejdřív ověř telefon."); setBusy("sms");
-    try { const { error: e } = await supabase.from("match_notification_preferences").upsert({ user_id: user.id, sms_enabled: enabled, reminder_minutes: reminderMinutes, updated_at: new Date().toISOString() }); if (e) throw e; setSmsEnabled(enabled); setNotice(enabled ? "SMS připomínky jsou zapnuté. Skutečné doručování čeká na SMS provider." : "SMS připomínky jsou vypnuté."); }
+    try { const { error: e } = await supabase.from("match_notification_preferences").upsert({ user_id: user!.id, sms_enabled: enabled, reminder_minutes: reminderMinutes, updated_at: new Date().toISOString() }); if (e) throw e; setSmsEnabled(enabled); setNotice(enabled ? "SMS připomínky jsou zapnuté. Skutečné doručování čeká na SMS provider." : "SMS připomínky jsou vypnuté."); }
     catch (e) { setError(e instanceof Error ? e.message : "Nastavení upozornění selhalo."); }
     finally { setBusy(null); }
   }

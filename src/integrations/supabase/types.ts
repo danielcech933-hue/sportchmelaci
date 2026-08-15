@@ -1274,6 +1274,24 @@ export type Database = {
           },
         ]
       }
+      phone_verifications: {
+        Row: {
+          phone_public: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          phone_public?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          phone_public?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       poker_seats: {
         Row: {
           chips: number
@@ -1596,6 +1614,8 @@ export type Database = {
           notifications_enabled: boolean
           phone_hash: string
           phone_last4: string
+          phone_number: string | null
+          phone_public: boolean
           telegram_chat_id: number | null
           telegram_user_id: number
           telegram_username: string | null
@@ -1607,6 +1627,8 @@ export type Database = {
           notifications_enabled?: boolean
           phone_hash: string
           phone_last4: string
+          phone_number?: string | null
+          phone_public?: boolean
           telegram_chat_id?: number | null
           telegram_user_id: number
           telegram_username?: string | null
@@ -1618,6 +1640,8 @@ export type Database = {
           notifications_enabled?: boolean
           phone_hash?: string
           phone_last4?: string
+          phone_number?: string | null
+          phone_public?: boolean
           telegram_chat_id?: number | null
           telegram_user_id?: number
           telegram_username?: string | null
@@ -2014,6 +2038,12 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_verified_phone: {
+        Args: { _user_id: string }
+        Returns: {
+          phone_number: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2099,6 +2129,7 @@ export type Database = {
         Args: { _match_id: string }
         Returns: number
       }
+      set_phone_public: { Args: { _enabled: boolean }; Returns: boolean }
       set_tournament_schedule: {
         Args: { _scheduled_at: string; _tournament_id: string }
         Returns: undefined
