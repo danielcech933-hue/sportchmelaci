@@ -1,21 +1,21 @@
 import { useMemo, useState } from "react";
 import { Beer, Flame, Gamepad2, Gem, Goal, Pickaxe, Shield, Sparkles, Trophy, Zap } from "lucide-react";
-import { SlotMachine } from "@/components/slots/SlotMachine";
+import { VariantSlotMachine } from "@/components/slots/VariantSlotMachine";
 import { SlotVariantFrame, type SlotVariantId } from "@/components/slots/SlotVariantFrame";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const GAMES: Array<{ id: SlotVariantId; title: string; kicker: string; description: string; icon: typeof Beer; accent: string; frame: string; badge: string; feature: string }> = [
-  { id: "neon-pints", title: "Neon Pints", kicker: "NEON CASCADE", description: "Cyber sportbar, neonové světlo a řetězení výher.", icon: Beer, accent: "from-cyan-400/35 via-emerald-400/15 to-transparent", frame: "border-cyan-300/35 hover:border-cyan-200/80", badge: "HIGH VOLATILITY", feature: "CASCADES" },
-  { id: "hop-highway", title: "Hop Highway", kicker: "BOOST CIRCUIT", description: "Futuristický závodní okruh s boosty a respiny.", icon: Goal, accent: "from-amber-400/35 via-orange-400/15 to-transparent", frame: "border-amber-300/35 hover:border-orange-200/80", badge: "MID VOLATILITY", feature: "BOOST RESPINS" },
-  { id: "golden-chmel", title: "Golden Chmel", kicker: "GOLD SERIES", description: "Prémiový stadion, trofeje a násobitelový bonus.", icon: Gem, accent: "from-yellow-300/40 via-yellow-500/15 to-transparent", frame: "border-yellow-300/40 hover:border-yellow-100/85", badge: "HIGH VOLATILITY", feature: "MULTIPLIER BONUS" },
-  { id: "cursed-kegs", title: "Cursed Kegs", kicker: "DARK CELLAR", description: "Temný sklep, mystery sudy a wild řetězení.", icon: Shield, accent: "from-fuchsia-500/35 via-purple-500/15 to-transparent", frame: "border-fuchsia-300/35 hover:border-purple-200/80", badge: "EXTREME VOLATILITY", feature: "WILD CHAINS" },
-  { id: "stadium-legends", title: "Stadium Legends", kicker: "HALL OF FAME", description: "Velká aréna, sticky wilds a free spiny.", icon: Trophy, accent: "from-sky-400/35 via-blue-500/15 to-transparent", frame: "border-sky-300/35 hover:border-blue-200/80", badge: "MID VOLATILITY", feature: "STICKY WILDS" },
+  { id: "neon-pints", title: "Neon Pints", kicker: "NEON CASCADE", description: "6×5 cyber sportbar se světelnými řetězy a clusterovými výhrami.", icon: Beer, accent: "from-cyan-400/35 via-emerald-400/15 to-transparent", frame: "border-cyan-300/35 hover:border-cyan-200/80", badge: "HIGH VOLATILITY", feature: "CASCADES" },
+  { id: "hop-highway", title: "Hop Highway", kicker: "BOOST CIRCUIT", description: "5×3 futuristický závod, ways-to-win a boosty po celé dráze.", icon: Goal, accent: "from-amber-400/35 via-orange-400/15 to-transparent", frame: "border-amber-300/35 hover:border-orange-200/80", badge: "MID VOLATILITY", feature: "BOOST RESPINS" },
+  { id: "golden-chmel", title: "Golden Chmel", kicker: "GOLD SERIES", description: "5×3 prémiový stadion s klasickými liniemi a Golden Frenzy bonusem.", icon: Gem, accent: "from-yellow-300/40 via-yellow-500/15 to-transparent", frame: "border-yellow-300/40 hover:border-yellow-100/85", badge: "HIGH VOLATILITY", feature: "MULTIPLIER BONUS" },
+  { id: "cursed-kegs", title: "Cursed Kegs", kicker: "DARK CELLAR", description: "6×4 temný sklep s mystery sudy a wild chain odměnami.", icon: Shield, accent: "from-fuchsia-500/35 via-purple-500/15 to-transparent", frame: "border-fuchsia-300/35 hover:border-purple-200/80", badge: "EXTREME VOLATILITY", feature: "WILD CHAINS" },
+  { id: "stadium-legends", title: "Stadium Legends", kicker: "HALL OF FAME", description: "5×4 aréna s legendárními symboly a sticky-style wild odměnou.", icon: Trophy, accent: "from-sky-400/35 via-blue-500/15 to-transparent", frame: "border-sky-300/35 hover:border-blue-200/80", badge: "MID VOLATILITY", feature: "STICKY WILDS" },
 ];
 
 type GameId = SlotVariantId;
 
-export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
+export function SlotGameLibrary() {
   const { nickname } = useAuth();
   const [selected, setSelected] = useState<GameId | null>(null);
   const game = useMemo(() => GAMES.find((item) => item.id === selected) ?? null, [selected]);
@@ -26,9 +26,9 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
         <div>
           <div className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.28em] text-hop-neon/80"><Gamepad2 className="h-4 w-4" /> Chmelovci Slot Library</div>
           <h2 className="mt-1 font-display text-2xl tracking-[0.12em] slot-gold-text sm:text-3xl">NOVÉ HRY</h2>
-          <p className="mt-1 max-w-3xl text-xs text-foreground/60 sm:text-sm">Každý titul má vlastní sportovní identitu a vlastní designový směr. Všechny zatím používají bezpečnou play-money Slot CZK peněženku.</p>
+          <p className="mt-1 max-w-3xl text-xs text-foreground/60 sm:text-sm">Každý titul má vlastní herní rozměr, symboly, výherní logiku a feature. Všechny hry jsou pouze play-money a používají Slot CZK.</p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-hop-gold/25 bg-hop-gold/5 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-hop-gold/80"><Zap className="h-3.5 w-3.5" /> PLAY MONEY</div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-hop-gold/25 bg-hop-gold/5 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-hop-gold/80"><Zap className="h-3.5 w-3.5" /> SERVER RNG</div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -50,12 +50,12 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
         })}
       </div>
 
-      {game && <div className="mt-6"><SlotVariantFrame game={game.id}><div className="[&>div>div.mb-3:first-of-type]:hidden"><SlotMachine playerName={nickname ?? "Hráč"} onExchange={onExchange} /></div></SlotVariantFrame></div>}
+      {game && <div className="mt-6"><SlotVariantFrame game={game.id}><VariantSlotMachine game={game.id} playerName={nickname ?? "Hráč"} /></SlotVariantFrame></div>}
 
       <div className="mt-4 grid gap-2 text-[9px] font-mono uppercase tracking-[0.16em] text-white/35 sm:grid-cols-3">
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2"><Flame className="mb-1 h-3.5 w-3.5 text-hop-gold/70" /> Každá hra má vlastní art direction</div>
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2"><Pickaxe className="mb-1 h-3.5 w-3.5 text-hop-neon/70" /> Stejná bezpečná wallet vrstva</div>
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2"><Sparkles className="mb-1 h-3.5 w-3.5 text-sky-300/70" /> Vlastní matematiku doplníme samostatně</div>
+        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2"><Flame className="mb-1 h-3.5 w-3.5 text-hop-gold/70" /> Každá hra má vlastní layout</div>
+        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2"><Pickaxe className="mb-1 h-3.5 w-3.5 text-hop-neon/70" /> Server rozhoduje o výsledku</div>
+        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2"><Sparkles className="mb-1 h-3.5 w-3.5 text-sky-300/70" /> Slot CZK bez reálných peněz</div>
       </div>
     </section>
   );
