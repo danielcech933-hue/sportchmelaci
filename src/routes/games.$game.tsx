@@ -5,20 +5,18 @@ const GAME_META = {
   poker: {
     title: "POKER LOBBY",
     eyebrow: "// CARD ROOM",
-    description: "Vstup do pokerové herny, vyber stůl a pokračuj do hry.",
+    description: "Samostatná pokerová herna: výběr stolu, hráči a následný vstup do partie.",
     icon: Spade,
     tone: "text-primary",
-    cta: "Otevřít poker",
-    href: "/live",
+    cta: "Lobby připraveno",
   },
   roulette: {
     title: "RULETA LOBBY",
     eyebrow: "// ROULETTE FLOOR",
-    description: "Vyber ruletový stůl a pokračuj do živé hry.",
+    description: "Samostatná ruletová herna: výběr stolu, obsazenost a následný vstup do hry.",
     icon: Dices,
     tone: "text-accent",
-    cta: "Otevřít ruletu",
-    href: "/slots",
+    cta: "Lobby připraveno",
   },
   ultimate: {
     title: "ULTIMATE LOBBY",
@@ -27,7 +25,6 @@ const GAME_META = {
     icon: Layers3,
     tone: "text-primary",
     cta: "Vstoupit do Ultimate",
-    href: "/ultimate-team",
   },
 } as const;
 
@@ -40,6 +37,7 @@ function GameLobby() {
   const meta = GAME_META[game as keyof typeof GAME_META];
   if (!meta) throw notFound();
   const Icon = meta.icon;
+  const isUltimate = game === "ultimate";
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 pb-32 sm:py-12">
@@ -61,18 +59,24 @@ function GameLobby() {
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">{meta.description}</p>
           </div>
 
-          <Link
-            to={meta.href}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-display tracking-widest text-primary-foreground shadow-[0_0_28px_-10px_var(--color-primary)] transition hover:brightness-110"
-          >
-            {meta.cta} <ChevronRight className="h-4 w-4" />
-          </Link>
+          {isUltimate ? (
+            <Link
+              to="/ultimate-team"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-display tracking-widest text-primary-foreground shadow-[0_0_28px_-10px_var(--color-primary)] transition hover:brightness-110"
+            >
+              {meta.cta} <ChevronRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <span className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+              {meta.cta}
+            </span>
+          )}
         </div>
       </section>
 
       <section className="mt-5 grid gap-3 sm:grid-cols-3">
         <LobbyTile label="Lobby" value="OPEN" />
-        <LobbyTile label="Stoly" value="Připraveno" />
+        <LobbyTile label={game === "poker" ? "Stoly" : game === "roulette" ? "Ruletové stoly" : "Režimy"} value="Připraveno" />
         <LobbyTile label="Hráči" value="Online" />
       </section>
     </main>
