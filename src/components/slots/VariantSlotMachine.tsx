@@ -7,11 +7,11 @@ import type { SlotVariantId } from "@/components/slots/SlotVariantFrame";
 import { cn } from "@/lib/utils";
 
 const META: Record<SlotVariantId, { columns: number; rows: number; symbols: Record<string, string>; accent: string }> = {
-  "neon-pints": { columns: 6, rows: 5, accent: "cyan", symbols: { pint: "🍺", bolt: "⚡", neon: "✦", ball: "⚽", star: "★", k: "K", q: "Q", j: "J", ten: "10" } },
-  "hop-highway": { columns: 5, rows: 3, accent: "orange", symbols: { helmet: "🪖", car: "🏎️", flag: "🏁", boost: "⚡", ball: "⚽", k: "K", q: "Q", j: "J", ten: "10" } },
-  "golden-chmel": { columns: 5, rows: 3, accent: "gold", symbols: { trophy_gold: "🏆", trophy_silver: "🥈", diamond: "◆", ball: "⚽", whistle: "📣", k: "K", q: "Q", j: "J", ten: "10" } },
-  "cursed-kegs": { columns: 6, rows: 4, accent: "purple", symbols: { cursed_keg: "🛢️", wild: "☠", skull: "💀", chain: "⛓", ball: "⚽", k: "K", q: "Q", j: "J", ten: "10" } },
-  "stadium-legends": { columns: 5, rows: 4, accent: "blue", symbols: { legend: "👑", trophy_gold: "🏆", wild: "★", ball: "⚽", boot: "👟", k: "K", q: "Q", j: "J", ten: "10" } },
+  "neon-pints": { columns: 6, rows: 5, accent: "cyan", symbols: { pint: "🍺", bolt: "⚡", neon: "✦", ball: "⚽", star: "★", wild: "☄", k: "K", q: "Q", j: "J", ten: "10" } },
+  "hop-highway": { columns: 5, rows: 3, accent: "orange", symbols: { helmet: "🪖", car: "🏎️", flag: "🏁", boost: "⚡", ball: "⚽", wild: "🚀", k: "K", q: "Q", j: "J", ten: "10" } },
+  "golden-chmel": { columns: 5, rows: 3, accent: "gold", symbols: { trophy_gold: "🏆", trophy_silver: "🥈", diamond: "◆", ball: "⚽", whistle: "📣", wild: "✦", k: "K", q: "Q", j: "J", ten: "10" } },
+  "cursed-kegs": { columns: 6, rows: 4, accent: "purple", symbols: { cursed_keg: "🛢️", mystery: "❓", wild: "☠", skull: "💀", chain: "⛓", ball: "⚽", k: "K", q: "Q", j: "J", ten: "10" } },
+  "stadium-legends": { columns: 5, rows: 4, accent: "blue", symbols: { legend: "👑", trophy_gold: "🏆", wild: "★", ball: "⚽", boot: "👟", champion: "🏅", k: "K", q: "Q", j: "J", ten: "10" } },
 };
 
 type SpinResult = { game_id: SlotVariantId; grid: string[][]; columns: number; rows: number; total: number; multiplier_of_bet: number; feature: string; slot_czk: number };
@@ -19,7 +19,7 @@ type SpinResult = { game_id: SlotVariantId; grid: string[][]; columns: number; r
 export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; playerName: string }) {
   const meta = META[game];
   const { slotCZK, ready } = useWallet();
-  const [shownBalance, setShownBalance] = useState(slotCZK);
+  const [balance, setBalance] = useState(slotCZK);
   const [bet, setBet] = useState(10);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<SpinResult | null>(null);
@@ -30,8 +30,8 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
 
   async function spin() {
     if (!ready || spinning) return;
-    const balance = Math.max(shownBalance, slotCZK);
-    if (bet > balance) { setMessage("Nedostatek Slot CZK — použij Směnárnu."); return; }
+    const currentBalance = Number.isFinite(balance) ? balance : slotCZK;
+    if (bet > currentBalance) { setMessage("Nedostatek Slot CZK — použij Směnárnu."); return; }
     setSpinning(true); setMessage("TOČÍME…"); setResult(null);
     const { data, error } = await supabase.rpc("slot_variant_spin", { _game_id: game, _bet: bet });
     if (error) {
@@ -41,14 +41,14 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
     }
     const parsed = Array.isArray(data) ? data[0] : data;
     const next = parsed as SpinResult | null;
-    if (!next?.grid || !Number.isFinite(Number(next.slot_czk))) {
+    if (!next?.grid || !next.columns || !next.rows || !Number.isFinite(Number(next.slot_czk))) {
       setMessage("Server nevrátil platný výsledek hry.");
       setSpinning(false);
       return;
     }
-    window.setTimeout(() => {
+    setTimeout(() => {
       setResult(next);
-      setShownBalance(Number(next.slot_czk));
+      setBalance(Number(next.slot_czk));
       setMessage(next.total > 0 ? `${next.feature} · VÝHRA ${next.total.toLocaleString("cs-CZ")} CZK` : next.feature);
       setSpinning(false);
       if (next.total > 0) toast.success(`${next.feature}: +${next.total.toLocaleString("cs-CZ")} CZK`);
@@ -61,7 +61,7 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
     <div className="rounded-[1.6rem] border border-white/10 bg-black/45 p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2">
         <div><p className="font-mono text-[8px] uppercase tracking-[.22em] text-white/40">Hráč</p><p className="font-display text-sm text-white">{playerName}</p></div>
-        <div className="text-right"><p className="font-mono text-[8px] uppercase tracking-[.22em] text-white/40">Slot CZK</p><p className="font-mono text-sm font-black text-hop-gold">{shownBalance.toLocaleString("cs-CZ")} Kč</p></div>
+        <div className="text-right"><p className="font-mono text-[8px] uppercase tracking-[.22em] text-white/40">Slot CZK</p><p className="font-mono text-sm font-black text-hop-gold">{(Number.isFinite(balance) ? balance : slotCZK).toLocaleString("cs-CZ")} Kč</p></div>
       </div>
 
       <div className={cn("mx-auto grid max-w-4xl gap-1.5 rounded-2xl border bg-black/55 p-2 transition", accent)} style={{ gridTemplateColumns: `repeat(${meta.columns}, minmax(0, 1fr))` }}>
@@ -74,9 +74,9 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
       </div>
 
       <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0"><div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[.16em] text-white/45"><Sparkles className="h-3.5 w-3.5 text-hop-neon" /> {message}</div><p className="mt-1 font-mono text-[8px] uppercase tracking-[.14em] text-white/25">Serverové RNG · Play Money · Slot CZK</p></div>
+        <div className="min-w-0"><div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[.16em] text-white/45"><Sparkles className="h-3.5 w-3.5 text-hop-neon" /> {message}</div><p className="mt-1 font-mono text-[8px] uppercase tracking-[.14em] text-white/25">Serverové RNG · Play Money · Slot CZK · {meta.columns}×{meta.rows}</p></div>
         <div className="flex items-center gap-2">
-          <select value={bet} onChange={(e) => setBet(Number(e.target.value))} className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none"><option value={5}>5 Kč</option><option value={10}>10 Kč</option><option value={25}>25 Kč</option><option value={50}>50 Kč</option><option value={100}>100 Kč</option></select>
+          <select value={bet} onChange={(e) => setBet(Number(e.target.value))} className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none"><option value={5}>5 Kč</option><option value={10}>10 Kč</option><option value={25}>25 Kč</option><option value={50}>50 Kč</option><option value={100}>100 Kč</option><option value={200}>200 Kč</option><option value={500}>500 Kč</option></select>
           <button type="button" onClick={() => void spin()} disabled={!ready || spinning} className="inline-flex items-center gap-2 rounded-xl bg-hop-gold px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-black disabled:cursor-not-allowed disabled:opacity-50">
             {spinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
             {spinning ? "Točíme" : "SPIN"}
