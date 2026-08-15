@@ -8,21 +8,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode, type ComponentType } from "react";
-import {
-  Home,
-  CalendarDays,
-  Users,
-  Trophy,
-  History as HistoryIcon,
-  UserRound,
-  ShieldCheck,
-  Radio,
-  Coins,
-  MessagesSquare,
-  HeartHandshake,
-  MapPin,
-} from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+import { UserRound, Radio, WalletCards } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import visualCss from "../visual-polish.css?url";
@@ -140,49 +127,64 @@ function RootComponent() {
   );
 }
 
-type NavItem = { to: string; label: string; icon: ComponentType<{ className?: string; size?: number }>; exact?: boolean; admin?: boolean; authOnly?: boolean };
-const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Lobby", icon: Home, exact: true }, { to: "/schedule", label: "Plán", icon: CalendarDays },
-  { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/rankings", label: "Scoreboard", icon: Trophy },
-  { to: "/teams", label: "Teams", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin },
-  { to: "/bets", label: "Sázky", icon: Coins },
-  { to: "/slots", label: "Slots", icon: Coins }, { to: "/chat", label: "Chat", icon: MessagesSquare },
-  { to: "/history", label: "Historie", icon: HistoryIcon }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
-  { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
-];
-function matchesRoute(pathname: string, item: NavItem): boolean { return item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/"); }
-
 function SiteHeader() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, nickname, avatarPath, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const visible = NAV_ITEMS.filter((n) => n.admin ? !!user && isAdmin : n.authOnly ? !!user : true);
-  const current = visible.find((n) => matchesRoute(pathname, n)) ?? (pathname.startsWith("/match") ? { label: "Live zápas", icon: Radio, to: "/match", exact: false } as NavItem : pathname.startsWith("/auth") ? { label: "Přihlášení", icon: UserRound, to: "/auth", exact: false } as NavItem : null);
+  const current = pathname.startsWith("/match")
+    ? { label: "Live zápas", icon: Radio }
+    : pathname.startsWith("/auth")
+      ? { label: "Přihlášení", icon: UserRound }
+      : null;
+
   return (
-    <header className="sticky top-0 z-40 border-b border-primary/25 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-      <div className="relative mx-auto max-w-6xl px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <Link to="/" className="group flex min-w-0 items-center gap-2"><span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/40 bg-primary/10"><span aria-hidden className="sport-cycle text-base leading-none"><span>⚽</span><span>🎾</span><span>🏐</span><span>🏓</span></span><span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" /></span><span className="brand-shimmer truncate font-display text-base tracking-wide neon-text sm:text-2xl sm:tracking-widest">CHMELOVÍ SPORTOVCI</span></Link>
-          {current && <div className="hidden min-w-0 items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 md:flex"><current.icon className="h-3.5 w-3.5 text-primary" /><span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">{current.label}</span></div>}
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2"><DmBell /><NotificationsBell /><AuthNav /></div>
+    <header className="sticky top-0 z-40 border-b border-primary/20 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
+      <div className="absolute inset-0 grid-bg opacity-[0.07] pointer-events-none" />
+      <div className="relative mx-auto max-w-7xl px-2.5 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex min-h-9 items-center gap-2 sm:min-h-10">
+          <Link to="/" aria-label="Chmeloví Sportovci — Lobby" className="group flex min-w-0 flex-1 items-center gap-2">
+            <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/35 bg-primary/10 shadow-[0_0_20px_-8px_var(--color-primary)] sm:h-8 sm:w-8">
+              <span aria-hidden className="sport-cycle text-sm leading-none sm:text-base"><span>⚽</span><span>🎾</span><span>🏐</span><span>🏓</span></span>
+              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
+            </span>
+            <span className="brand-shimmer hidden truncate font-display text-xl tracking-[0.08em] neon-text sm:block md:text-2xl md:tracking-[0.18em]">CHMELOVÍ SPORTOVCI</span>
+            <span className="brand-shimmer truncate font-display text-lg tracking-[0.07em] neon-text sm:hidden">CHM SPORT</span>
+          </Link>
+
+          {current && (
+            <div className="hidden shrink-0 items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 md:flex">
+              <current.icon className="h-3.5 w-3.5 text-primary" />
+              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-primary/90">{current.label}</span>
+            </div>
+          )}
+
+          <div className="flex shrink-0 items-center gap-1">
+            <DmBell />
+            <NotificationsBell />
+            <AuthNav user={user} nickname={nickname} avatarPath={avatarPath} loading={loading} />
+          </div>
         </div>
-        {current && <div className="mt-2 flex items-center gap-2 rounded-md border border-primary/25 bg-primary/5 px-2.5 py-1 md:hidden"><current.icon className="h-3.5 w-3.5 text-primary" /><span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-primary/90">// {current.label}</span></div>}
       </div>
     </header>
   );
 }
 
-function AuthNav() {
-  const { user, nickname, avatarPath, signOut, loading } = useAuth();
+function AuthNav({ user, nickname, avatarPath, loading }: { user: ReturnType<typeof useAuth>["user"]; nickname: string | null; avatarPath: string | null; loading: boolean }) {
+  const { signOut } = useAuth();
   const { userDollars } = useWallet();
   if (loading) return null;
-  if (!user) return <Link to="/auth" className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-[0_0_16px_-4px_hsl(45_100%_60%/0.7)] sm:text-sm">Přihlásit</Link>;
+  if (!user) return <Link to="/auth" className="rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-semibold text-primary-foreground shadow-[0_0_18px_-6px_var(--color-primary)]">Přihlásit</Link>;
   return (
-    <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-      <Link to="/profile" aria-label="Profil" className="shrink-0"><Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} /></Link>
-      <span className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-accent/40 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent shadow-[0_0_12px_-4px_var(--color-accent)] sm:px-2 sm:text-xs">💰 ${userDollars.toFixed(0)}</span>
-      {nickname && <span className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:inline">as <span className="text-primary neon-text">{nickname}</span></span>}
-      <button onClick={() => signOut()} aria-label="Odhlásit" className="shrink-0 rounded-md border border-primary/25 px-2 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground sm:px-2.5 sm:text-sm"><span className="hidden sm:inline">Odhlásit</span><span className="sm:hidden" aria-hidden>⎋</span></button>
+    <div className="flex min-w-0 items-center gap-1">
+      <Link to="/profile" aria-label="Profil" className="shrink-0 rounded-full ring-1 ring-primary/25 transition hover:ring-primary/60">
+        <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
+      </Link>
+      <Link to="/profile" aria-label="Wallet" className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-accent/35 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent transition hover:border-accent/70 sm:px-2">
+        <WalletCards className="h-3 w-3" />${userDollars.toFixed(0)}
+      </Link>
+      {nickname && <span className="hidden max-w-28 truncate font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground lg:inline">{nickname}</span>}
+      <button onClick={() => signOut()} aria-label="Odhlásit" title="Odhlásit" className="rounded-lg border border-primary/20 px-1.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/55 hover:text-foreground">
+        <span aria-hidden>⎋</span>
+      </button>
     </div>
   );
 }
