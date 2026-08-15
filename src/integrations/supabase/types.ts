@@ -1568,6 +1568,7 @@ export type Database = {
           consumed_at: string | null
           created_at: string
           expires_at: string
+          telegram_chat_id: number | null
           token: string
           user_id: string
         }
@@ -1575,6 +1576,7 @@ export type Database = {
           consumed_at?: string | null
           created_at?: string
           expires_at: string
+          telegram_chat_id?: number | null
           token: string
           user_id: string
         }
@@ -1582,6 +1584,7 @@ export type Database = {
           consumed_at?: string | null
           created_at?: string
           expires_at?: string
+          telegram_chat_id?: number | null
           token?: string
           user_id?: string
         }
@@ -2114,6 +2117,10 @@ export type Database = {
       slot_pick_bonus: { Args: { _multiplier: number }; Returns: Json }
       slot_spin: { Args: { _bet: number }; Returns: Json }
       sync_match_elo: { Args: { _match_id: string }; Returns: undefined }
+      telegram_bind_chat: {
+        Args: { _telegram_chat_id: number; _token: string }
+        Returns: boolean
+      }
       telegram_complete_link: {
         Args: {
           _phone_hash: string
@@ -2123,6 +2130,10 @@ export type Database = {
           _telegram_username: string
           _token: string
         }
+        Returns: string
+      }
+      telegram_pending_token: {
+        Args: { _telegram_chat_id: number }
         Returns: string
       }
       telegram_start_link: {
