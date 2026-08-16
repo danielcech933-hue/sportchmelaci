@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Beer, CarFront, ChevronRight, Fish, Flame, Gamepad2, Gem, Hammer, Pickaxe, Shield, Sparkles, Trophy, Zap } from "lucide-react";
-import { EpicSlotMachinePro } from "@/components/slots/EpicSlotMachinePro";
+import { EpicSlotMachinePremium } from "@/components/slots/EpicSlotMachinePremium";
 import { VariantSlotMachine } from "@/components/slots/VariantSlotMachine";
 import { SlotVariantFrame, type SlotVariantId } from "@/components/slots/SlotVariantFrame";
 import { useAuth } from "@/lib/auth";
@@ -69,7 +69,7 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
         })}
       </div>
 
-      {game && <div className="mt-5">{game.epic ? <EpicSlotMachinePro game={game.id as EpicGameId} playerName={nickname ?? "Hráč"} /> : <SlotVariantFrame game={game.id as SlotVariantId}><VariantSlotMachine game={game.id as SlotVariantId} playerName={nickname ?? "Hráč"} /></SlotVariantFrame>}</div>}
+      {game && <div className="mt-5">{game.epic ? <EpicSlotMachinePremium game={game.id as EpicGameId} playerName={nickname ?? "Hráč"} /> : <SlotVariantFrame game={game.id as SlotVariantId}><VariantSlotMachine game={game.id as SlotVariantId} playerName={nickname ?? "Hráč"} /></SlotVariantFrame>}</div>}
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3"><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Hammer className="h-4 w-4 text-[#ffcc44]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Originální vector artwork</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Pickaxe className="h-4 w-4 text-[#4dffa6]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Server rozhoduje o výsledku</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Sparkles className="h-4 w-4 text-sky-300/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Slot CZK · pouze play money</div></div></div>
     </section>
