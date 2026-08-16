@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { Gem, Radio, Shield, Sparkles, Spade, Users } from "lucide-react";
 import { LivePokerTournament } from "@/components/LivePokerTournament";
@@ -40,6 +41,6 @@ export function PokerArena3D() {
   );
 }
 
-function ArenaFeature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function ArenaFeature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return <div className="rounded-2xl border border-white/8 bg-white/[.02] p-4"><div className="flex items-center gap-2 text-amber-300"><span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span><span className="font-mono text-[8px] font-black uppercase tracking-[.2em] text-white/45">{title}</span></div><p className="mt-2 text-[10px] leading-relaxed text-white/42">{text}</p></div>;
 }
