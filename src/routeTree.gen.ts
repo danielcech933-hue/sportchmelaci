@@ -35,6 +35,7 @@ import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
 import { Route as SlotsChmelovciCupRouteImport } from './routes/slots.chmelovci-cup'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
+import { Route as GamesGameRouteImport } from './routes/games.$game'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -172,6 +173,11 @@ const ProfileIdRoute = ProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesGameRoute = GamesGameRouteImport.update({
+  id: '/games/$game',
+  path: '/games/$game',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/venues': typeof VenuesRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/games/$game': typeof GamesGameRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/venues': typeof VenuesRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/games/$game': typeof GamesGameRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
@@ -300,6 +308,7 @@ export interface FileRoutesById {
   '/venues': typeof VenuesRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/games/$game': typeof GamesGameRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/venues'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/games/$game'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
     | '/support/return'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/venues'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/games/$game'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
     | '/support/return'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/venues'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/games/$game'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
     | '/support/return'
@@ -438,6 +450,7 @@ export interface RootRouteChildren {
   VenuesRoute: typeof VenuesRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  GamesGameRoute: typeof GamesGameRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/$game': {
+      id: '/games/$game'
+      path: '/games/$game'
+      fullPath: '/games/$game'
+      preLoaderRoute: typeof GamesGameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -723,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  GamesGameRoute: GamesGameRoute,
   ProfileIdRoute: ProfileIdRoute,
   ProfileIndexRoute: ProfileIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,

@@ -1528,6 +1528,50 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_variant_bonus_sessions: {
+        Row: {
+          bonus_total: number
+          collector: number
+          free_spins_remaining: number
+          game_id: string
+          mode: string
+          multiplier: number
+          retriggers: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_total?: number
+          collector?: number
+          free_spins_remaining?: number
+          game_id: string
+          mode: string
+          multiplier?: number
+          retriggers?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_total?: number
+          collector?: number
+          free_spins_remaining?: number
+          game_id?: string
+          mode?: string
+          multiplier?: number
+          retriggers?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slot_variant_bonus_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string
@@ -2125,6 +2169,46 @@ export type Database = {
       }
       roulette_result: { Args: { _round_no: number }; Returns: number }
       roulette_settle: { Args: { _round_no: number }; Returns: Json }
+      save_match_score: {
+        Args: {
+          _ended_at?: string
+          _match_id: string
+          _score_a: number
+          _score_b: number
+          _sets?: Json
+        }
+        Returns: {
+          bets: Json
+          bets_locked_at: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          owner_id: string
+          round: number | null
+          scheduled_at: string | null
+          score_a: number
+          score_b: number
+          sets: Json
+          slot: number | null
+          sport: string
+          started_at: string
+          team_a: string
+          team_a_ref: string | null
+          team_b: string
+          team_b_ref: string | null
+          tournament_id: string | null
+          updated_at: string
+          venue_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       schedule_match_sms_reminder: {
         Args: { _match_id: string }
         Returns: number
@@ -2135,6 +2219,10 @@ export type Database = {
         Returns: undefined
       }
       settle_match: { Args: { _match_id: string }; Returns: undefined }
+      slot_epic_spin: {
+        Args: { _bet?: number; _game_id: string }
+        Returns: Json
+      }
       slot_leaderboard: {
         Args: { _limit?: number }
         Returns: {
@@ -2147,6 +2235,10 @@ export type Database = {
       }
       slot_pick_bonus: { Args: { _multiplier: number }; Returns: Json }
       slot_spin: { Args: { _bet: number }; Returns: Json }
+      slot_variant_spin: {
+        Args: { _bet?: number; _game_id: string }
+        Returns: Json
+      }
       sync_match_elo: { Args: { _match_id: string }; Returns: undefined }
       telegram_bind_chat: {
         Args: { _telegram_chat_id: number; _token: string }
