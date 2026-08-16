@@ -7,7 +7,9 @@ import type { SlotVariantId } from "@/components/slots/SlotVariantFrame";
 import { VariantBonusOverlay } from "@/components/slots/VariantBonusOverlay";
 import { cn } from "@/lib/utils";
 
-const META: Record<SlotVariantId, { columns: number; rows: number; symbols: Record<string, string>; accent: string }> = {
+type VariantMeta = { columns: number; rows: number; symbols: Record<string, string>; accent: string };
+
+const META: Partial<Record<SlotVariantId, VariantMeta>> = {
   "neon-pints": { columns: 6, rows: 5, accent: "cyan", symbols: { pint: "🍺", bolt: "⚡", neon: "✦", ball: "⚽", star: "★", wild: "☄", k: "K", q: "Q", j: "J", ten: "10" } },
   "hop-highway": { columns: 5, rows: 3, accent: "orange", symbols: { helmet: "🪖", car: "🏎️", flag: "🏁", boost: "⚡", ball: "⚽", wild: "🚀", k: "K", q: "Q", j: "J", ten: "10" } },
   "golden-chmel": { columns: 5, rows: 3, accent: "gold", symbols: { trophy_gold: "🏆", trophy_silver: "🥈", diamond: "◆", ball: "⚽", whistle: "📣", wild: "✦", k: "K", q: "Q", j: "J", ten: "10" } },
@@ -28,7 +30,7 @@ type SpinResult = {
 };
 
 export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; playerName: string }) {
-  const meta = META[game];
+  const meta = META[game] ?? META["neon-pints"]!;
   const { slotCZK, ready, spinVariantSlot } = useWallet();
   const [bet, setBet] = useState(10);
   const [spinning, setSpinning] = useState(false);

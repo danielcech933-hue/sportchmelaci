@@ -162,7 +162,7 @@ function MatchPage() {
         <Lineup teamA={match.teamA} teamB={match.teamB} canEdit={isAdmin && !match.endedAt} onChange={(a, b) => update({ ...match, teamA: a, teamB: b })} />
         {cfg.hasSets && <div className="mt-2 grid grid-cols-2 gap-3 text-center text-xs text-muted-foreground md:gap-8"><div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsA}</span></div><div>{cfg.setLabel}s won: <span className="font-mono text-primary">{setsB}</span></div></div>}
         <div className="mt-4 grid grid-cols-2 gap-3 md:gap-8">
-          {["a", "b" as const].map((side) => {
+          {(["a", "b"] as const).map((side) => {
             const score = side === "a" ? match.scoreA : match.scoreB;
             return <div key={side} className="rounded-2xl bg-background/60 p-4 md:p-8"><div className="led-digit text-center text-[6rem] leading-none md:text-[10rem]">{score}</div>{isOwner && !match.endedAt && <div className="mt-4 flex items-center justify-center gap-2"><button onClick={() => bump(side, -1)} className="h-12 w-12 rounded-full border border-border text-xl hover:bg-surface-2" aria-label="minus">−</button><button onClick={() => bump(side, 1)} className="h-16 flex-1 rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_30px_-10px_var(--color-primary)] active:scale-95" aria-label="plus one">+1</button></div>}</div>;
           })}
