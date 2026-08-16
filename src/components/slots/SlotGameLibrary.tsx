@@ -6,7 +6,25 @@ import { SlotVariantFrame, type SlotVariantId } from "@/components/slots/SlotVar
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-const GAMES: Array<{ id: SlotVariantId; title: string; kicker: string; description: string; icon: typeof Beer; accent: string; frame: string; badge: string; feature: string; motif: string; stat: string; epic?: boolean }> = [
+type EpicGameId = "thunder-egg" | "bass-bounty";
+type CatalogGameId = SlotVariantId | EpicGameId;
+
+type CatalogGame = {
+  id: CatalogGameId;
+  title: string;
+  kicker: string;
+  description: string;
+  icon: typeof Beer;
+  accent: string;
+  frame: string;
+  badge: string;
+  feature: string;
+  motif: string;
+  stat: string;
+  epic?: boolean;
+};
+
+const GAMES: CatalogGame[] = [
   { id:"thunder-egg", title:"Thunder Egg", kicker:"OLYMPUS STORM", description:"6×5 cluster slot s cascades, Divine Reveal, Lightning zásahy a třemi bonusovými režimy.", icon:Hammer, accent:"from-amber-400/50 via-indigo-500/20 to-transparent", frame:"border-amber-300/45 hover:border-yellow-100/90", badge:"EPIC VOL", feature:"DIVINE REVEAL", motif:"STORM", stat:"6 × 5", epic:true },
   { id:"bass-bounty", title:"Bass Bounty", kicker:"WILD WATER", description:"5×3 money-symbol bonanza s collector wildem, free spiny a retrigger multipliery.", icon:Fish, accent:"from-cyan-400/50 via-blue-500/20 to-transparent", frame:"border-cyan-300/45 hover:border-cyan-100/90", badge:"EPIC VOL", feature:"MEGA CATCH", motif:"WILD WATER", stat:"5 × 3", epic:true },
   { id:"neon-pints", title:"Neon Pints", kicker:"NEON CASCADE", description:"Cyber sportbar, světelné trubice a padající symboly.", icon:Beer, accent:"from-cyan-400/45 via-emerald-400/12 to-transparent", frame:"border-cyan-300/30 hover:border-cyan-200/75", badge:"HIGH VOL", feature:"CASCADE / CLUSTER", motif:"NEON", stat:"6 × 5" },
@@ -16,19 +34,16 @@ const GAMES: Array<{ id: SlotVariantId; title: string; kicker: string; descripti
   { id:"stadium-legends", title:"Stadium Legends", kicker:"HALL OF FAME", description:"Prémiová sportovní síň slávy s legendárními wildy.", icon:Gem, accent:"from-sky-400/45 via-blue-500/15 to-transparent", frame:"border-sky-300/30 hover:border-blue-200/75", badge:"MID VOL", feature:"LEGEND WILDS", motif:"LEGENDS", stat:"5 × 4" },
 ];
 
-type GameId = SlotVariantId;
-type EpicGameId = "thunder-egg" | "bass-bounty";
-
 export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
   const { nickname } = useAuth();
-  const [selected, setSelected] = useState<GameId | null>(null);
+  const [selected, setSelected] = useState<CatalogGameId | null>(null);
   const game = useMemo(() => GAMES.find((item) => item.id === selected) ?? null, [selected]);
 
   return (
     <section className="mt-5 overflow-hidden rounded-[30px] border border-white/10 bg-[#070b10]/95 p-3 shadow-[0_28px_90px_-60px_rgba(0,0,0,.95)] sm:p-5">
       <div className="flex flex-col gap-4 border-b border-white/8 pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 font-mono text-[8px] font-black uppercase tracking-[.3em] text-[#4dffa6]/80"><Gamepad2 className="h-4 w-4" /> ORIGINAL GAME CATALOG</div>
+          <div className="inline-flex items-center gap-2 font-mono text-[8px] font-black uppercase tracking-[.3em] text-[#4dffa6]/80"><Gamepad2 className="h-4 w-4" /> SLOT GAME CATALOG</div>
           <h2 className="mt-1 font-display text-3xl tracking-[.13em] text-white sm:text-4xl">VYBER SI HRU</h2>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-white/48 sm:text-sm">Epic edice mají vlastní bonusový flow a cinematické VFX; ostatní tituly mají vlastní vizuální identitu a serverovou výherní logiku.</p>
         </div>
@@ -54,7 +69,7 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
         })}
       </div>
 
-      {game && <div className="mt-5">{game.epic ? <EpicSlotMachine game={game.id as EpicGameId} playerName={nickname ?? "Hráč"} /> : <SlotVariantFrame game={game.id}><VariantSlotMachine game={game.id} playerName={nickname ?? "Hráč"} /></SlotVariantFrame>}</div>}
+      {game && <div className="mt-5">{game.epic ? <EpicSlotMachine game={game.id as EpicGameId} playerName={nickname ?? "Hráč"} /> : <SlotVariantFrame game={game.id as SlotVariantId}><VariantSlotMachine game={game.id as SlotVariantId} playerName={nickname ?? "Hráč"} /></SlotVariantFrame>}</div>}
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3"><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Hammer className="h-4 w-4 text-[#ffcc44]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Epic bonusy mají vlastní VFX</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Pickaxe className="h-4 w-4 text-[#4dffa6]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Server rozhoduje o výsledku</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Sparkles className="h-4 w-4 text-sky-300/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Slot CZK · pouze play money</div></div></div>
     </section>
