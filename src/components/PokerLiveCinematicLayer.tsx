@@ -24,9 +24,9 @@ const SEATS = [
 function CardFace({ rank, suit, red, down = false, delay = 0 }: { rank: string; suit: string; red: boolean; down?: boolean; delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -24, rotateY: 180, scale: .78 }}
+      initial={{ opacity: 0, y: -24, rotateY: 180, scale: 0.78 }}
       animate={{ opacity: 1, y: 0, rotateY: down ? 180 : 0, scale: 1 }}
-      transition={{ duration: .58, delay, ease: [0.22, 1, .36, 1] }}
+      transition={{ duration: 0.58, delay, ease: [0.22, 1, 0.36, 1] }}
       className="[transform-style:preserve-3d]"
     >
       <div className="relative h-16 w-11 overflow-hidden rounded-[11px] border border-white/25 bg-gradient-to-b from-white via-zinc-100 to-zinc-300 shadow-[0_15px_26px_-15px_rgba(0,0,0,.9)] sm:h-20 sm:w-14">
@@ -47,7 +47,7 @@ function CardFace({ rank, suit, red, down = false, delay = 0 }: { rank: string; 
 
 function ChipBurst({ amount }: { amount: number }) {
   return (
-    <motion.div className="pointer-events-none absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2" initial={{ opacity: 0, scale: .5 }} animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1.1, 1.15, 1.35] }} transition={{ duration: 1.2 }}>
+    <motion.div className="pointer-events-none absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1.1, 1.15, 1.35] }} transition={{ duration: 1.2 }}>
       <div className="flex items-center gap-2 rounded-2xl border border-amber-300/50 bg-black/85 px-4 py-2 shadow-[0_0_60px_rgba(255,204,68,.35)] backdrop-blur-xl">
         <CircleDollarSign className="h-4 w-4 text-amber-300" />
         <span className="font-display text-xl tracking-wider text-amber-200">+{amount.toLocaleString("cs-CZ")}</span>
@@ -81,17 +81,17 @@ export function PokerLiveCinematicLayer() {
       </div>
 
       <div className="relative mx-auto aspect-[1.65] max-w-6xl [perspective:1800px] sm:aspect-[1.8]">
-        <motion.div animate={{ rotateX: 56 }} transition={{ duration: .8 }} className="absolute left-1/2 top-[54%] h-[66%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[5px] border-amber-200/20 bg-[radial-gradient(ellipse_at_center,rgba(16,90,55,.96),rgba(4,19,17,.99)_55%,#020507_75%)] shadow-[0_50px_120px_-35px_rgba(0,0,0,.95),inset_0_0_60px_rgba(0,0,0,.95)] [transform-style:preserve-3d]">
+        <motion.div animate={{ rotateX: 56 }} transition={{ duration: 0.8 }} className="absolute left-1/2 top-[54%] h-[66%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[5px] border-amber-200/20 bg-[radial-gradient(ellipse_at_center,rgba(16,90,55,.96),rgba(4,19,17,.99)_55%,#020507_75%)] shadow-[0_50px_120px_-35px_rgba(0,0,0,.95),inset_0_0_60px_rgba(0,0,0,.95)] [transform-style:preserve-3d]>
           <div className="absolute inset-[6%] rounded-[50%] border border-amber-100/10" />
           <div className="absolute inset-[11%] rounded-[50%] border border-white/5" />
-          <motion.div animate={{ scale: [1, 1.03, 1], opacity: [.75, 1, .75] }} transition={{ duration: 1.8, repeat: Infinity }} className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-[24px] border border-white/8 bg-black/30 px-4 py-3 backdrop-blur">
+          <motion.div animate={{ scale: [1, 1.03, 1], opacity: [0.75, 1, 0.75] }} transition={{ duration: 1.8, repeat: Infinity }} className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-[24px] border border-white/8 bg-black/30 px-4 py-3 backdrop-blur">
             <CircleDollarSign className="h-4 w-4 text-amber-300" /><span className="font-mono text-[8px] font-black uppercase tracking-[.18em] text-white/35">POT</span><span className="font-display text-xl tracking-wider text-amber-200">{pot.toLocaleString("cs-CZ")}</span>
           </motion.div>
         </motion.div>
 
         <AnimatePresence mode="wait">
           <motion.div key={visibleBoard} className="absolute left-1/2 top-[48%] z-20 flex -translate-x-1/2 -translate-y-1/2 gap-1.5 sm:gap-2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
-            {BOARD.map((card, i) => i < visibleBoard ? <CardFace key={i} {...card} delay={i * .11} /> : <div key={i} className="h-16 w-11 rounded-[10px] border border-amber-200/10 bg-black/25 sm:h-20 sm:w-14" />)}
+            {BOARD.map((card, i) => i < visibleBoard ? <CardFace key={i} {...card} delay={i * 0.11} /> : <div key={i} className="h-16 w-11 rounded-[10px] border border-amber-200/10 bg-black/25 sm:h-20 sm:w-14" />)}
           </motion.div>
         </AnimatePresence>
 
@@ -101,7 +101,7 @@ export function PokerLiveCinematicLayer() {
             <div className={`rounded-2xl border bg-gradient-to-br from-white/[.05] via-black/70 to-black p-2.5 shadow-[0_24px_45px_-25px_rgba(0,0,0,.95)] backdrop-blur-xl ${active ? "border-amber-300/55 ring-2 ring-amber-300/25 shadow-[0_0_35px_rgba(255,204,68,.22)]" : "border-white/10"}`}>
               <div className="flex items-center gap-2"><div className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 bg-black/30"><UserRound className="h-3.5 w-3.5 text-white/70" /></div><div className="min-w-0"><div className="truncate font-display text-[10px] tracking-wider text-white">{seat.name}</div><div className="font-mono text-[7px] uppercase tracking-[.16em] text-white/35">{active ? "ACTION" : "SEATED"}</div></div>{i === 0 && <Crown className="ml-auto h-3.5 w-3.5 text-amber-300" />}</div>
               <div className="mt-2 flex items-center justify-between rounded-lg border border-white/8 bg-black/30 px-2 py-1.5"><span className="font-mono text-[7px] font-black uppercase tracking-[.12em] text-white/35">STACK</span><span className="font-mono text-[8px] font-black text-amber-200">{seat.stack}</span></div>
-              <div className="mt-2 flex gap-1.5"><CardFace rank="A" suit="♠" red={false} down /><CardFace rank="K" suit="♣" red={false} down delay={.05} /></div>
+              <div className="mt-2 flex gap-1.5"><CardFace rank="A" suit="♠" red={false} down /><CardFace rank="K" suit="♣" red={false} down delay={0.05} /></div>
             </div>
           </motion.div>;
         })}
@@ -111,7 +111,20 @@ export function PokerLiveCinematicLayer() {
         </motion.div>
 
         <AnimatePresence>
-          {phase === "showdown" && <motion.div initial={{ opacity: 0, scale: .8, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 1.05 }} className="absolute left-1/2 top-[69%] z-50 -translate-x-1/2 rounded-2xl border border-amber-300/55 bg-black/85 px-5 py-3 text-center shadow-[0_0_70px_rgba(255,204,68,.3)] backdrop-blur-xl"><div className="font-mono text-[7px] font-black uppercase tracking-[.3em] text-amber-300">SHOWDOWN</div><div className="mt-1 flex items-center gap-2 font-display text-xl tracking-[.12em] text-white"><Trophy className="h-4 w-4 text-amber-300" /> CHMEL KING WINS</div><div className="mt-1 font-mono text-[8px] text-emerald-300">+{pot.toLocaleString("cs-CZ")} CHIPS · FULL HOUSE</div></div>}
+          {phase === "showdown" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="absolute left-1/2 top-[69%] z-50 -translate-x-1/2 rounded-2xl border border-amber-300/55 bg-black/85 px-5 py-3 text-center shadow-[0_0_70px_rgba(255,204,68,.3)] backdrop-blur-xl"
+            >
+              <div className="font-mono text-[7px] font-black uppercase tracking-[.3em] text-amber-300">SHOWDOWN</div>
+              <div className="mt-1 flex items-center gap-2 font-display text-xl tracking-[.12em] text-white">
+                <Trophy className="h-4 w-4 text-amber-300" /> CHMEL KING WINS
+              </div>
+              <div className="mt-1 font-mono text-[8px] text-emerald-300">+{pot.toLocaleString("cs-CZ")} CHIPS · FULL HOUSE</div>
+            </motion.div>
+          )}
           {phase === "win" && <ChipBurst amount={pot} />}
         </AnimatePresence>
       </div>
