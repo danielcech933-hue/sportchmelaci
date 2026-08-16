@@ -2,7 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, ChevronDown } from "lucide-react";
 import { EpicSymbolArt } from "@/components/slots/EpicSymbolArt";
-import { EPIC_FEATURES, type EpicGame } from "@/components/slots/EpicBonusCinematic";
+import { EPIC_FEATURES } from "@/components/slots/EpicBonusCinematic";
+import type { EpicGame } from "@/components/slots/EpicStage";
 import { cn } from "@/lib/utils";
 
 type Row = { symbol: string; label: string; pays: string };
