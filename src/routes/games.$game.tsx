@@ -1,11 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Dices, Layers3, Spade, Users, Zap, Shield } from "lucide-react";
+import { PokerArena3D } from "@/components/PokerArena3D";
 
 const GAME_META = {
   poker: {
     title: "POKER LOBBY",
     eyebrow: "// CARD ROOM",
-    description: "Vyber stůl podle limitu, obsazenosti a formátu. Každý stůl má vlastní lobby a později vlastní herní server.",
+    description: "3D multiplayer Texas Hold’em arena se server-authoritative handou, realtime akcí a play-money Slot CZK.",
     icon: Spade,
     tone: "text-primary",
     accent: "border-primary/30",
@@ -32,9 +33,9 @@ type Game = keyof typeof GAME_META;
 
 const TABLES: Record<Exclude<Game, "ultimate">, { id: string; name: string; detail: string; occupancy: string; status: "open" | "soon"; }[]> = {
   poker: [
-    { id: "poker-micro", name: "CHMEL MICRO", detail: "NLH · $1 / $2", occupancy: "3 / 6", status: "open" },
-    { id: "poker-standard", name: "CHMEL STANDARD", detail: "NLH · $5 / $10", occupancy: "4 / 6", status: "open" },
-    { id: "poker-high", name: "CYBER HIGH", detail: "NLH · $25 / $50", occupancy: "1 / 6", status: "soon" },
+    { id: "poker-micro", name: "CHMEL MICRO", detail: "NLH · Slot CZK play-money", occupancy: "live", status: "open" },
+    { id: "poker-standard", name: "CHMEL STANDARD", detail: "NLH · 6–9 hráčů", occupancy: "live", status: "open" },
+    { id: "poker-high", name: "CYBER HIGH", detail: "NLH · high-limit preset", occupancy: "soon", status: "soon" },
   ],
   roulette: [
     { id: "roulette-green", name: "CHMEL EURO", detail: "European · 0–36", occupancy: "7 / 10", status: "open" },
@@ -55,15 +56,15 @@ function GameLobby() {
   const Icon = meta.icon;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 pb-32 sm:py-12">
+    <main className="mx-auto max-w-[1500px] px-3 py-6 pb-32 sm:px-5 sm:py-10">
       <Link to="/" className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3.5 w-3.5" /> Lobby
       </Link>
 
-      <section className={`relative mt-5 overflow-hidden rounded-3xl border ${meta.accent} bg-background/60 p-6 backdrop-blur-xl sm:p-10`}>
+      <section className={`relative mt-5 overflow-hidden rounded-3xl border ${meta.accent} bg-background/60 p-5 backdrop-blur-xl sm:p-8`}>
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-15" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-4xl">
             <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-primary/80">{meta.eyebrow}</p>
             <div className="mt-3 flex items-center gap-3">
               <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 ${meta.tone}`}>
@@ -80,7 +81,7 @@ function GameLobby() {
         </div>
       </section>
 
-      {game === "ultimate" ? <UltimateLobby /> : <TableLobby game={game} />}
+      {game === "ultimate" ? <UltimateLobby /> : game === "poker" ? <PokerArena3D /> : <TableLobby game={game} />}
     </main>
   );
 }
@@ -136,7 +137,7 @@ function TableLobby({ game }: { game: "poker" | "roulette" }) {
       </section>
 
       <p className="mt-5 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-        Lobby UI je připravené na napojení skutečných serverových stolů; stav obsazenosti je nyní pouze prezentační.
+        Ruleta používá vlastní live room; poker nyní používá realtime 3D arénu se serverovým Texas Hold’em enginem.
       </p>
     </>
   );
