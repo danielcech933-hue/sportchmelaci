@@ -2,9 +2,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Crown, Gem, Radio, Shield, Sparkles, Spade, Users, Zap } from "lucide-react";
 import { LivePokerTournament } from "@/components/LivePokerTournament";
-import { Poker3DCinematicTable } from "@/components/Poker3DCinematicTable";
-import { PokerLiveCinematic } from "@/components/PokerLiveCinematic";
-import { PokerLiveSyncHUD } from "@/components/PokerLiveSyncHUD";
+import { Poker3DExperience } from "@/components/Poker3DExperience";
 
 const SEATS = [
   { name: "NORTH STAR", meta: "PRO", tone: "from-amber-300/25 to-orange-500/5" },
@@ -35,13 +33,12 @@ export function PokerArena3D() {
         <div className="flex flex-wrap gap-2 font-mono text-[8px] font-black uppercase tracking-[.16em]">
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-emerald-300"><Radio className="h-3 w-3" /> REALTIME</span>
           <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1.5 text-cyan-300"><Shield className="h-3 w-3" /> SERVER AUTH</span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-amber-300"><Gem className="h-3 w-3" /> PLAY MONEY</span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-amber-300"><Gem className="h-4 w-4" /> PLAY MONEY</span>
         </div>
       </header>
 
       <section className="relative z-10 p-3 sm:p-5">
-        <Poker3DCinematicTable />
-        <PokerLiveSyncHUD />
+        <Poker3DExperience />
       </section>
 
       <section className="relative z-10 px-3 pb-2 sm:px-5">
@@ -60,10 +57,6 @@ export function PokerArena3D() {
           </div>
         </div>
       </section>
-
-      <div className="relative z-10 border-t border-white/8 bg-black/25 p-3 sm:p-5">
-        <PokerLiveCinematic />
-      </div>
 
       <div className="relative z-10 grid gap-3 px-3 pb-3 pt-3 sm:grid-cols-3 sm:px-5 sm:pb-5">
         <ArenaFeature icon={<Sparkles />} title="CINEMATIC SHOWDOWN" text="Karty se rozdají, otočí a vítězná kombinace dostane vlastní win reveal." />
