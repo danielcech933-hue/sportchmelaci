@@ -4,6 +4,7 @@ import { Crown, Gem, Radio, Shield, Sparkles, Spade, Users, Zap } from "lucide-r
 import { LivePokerTournament } from "@/components/LivePokerTournament";
 import { Poker3DCinematicTable } from "@/components/Poker3DCinematicTable";
 import { PokerLiveCinematic } from "@/components/PokerLiveCinematic";
+import { PokerLiveSyncHUD } from "@/components/PokerLiveSyncHUD";
 
 const SEATS = [
   { name: "NORTH STAR", meta: "PRO", tone: "from-amber-300/25 to-orange-500/5" },
@@ -40,6 +41,7 @@ export function PokerArena3D() {
 
       <section className="relative z-10 p-3 sm:p-5">
         <Poker3DCinematicTable />
+        <PokerLiveSyncHUD />
       </section>
 
       <section className="relative z-10 px-3 pb-2 sm:px-5">
