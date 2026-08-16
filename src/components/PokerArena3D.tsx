@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Gem, Radio, Shield, Sparkles, Spade, Users, Zap } from "lucide-react";
 import { LivePokerTournament } from "@/components/LivePokerTournament";
 import { Poker3DCinematicTable } from "@/components/Poker3DCinematicTable";
+import { PokerLiveCinematic } from "@/components/PokerLiveCinematic";
 
 const SEATS = [
   { name: "NORTH STAR", meta: "PRO", tone: "from-amber-300/25 to-orange-500/5" },
@@ -57,6 +58,10 @@ export function PokerArena3D() {
           </div>
         </div>
       </section>
+
+      <div className="relative z-10 border-t border-white/8 bg-black/25 p-3 sm:p-5">
+        <PokerLiveCinematic />
+      </div>
 
       <div className="relative z-10 grid gap-3 px-3 pb-3 pt-3 sm:grid-cols-3 sm:px-5 sm:pb-5">
         <ArenaFeature icon={<Sparkles />} title="CINEMATIC SHOWDOWN" text="Karty se rozdají, otočí a vítězná kombinace dostane vlastní win reveal." />
