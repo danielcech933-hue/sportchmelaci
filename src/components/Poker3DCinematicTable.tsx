@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Coins, Crown, Gem, Radio, Sparkles, Trophy, UserRound, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PokerTableFX, PokerChipFlight } from "@/components/PokerTableFX";
 
 const BOARD = [
   { rank: "A", suit: "♠", red: false },
@@ -30,18 +31,9 @@ const TONE: Record<string, string> = {
 
 function Card({ rank, suit, red, faceDown = false, delay = 0 }: { rank: string; suit: string; red?: boolean; faceDown?: boolean; delay?: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -32, rotateY: 180, scale: 0.75 }}
-      animate={{ opacity: 1, y: 0, rotateY: faceDown ? 180 : 0, scale: 1 }}
-      transition={{ duration: 0.58, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="[transform-style:preserve-3d]"
-    >
+    <motion.div initial={{ opacity: 0, y: -32, rotateY: 180, scale: 0.75 }} animate={{ opacity: 1, y: 0, rotateY: faceDown ? 180 : 0, scale: 1 }} transition={{ duration: 0.58, delay, ease: [0.22, 1, 0.36, 1] }} className="[transform-style:preserve-3d]">
       <div className="relative h-16 w-11 overflow-hidden rounded-[10px] border border-white/25 bg-gradient-to-b from-white to-zinc-200 shadow-[0_12px_24px_-12px_rgba(0,0,0,.9)] sm:h-20 sm:w-14">
-        {faceDown ? (
-          <div className="absolute inset-1.5 rounded-md border border-amber-300/25 bg-[radial-gradient(circle_at_30%_30%,rgba(255,208,75,.25),transparent_25%),linear-gradient(135deg,#0b1019,#111b2d)]"><div className="absolute inset-2 rounded border border-amber-200/10" /></div>
-        ) : (
-          <div className={`flex h-full flex-col items-center justify-center font-display font-black ${red ? "text-rose-600" : "text-zinc-950"}`}><span className="text-lg leading-none">{rank}</span><span className="text-sm leading-none">{suit}</span></div>
-        )}
+        {faceDown ? <div className="absolute inset-1.5 rounded-md border border-amber-300/25 bg-[radial-gradient(circle_at_30%_30%,rgba(255,208,75,.25),transparent_25%),linear-gradient(135deg,#0b1019,#111b2d)]"><div className="absolute inset-2 rounded border border-amber-200/10" /></div> : <div className={`flex h-full flex-col items-center justify-center font-display font-black ${red ? "text-rose-600" : "text-zinc-950"}`}><span className="text-lg leading-none">{rank}</span><span className="text-sm leading-none">{suit}</span></div>}
       </div>
     </motion.div>
   );
@@ -49,31 +41,29 @@ function Card({ rank, suit, red, faceDown = false, delay = 0 }: { rank: string; 
 
 function Chips({ amount, accent }: { amount: number; accent: string }) {
   const color = accent === "cyan" ? "border-cyan-200/55" : accent === "emerald" ? "border-emerald-200/55" : "border-amber-200/55";
-  return <div className="flex items-end gap-[3px]">{Array.from({ length: Math.min(5, Math.max(3, Math.ceil(amount / 700))) }).map((_, i) => <motion.span key={i} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: i * .04 }} className={`h-2.5 w-7 rounded-full border ${color} bg-gradient-to-b from-white/15 to-black shadow-[0_4px_8px_rgba(0,0,0,.75)]`} />)}</div>;
+  return <div className="flex items-end gap-[3px]">{Array.from({ length: Math.min(5, Math.max(3, Math.ceil(amount / 700))) }).map((_, i) => <PokerChipFlight key={i} delay={i * .04}><motion.span initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={`block h-2.5 w-7 rounded-full border ${color} bg-gradient-to-b from-white/15 to-black shadow-[0_4px_8px_rgba(0,0,0,.75)]`} /></PokerChipFlight>)}</div>;
 }
 
 export function Poker3DCinematicTable() {
   const [phase, setPhase] = useState(0);
   const [timer, setTimer] = useState(18);
-  useEffect(() => {
-    const p = window.setInterval(() => setPhase((x) => (x + 1) % 4), 4200);
-    const t = window.setInterval(() => setTimer((x) => (x <= 1 ? 25 : x - 1)), 1000);
-    return () => { window.clearInterval(p); window.clearInterval(t); };
-  }, []);
-  const liveSeat = [1, 4, 0, 3][phase];
-  const visible = [0, 3, 5, 5][phase];
-  const pot = useMemo(() => [120, 280, 640, 1160][phase], [phase]);
-  const action = ["DEALING", "BET 120", "RAISE 480", "SHOWDOWN"][phase];
+  useEffect(() => { const p = window.setInterval(() => setPhase((x) => (x + 1) % 5), 4200); const t = window.setInterval(() => setTimer((x) => (x <= 1 ? 25 : x - 1)), 1000); return () => { window.clearInterval(p); window.clearInterval(t); }; }, []);
+  const liveSeat = [1, 4, 0, 3, 2][phase];
+  const visible = [0, 3, 5, 5, 5][phase];
+  const pot = useMemo(() => [120, 280, 640, 1160, 1480][phase], [phase]);
+  const action = ["DEALING", "BET 120", "RAISE 480", "SHOWDOWN", "WIN"][phase];
+  const phaseId = (["deal", "bet", "raise", "showdown", "win"] as const)[phase];
 
   return (
     <section className="relative overflow-hidden rounded-[30px] border border-amber-300/20 bg-[#03060a] p-3 shadow-[0_35px_120px_-55px_rgba(255,204,68,.65)] sm:p-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,202,80,.13),transparent_26%),radial-gradient(circle_at_50%_100%,rgba(24,177,117,.12),transparent_45%)]" />
-      <div className="relative mb-3 flex items-center justify-between rounded-2xl border border-white/8 bg-black/45 px-3 py-2 backdrop-blur-xl">
+      <PokerTableFX phase={phaseId} pot={pot} timer={timer} action={action} />
+      <div className="relative mt-3 flex items-center justify-between rounded-2xl border border-white/8 bg-black/45 px-3 py-2 backdrop-blur-xl">
         <div className="flex items-center gap-2"><span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 font-mono text-[7px] font-black uppercase tracking-[.18em] text-emerald-300"><Radio className="h-3 w-3" /> LIVE ENGINE</span><span className="font-mono text-[8px] font-black uppercase tracking-[.18em] text-white/35">CINEMATIC TABLE</span></div>
         <span className="font-mono text-[8px] font-black uppercase tracking-[.18em] text-amber-300">{action} · {timer.toString().padStart(2, "0")}s</span>
       </div>
 
-      <div className="relative mx-auto aspect-[1.65] max-w-6xl [perspective:1800px] sm:aspect-[1.8]">
+      <div className="relative mx-auto mt-3 aspect-[1.65] max-w-6xl [perspective:1800px] sm:aspect-[1.8]">
         <motion.div animate={{ rotateX: 56 }} className="absolute left-1/2 top-[54%] h-[66%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[5px] border-amber-200/20 bg-[radial-gradient(ellipse_at_center,rgba(16,90,55,.96),rgba(4,19,17,.99)_55%,#020507_75%)] shadow-[0_50px_120px_-35px_rgba(0,0,0,.95),inset_0_0_60px_rgba(0,0,0,.95)] [transform-style:preserve-3d]>
           <div className="absolute inset-[6%] rounded-[50%] border border-amber-100/10" /><div className="absolute inset-[11%] rounded-[50%] border border-white/5" />
           <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-[24px] border border-white/8 bg-black/30 px-4 py-3 backdrop-blur"><Coins className="h-4 w-4 text-amber-300" /><span className="font-mono text-[8px] font-black uppercase tracking-[.18em] text-white/35">POT</span><span className="font-display text-xl text-amber-200">{pot}</span></div>
