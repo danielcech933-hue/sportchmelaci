@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Beer, CarFront, ChevronRight, Fish, Flame, Gamepad2, Gem, Hammer, Pickaxe, Shield, Sparkles, Trophy, Zap } from "lucide-react";
-import { EpicSlotMachine } from "@/components/slots/EpicSlotMachine";
+import { EpicSlotMachinePro } from "@/components/slots/EpicSlotMachinePro";
 import { VariantSlotMachine } from "@/components/slots/VariantSlotMachine";
 import { SlotVariantFrame, type SlotVariantId } from "@/components/slots/SlotVariantFrame";
 import { useAuth } from "@/lib/auth";
@@ -45,7 +45,7 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
         <div>
           <div className="inline-flex items-center gap-2 font-mono text-[8px] font-black uppercase tracking-[.3em] text-[#4dffa6]/80"><Gamepad2 className="h-4 w-4" /> SLOT GAME CATALOG</div>
           <h2 className="mt-1 font-display text-3xl tracking-[.13em] text-white sm:text-4xl">VYBER SI HRU</h2>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-white/48 sm:text-sm">Epic edice mají vlastní bonusový flow a cinematické VFX; ostatní tituly mají vlastní vizuální identitu a serverovou výherní logiku.</p>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-white/48 sm:text-sm">Epic edice mají vlastní bonusový flow, originální vektorové symboly a cinematické VFX; ostatní tituly mají vlastní vizuální identitu a serverovou výherní logiku.</p>
         </div>
         <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#4dffa6]/20 bg-[#4dffa6]/5 px-3 py-1.5 font-mono text-[8px] font-black uppercase tracking-[.18em] text-[#4dffa6]"><Zap className="h-3.5 w-3.5" /> SERVER RNG · SLOT CZK</div>
       </div>
@@ -69,9 +69,9 @@ export function SlotGameLibrary({ onExchange }: { onExchange?: () => void }) {
         })}
       </div>
 
-      {game && <div className="mt-5">{game.epic ? <EpicSlotMachine game={game.id as EpicGameId} playerName={nickname ?? "Hráč"} /> : <SlotVariantFrame game={game.id as SlotVariantId}><VariantSlotMachine game={game.id as SlotVariantId} playerName={nickname ?? "Hráč"} /></SlotVariantFrame>}</div>}
+      {game && <div className="mt-5">{game.epic ? <EpicSlotMachinePro game={game.id as EpicGameId} playerName={nickname ?? "Hráč"} /> : <SlotVariantFrame game={game.id as SlotVariantId}><VariantSlotMachine game={game.id as SlotVariantId} playerName={nickname ?? "Hráč"} /></SlotVariantFrame>}</div>}
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3"><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Hammer className="h-4 w-4 text-[#ffcc44]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Epic bonusy mají vlastní VFX</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Pickaxe className="h-4 w-4 text-[#4dffa6]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Server rozhoduje o výsledku</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Sparkles className="h-4 w-4 text-sky-300/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Slot CZK · pouze play money</div></div></div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3"><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Hammer className="h-4 w-4 text-[#ffcc44]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Originální vector artwork</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Pickaxe className="h-4 w-4 text-[#4dffa6]/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Server rozhoduje o výsledku</div></div><div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><Sparkles className="h-4 w-4 text-sky-300/65"/><div className="mt-2 font-mono text-[8px] font-black uppercase tracking-[.16em] text-white/42">Slot CZK · pouze play money</div></div></div>
     </section>
   );
 }
