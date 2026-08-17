@@ -18,6 +18,7 @@ export type SportId =
   | "topspin";
 
 export type MarketKind = "goals" | "hockey" | "points" | "sets" | "race";
+export type MatchFormat = "1v1" | "2v2";
 
 export interface SportConfig {
   id: SportId;
@@ -84,8 +85,11 @@ export interface Match {
   ownerId: string;
   ownerNickname: string;
   sport: SportId;
+  matchFormat: MatchFormat;
   teamA: string;
   teamB: string;
+  teamAPlayers: string[];
+  teamBPlayers: string[];
   scoreA: number;
   scoreB: number;
   sets: SetScore[];
