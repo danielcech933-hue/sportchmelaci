@@ -2,11 +2,13 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Dices, Layers3, Spade, Users, Zap, Shield, Sparkles } from "lucide-react";
 import { PokerArena3D } from "@/components/PokerArena3D";
 import { LiveRouletteServer } from "@/components/LiveRouletteServer";
+import { RollBattles } from "@/components/case-opening/RollBattles";
 
 const GAME_META = {
   poker: { title: "POKER LOBBY", eyebrow: "// CARD ROOM", description: "Skutečný multiplayer Texas Hold'em. Připoj se ke stolu, posaď se na volné místo a počkej na další skutečné hráče.", icon: Spade, tone: "text-amber-300", accent: "border-amber-300/30" },
   roulette: { title: "RULETA LIVE", eyebrow: "// ROULETTE FLOOR", description: "Živá serverová ruleta s odpočtem do uzavření a společným kolem. Vše je server-authoritative a pouze play-money.", icon: Dices, tone: "text-emerald-300", accent: "border-emerald-300/30" },
   ultimate: { title: "ULTIMATE LOBBY", eyebrow: "// FC ULTIMATE", description: "Vstupní hala pro sestavy, Card Spin, sbírku a online zápasy. Každý režim má vlastní flow.", icon: Layers3, tone: "text-primary", accent: "border-primary/30" },
+  roll: { title: "ROLL BATTLES", eyebrow: "// STOCK VAULT ARENA", description: "Slož svůj stack z virtuálních akciových collectible dropů, dorovnej soupeře v toleranci ±15 % a rozhodni battle jedním serverovým Rollem.", icon: Dices, tone: "text-cyan-300", accent: "border-cyan-300/30" },
 } as const;
 
 type Game = keyof typeof GAME_META;
@@ -19,6 +21,8 @@ function GameLobby() {
   const meta = GAME_META[game];
   if (!meta) throw notFound();
   const Icon = meta.icon;
+
+  if (game === "roll") return <RollBattles />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 pb-32 sm:py-12">
