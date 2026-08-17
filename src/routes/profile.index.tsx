@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileView } from "@/components/ProfileView";
+import { ProfileAchievements } from "@/components/ProfileAchievements";
 import { AccountSecurity } from "@/components/AccountSecurity";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({
@@ -17,9 +19,11 @@ export const Route = createFileRoute("/profile/")({
 });
 
 function ProfilePage() {
+  const { user } = useAuth();
   return (
     <>
       <ProfileView />
+      {user && <div className="mx-auto max-w-6xl px-3 sm:px-4"><ProfileAchievements userId={user.id} /></div>}
       <div className="mx-auto max-w-6xl px-3 sm:px-4">
         <AccountSecurity />
       </div>
