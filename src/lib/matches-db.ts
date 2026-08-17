@@ -1,20 +1,31 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Match, SportId, SetScore, Bet } from "./matches";
+import type { Match, MatchFormat, SportId, SetScore, Bet } from "./matches";
 
 type Row = {
-  id: string; owner_id: string; sport: string; team_a: string; team_b: string; score_a: number; score_b: number;
-  sets: unknown; bets: unknown; started_at: string; ended_at: string | null; scheduled_at?: string | null;
+  id: string; owner_id: string; sport: string; match_format?: MatchFormat | null; team_a: string; team_b: string; score_a: number; score_b: number;
+  team_a_players?: unknown; team_b_players?: unknown; sets: unknown; bets: unknown; started_at: string; ended_at: string | null; scheduled_at?: string | null;
   confirmed_at?: string | null; confirmed_by?: string | null; bets_locked_at?: string | null; tournament_id?: string | null;
   round?: number | null; slot?: number | null; team_a_ref?: string | null; team_b_ref?: string | null;
 };
 
+function playerArray(value: unknown, fallback: string): string[] {
+  if (Array.isArray(value)) return value.map(String).map((s) => s.trim()).filter(Boolean);
+  return fallback.split(/\s*(?:&|\/|,|\+)\s*/).map((s) => s.trim()).filter(Boolean);
+}
+
 function toMatch(r: Row, nickname: string): Match {
-  return { id:r.id, ownerId:r.owner_id, ownerNickname:nickname, sport:r.sport as SportId, teamA:r.team_a, teamB:r.team_b,
+  const teamAPlayers = playerArray(r.team_a_players, r.team_a);
+  const teamBPlayers = playerArray(r.team_b_players, r.team_b);
+  const matchFormat: MatchFormat = r.match_format === "2v2" || teamAPlayers.length === 2 || teamBPlayers.length === 2 ? "2v2" : "1v1";
+  return {
+    id:r.id, ownerId:r.owner_id, ownerNickname:nickname, sport:r.sport as SportId, matchFormat,
+    teamA:r.team_a, teamB:r.team_b, teamAPlayers, teamBPlayers,
     scoreA:r.score_a, scoreB:r.score_b, sets:(r.sets as SetScore[]) ?? [], bets:(r.bets as Bet[]) ?? [],
     betsLockedAt:r.bets_locked_at ? new Date(r.bets_locked_at).getTime() : undefined, startedAt:new Date(r.started_at).getTime(),
     endedAt:r.ended_at ? new Date(r.ended_at).getTime() : undefined, scheduledAt:r.scheduled_at ? new Date(r.scheduled_at).getTime() : undefined,
     confirmedAt:r.confirmed_at ? new Date(r.confirmed_at).getTime() : undefined, confirmedBy:r.confirmed_by ?? null,
-    tournamentId:r.tournament_id ?? null, round:r.round ?? null, slot:r.slot ?? null, teamARef:r.team_a_ref ?? null, teamBRef:r.team_b_ref ?? null };
+    tournamentId:r.tournament_id ?? null, round:r.round ?? null, slot:r.slot ?? null, teamARef:r.team_a_ref ?? null, teamBRef:r.team_b_ref ?? null,
+  };
 }
 
 async function attachNicknames(rows: Row[]): Promise<Match[]> {
@@ -24,7 +35,18 @@ async function attachNicknames(rows: Row[]): Promise<Match[]> {
 }
 export async function fetchAllMatches():Promise<Match[]> { const {data,error}=await supabase.from("matches").select("*").order("started_at",{ascending:false}); if(error) throw error; return attachNicknames((data??[]) as Row[]); }
 export async function fetchMatch(id:string):Promise<Match|null>{ const {data,error}=await supabase.from("matches").select("*").eq("id",id).maybeSingle(); if(error) throw error; if(!data) return null; const [m]=await attachNicknames([data as Row]); return m; }
-export async function createMatch(input:{ownerId:string;sport:SportId;teamA:string;teamB:string;scheduledAt?:number|null}):Promise<string>{ const payload:Record<string,unknown>={owner_id:input.ownerId,sport:input.sport,team_a:input.teamA,team_b:input.teamB}; if(input.scheduledAt) payload.scheduled_at=new Date(input.scheduledAt).toISOString(); const {data,error}=await supabase.from("matches").insert(payload as never).select("id").single(); if(error) throw error; return data.id; }
+export async function createMatch(input:{ownerId:string;sport:SportId;matchFormat?:MatchFormat;teamA:string;teamB:string;teamAPlayers?:string[];teamBPlayers?:string[];scheduledAt?:number|null}):Promise<string>{
+  const matchFormat=input.matchFormat ?? "1v1";
+  const aPlayers=(input.teamAPlayers?.length ? input.teamAPlayers : [input.teamA]).map((s)=>s.trim()).filter(Boolean);
+  const bPlayers=(input.teamBPlayers?.length ? input.teamBPlayers : [input.teamB]).map((s)=>s.trim()).filter(Boolean);
+  if (matchFormat === "1v1" && (aPlayers.length !== 1 || bPlayers.length !== 1)) throw new Error("1v1 vyžaduje jednoho hráče na každé straně.");
+  if (matchFormat === "2v2" && (aPlayers.length !== 2 || bPlayers.length !== 2)) throw new Error("2v2 vyžaduje dva hráče na každé straně.");
+  const all = [...aPlayers, ...bPlayers].map((s)=>s.toLocaleLowerCase("cs-CZ"));
+  if (new Set(all).size !== all.length) throw new Error("Hráč nesmí být ve dvou stranách zároveň.");
+  const payload:Record<string,unknown>={owner_id:input.ownerId,sport:input.sport,match_format:matchFormat,team_a:aPlayers.join(" & "),team_b:bPlayers.join(" & "),team_a_players:aPlayers,team_b_players:bPlayers};
+  if(input.scheduledAt) payload.scheduled_at=new Date(input.scheduledAt).toISOString();
+  const {data,error}=await supabase.from("matches").insert(payload as never).select("id").single(); if(error) throw error; return data.id;
+}
 export async function saveMatch(m:Match):Promise<void>{ const {error}=await supabase.rpc("save_match_score" as never,{_match_id:m.id,_score_a:m.scoreA,_score_b:m.scoreB,_sets:m.sets as unknown as never,_ended_at:m.endedAt?new Date(m.endedAt).toISOString():null} as never); if(error) throw error; }
 
 export async function placeMarketBet(input:{matchId:string;marketId:string;optionId:string;pick:"a"|"b"|"draw";amount:number;lockedOdds:number;marketLabel?:string;selectionLabel?:string;note?:string}):Promise<{balance:number;lockedOdds:number}>{
