@@ -9,7 +9,7 @@ type Card = { r: number; s: "s" | "h" | "d" | "c" };
 type Player = { userId: string; nickname: string; chips: number; bet: number; folded: boolean; allIn: boolean; holeCards?: Card[] };
 type Hand = { players: Player[]; communityCards?: Card[]; pot: number; stage: string; toAct: number; deadline: number; winners?: { userId: string; nickname: string; amount: number; label: string }[] | null };
 type Tournament = { id: string; name: string; status: string; hand: Hand | null };
-type Seat = { user_id: string; nickname: string; seat_no: number; chips: number };
+type Seat = { tournament_id: string; user_id: string; nickname: string; seat_no: number; chips: number };
 
 const POSITIONS = [
   ["8%", "50%"],
