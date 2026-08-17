@@ -2,7 +2,7 @@ import { SPORTS, type Match } from "@/lib/matches";
 
 export function splitPlayers(name: string): string[] {
   return name
-    .split(/\s*(?:&|\/|\+|,|\band\b)\s*/i)
+    .split(/\s*(?:&|\/|\+|\band\b)\s*/i)
     .map((s) => s.trim())
     .filter(Boolean);
 }
@@ -14,12 +14,18 @@ function normalizeName(name: string): string {
 export function winnerSideOf(m: Match): "a" | "b" | null {
   if (!m.endedAt) return null;
   const cfg = SPORTS[m.sport];
+
+  // Prefer the decisive set/leg count when it is available. Some older
+  // recorded matches have a non-decisive or incomplete `sets` payload even
+  // though the final score is already saved, so fall back to the final score
+  // instead of silently dropping that result from the scoreboard.
   if (cfg.hasSets && m.sets.length > 0) {
     const a = m.sets.filter((s) => s.a > s.b).length;
     const b = m.sets.filter((s) => s.b > s.a).length;
-    if (a === b) return null;
-    return a > b ? "a" : "b";
+    if (a > b) return "a";
+    if (b > a) return "b";
   }
+
   if (m.scoreA === m.scoreB) return null;
   return m.scoreA > m.scoreB ? "a" : "b";
 }
