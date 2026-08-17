@@ -38,13 +38,7 @@ export default tseslint.config(
   },
   eslintPluginPrettier,
   {
-    files: [
-      "src/components/SportActionModal.tsx",
-      "src/routes/match.tsx",
-      "src/lib/matches.ts",
-      "src/lib/matches-db.ts",
-      "src/components/FloatingNav.tsx",
-    ],
+    files: ["**/*.{ts,tsx}"],
     rules: {
       "prettier/prettier": "off",
     },
