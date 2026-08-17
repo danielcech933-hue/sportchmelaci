@@ -55,6 +55,7 @@ const GAME_ITEMS: NavItem[] = [
   { to: "/games/roulette", label: "Ruleta", icon: Dices },
   { to: "/games/ultimate", label: "Ultimate", icon: Layers },
   { to: "/slots", label: "Sloty", icon: Beer },
+  { to: "/games/roll", label: "Roll", icon: Dices, authOnly: true },
   { to: "/games/case-opening", label: "Case Opening", icon: PackageOpen, privilegedOnly: true },
 ];
 
