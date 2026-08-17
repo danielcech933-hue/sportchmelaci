@@ -5,7 +5,7 @@ export const Route = createFileRoute("/games/case-opening")({
   head: () => ({
     meta: [
       { title: "Case Opening — SportChmeláci" },
-      { name: "description", content: "Privátní case-opening lobby se serverovou RNG a Slot CZK odměnami." },
+      { name: "description", content: "Privátní case-opening lobby za betting dolary s virtuálními share collectibles, rarity a serverovou RNG." },
     ],
   }),
   component: CaseOpeningLobby,
