@@ -5,6 +5,7 @@ import { BETS, formatKc } from "@/lib/slots";
 interface ControlBarProps {
   balance: number;
   bet: number;
+  maxBet: number;
   lastWin: number;
   spinning: boolean;
   freeSpinsLeft: number;
@@ -23,6 +24,7 @@ const AUTO_OPTIONS = [10, 25, 50, 100];
 export function ControlBar({
   balance,
   bet,
+  maxBet,
   lastWin,
   spinning,
   freeSpinsLeft,
@@ -35,9 +37,10 @@ export function ControlBar({
   onInfo,
   onHof,
 }: ControlBarProps) {
-  const idx = BETS.indexOf(bet);
-  const dec = () => onBet(BETS[Math.max(0, idx - 1)]);
-  const inc = () => onBet(BETS[Math.min(BETS.length - 1, idx + 1)]);
+  const availableBets = BETS.filter((value) => value <= maxBet);
+  const idx = Math.max(0, availableBets.indexOf(bet));
+  const dec = () => onBet(availableBets[Math.max(0, idx - 1)]);
+  const inc = () => onBet(availableBets[Math.min(availableBets.length - 1, idx + 1)]);
 
   return (
     <div className="mt-4 rounded-[20px] border border-hop-gold/30 bg-[linear-gradient(180deg,rgba(7,31,17,0.94),rgba(1,8,4,0.98))] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:p-4">
@@ -53,7 +56,7 @@ export function ControlBar({
           <div className="min-w-24 rounded-xl border border-hop-gold/35 bg-black/45 px-3 py-2 text-center font-mono text-sm font-black text-hop-gold shadow-inner">
             {formatKc(bet)}
           </div>
-          <IconBtn onClick={inc} disabled={spinning || idx >= BETS.length - 1} label="Zvýšit sázku"><Plus className="h-4 w-4" /></IconBtn>
+          <IconBtn onClick={inc} disabled={spinning || idx >= availableBets.length - 1} label="Zvýšit sázku"><Plus className="h-4 w-4" /></IconBtn>
           <button
             onClick={onMaxBet}
             disabled={spinning}
