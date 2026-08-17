@@ -34,16 +34,9 @@ export const Route = createFileRoute("/ultimate-team")({
   head: () => ({
     meta: [
       { title: "Ultimate Team — SportChmeláci" },
-      {
-        name: "description",
-        content:
-          "Spravuj klub, buduj sestavu, sbírej fotbalové karty, používej Card Spin a hraj FUT zápasy v prémiovém Ultimate Team hubu.",
-      },
+      { name: "description", content: "Spravuj klub, buduj sestavu, sbírej fotbalové karty, používej Card Spin a hraj FUT zápasy v prémiovém Ultimate Team hubu." },
       { property: "og:title", content: "Ultimate Team — SportChmeláci" },
-      {
-        property: "og:description",
-        content: "Klub, sestava, karty, Card Spin, progres a online zápasy na jednom místě.",
-      },
+      { property: "og:description", content: "Klub, sestava, karty, Card Spin, progres a online zápasy na jednom místě." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -52,13 +45,7 @@ export const Route = createFileRoute("/ultimate-team")({
 });
 
 type Tab = "club" | "squad" | "match" | "spin" | "collection" | "catalog";
-
-type TabDef = {
-  key: Tab;
-  label: string;
-  icon: typeof Shield;
-  eyebrow: string;
-};
+type TabDef = { key: Tab; label: string; icon: typeof Shield; eyebrow: string };
 
 const TABS: TabDef[] = [
   { key: "club", label: "Klub", icon: Shield, eyebrow: "CLUB HQ" },
@@ -126,7 +113,6 @@ function UltimateTeamPage() {
       <div className="relative overflow-hidden rounded-[34px] border border-primary/20 bg-[#060a10] shadow-[0_38px_120px_-60px_hsl(var(--primary)/0.55)]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_15%,hsl(var(--primary)/0.20),transparent_22%),radial-gradient(circle_at_10%_100%,rgba(45,197,255,.08),transparent_24%)]" />
         <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.025)_1px,transparent_1px)] [background-size:28px_28px]" />
-
         <section className="relative z-10 p-4 sm:p-6 lg:p-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
@@ -137,7 +123,6 @@ function UltimateTeamPage() {
               <h1 className="mt-3 font-display text-4xl uppercase tracking-[0.11em] text-white sm:text-6xl">{club?.clubName ?? "MŮJ KLUB"}</h1>
               <p className="mt-2 text-sm leading-relaxed text-white/45 sm:text-base">Jeden přehled pro klub, XI, karty, progres, Card Spin a online zápasy.</p>
             </div>
-
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[460px]">
               <HudStat icon={<Coins />} label="Coins" value={club?.coins ?? 0} tone="gold" />
               <HudStat icon={<Ticket />} label="Spin" value={club?.spinTokens ?? 0} tone="cyan" />
@@ -149,14 +134,10 @@ function UltimateTeamPage() {
           <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
             <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-mono text-[8px] font-black uppercase tracking-[0.3em] text-white/35">AKTUÁLNÍ SEKCE</p>
-                  <div className="mt-1 flex items-center gap-2"><CurrentIcon className="h-4 w-4 text-primary" /><span className="font-display text-xl uppercase tracking-[0.09em] text-white">{currentTab.label}</span><span className="rounded-md border border-white/8 bg-white/[0.03] px-2 py-1 font-mono text-[7px] font-black uppercase tracking-[0.16em] text-white/35">{currentTab.eyebrow}</span></div>
-                </div>
+                <div><p className="font-mono text-[8px] font-black uppercase tracking-[0.3em] text-white/35">AKTUÁLNÍ SEKCE</p><div className="mt-1 flex items-center gap-2"><CurrentIcon className="h-4 w-4 text-primary" /><span className="font-display text-xl uppercase tracking-[0.09em] text-white">{currentTab.label}</span><span className="rounded-md border border-white/8 bg-white/[0.03] px-2 py-1 font-mono text-[7px] font-black uppercase tracking-[0.16em] text-white/35">{currentTab.eyebrow}</span></div></div>
                 <button type="button" onClick={() => void reload()} disabled={refreshing} title="Synchronizovat klub se serverem" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.18em] text-white/50 transition hover:border-primary/30 hover:text-primary disabled:opacity-50"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />{refreshing ? "Synchronizuji" : "Sync"}</button>
               </div>
             </div>
-
             <div className="rounded-2xl border border-primary/15 bg-primary/[0.035] p-4">
               <div className="flex items-center justify-between gap-3"><div><p className="font-mono text-[8px] font-black uppercase tracking-[0.28em] text-primary/65">TEAM POWER</p><p className="mt-1 font-display text-2xl tracking-[0.08em] text-white">{collectionPower.toLocaleString("cs-CZ")}</p></div><Swords className="h-6 w-6 text-primary/60" /></div>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/6"><div className="h-full rounded-full bg-gradient-to-r from-primary via-cyan-300 to-primary" style={{ width: `${Math.min(100, cards.length ? Math.max(8, (collectionPower / Math.max(1, cards.length * 100)) * 100) : 8)}%` }} /></div>
@@ -170,12 +151,7 @@ function UltimateTeamPage() {
             {TABS.map((item) => {
               const Icon = item.icon;
               const active = tab === item.key;
-              return (
-                <button key={item.key} type="button" onClick={() => setTab(item.key)} aria-current={active ? "page" : undefined} className={cn("group inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2.5 text-left transition sm:px-4", active ? "border-primary/45 bg-primary/12 text-primary shadow-[0_12px_30px_-18px_hsl(var(--primary)/0.9)]" : "border-white/8 bg-white/[0.02] text-white/45 hover:border-white/15 hover:bg-white/[0.04] hover:text-white")}>
-                  <Icon className={cn("h-4 w-4", active ? "text-primary" : "text-white/30")} />
-                  <span><span className="block font-mono text-[7px] font-black uppercase tracking-[0.16em] opacity-55">{item.eyebrow}</span><span className="block font-display text-sm uppercase tracking-[0.06em]">{item.label}</span></span>
-                </button>
-              );
+              return <button key={item.key} type="button" onClick={() => setTab(item.key)} aria-current={active ? "page" : undefined} className={cn("group inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2.5 text-left transition sm:px-4", active ? "border-primary/45 bg-primary/12 text-primary shadow-[0_12px_30px_-18px_hsl(var(--primary)/0.9)]" : "border-white/8 bg-white/[0.02] text-white/45 hover:border-white/15 hover:bg-white/[0.04] hover:text-white")}><Icon className={cn("h-4 w-4", active ? "text-primary" : "text-white/30")} /><span><span className="block font-mono text-[7px] font-black uppercase tracking-[0.16em] opacity-55">{item.eyebrow}</span><span className="block font-display text-sm uppercase tracking-[0.06em]">{item.label}</span></span></button>;
             })}
           </div>
         </nav>
@@ -184,23 +160,7 @@ function UltimateTeamPage() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.section key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="mt-5">
           {error && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-400/20 bg-red-400/[0.06] px-4 py-3 text-xs text-red-200"><span>{error}</span><button type="button" onClick={() => void reload()} className="font-mono text-[9px] font-black uppercase tracking-[0.16em] underline underline-offset-4">Zkusit znovu</button></div>}
-
-          {tab === "club" && (
-            <div className="space-y-4">
-              <FutProgressionPanel />
-              <div className="grid gap-3 sm:grid-cols-3">
-                <StatCard icon={<Layers />} label="Karty ve sbírce" value={cards.length} hint="Vlastněné položky" />
-                <StatCard icon={<Trophy />} label="Nejlepší rating" value={bestRating || "—"} hint="Top OVR karty" />
-                <StatCard icon={<Sparkles />} label="Luck meter" value={club?.luckMeter ?? 0} hint="Spin bonus" />
-              </div>
-
-              <section className="rounded-[28px] border border-white/8 bg-[#070b11] p-4 sm:p-5">
-                <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[8px] font-black uppercase tracking-[0.28em] text-primary/65">CURATED XI</p><h2 className="mt-1 font-display text-2xl uppercase tracking-[0.08em] text-white">Nejlepší karty</h2></div><button type="button" onClick={() => setTab("collection")} className="inline-flex items-center gap-1 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-primary hover:text-white">Otevřít sbírku <ArrowUpRight className="h-3.5 w-3.5" /></button></div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{topCards.length === 0 ? <EmptyCard onGo={() => setTab("spin")} /> : topCards.map((owned) => <FeaturedCard key={owned.id} card={owned.card} onOpen={() => setTab("collection")} />)}</div>
-              </section>
-            </div>
-          )}
-
+          {tab === "club" && <div className="space-y-4"><FutProgressionPanel /><div className="grid gap-3 sm:grid-cols-3"><StatCard icon={<Layers />} label="Karty ve sbírce" value={cards.length} hint="Vlastněné položky" /><StatCard icon={<Trophy />} label="Nejlepší rating" value={bestRating || "—"} hint="Top OVR karty" /><StatCard icon={<Sparkles />} label="Luck meter" value={club?.luckMeter ?? 0} hint="Spin bonus" /></div><section className="rounded-[28px] border border-white/8 bg-[#070b11] p-4 sm:p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[8px] font-black uppercase tracking-[0.28em] text-primary/65">CURATED XI</p><h2 className="mt-1 font-display text-2xl uppercase tracking-[0.08em] text-white">Nejlepší karty</h2></div><button type="button" onClick={() => setTab("collection")} className="inline-flex items-center gap-1 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-primary hover:text-white">Otevřít sbírku <ArrowUpRight className="h-3.5 w-3.5" /></button></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{topCards.length === 0 ? <EmptyCard onGo={() => setTab("spin")} /> : topCards.map((owned) => <FeaturedCard key={owned.id} card={owned.card} onOpen={() => setTab("collection")} />)}</div></section></div>}
           {tab === "squad" && <div className="space-y-4"><FutSquadReadiness /><SquadBuilder cards={cards} /></div>}
           {tab === "match" && <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"><FutMatchPanel /><FutMatchHistory /></div>}
           {tab === "spin" && club && <CardSpinPanel club={club} onClubChange={(patch) => setClub((current) => (current ? { ...current, ...patch } : current))} onCardWon={() => void reload()} />}
@@ -222,7 +182,7 @@ function StatCard({ icon, label, value, hint }: { icon: React.ReactNode; label: 
 }
 
 function FeaturedCard({ card, onOpen }: { card: UtOwnedCard["card"]; onOpen: () => void }) {
-  return <button type="button" onClick={onOpen} className="group relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-white/[0.055] to-white/[0.015] p-3 text-left transition hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_25px_60px_-35px_hsl(var(--primary)/0.75)]"><div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,hsl(var(--primary)/0.16),transparent_30%)] opacity-70" /><div className="relative flex items-start justify-between gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-black/30 font-display text-xl text-primary">{card.rating}</div><span className="rounded-full border border-white/10 bg-black/25 px-2 py-1 font-mono text-[7px] font-black uppercase tracking-[0.14em] text-white/40">{card.position}</span></div><div className="relative mt-3"><p className="truncate font-display text-lg uppercase tracking-[0.05em] text-white">{card.name}</p><p className="mt-1 truncate text-[10px] text-white/35">{card.club}</p></div><div className="relative mt-3 grid grid-cols-3 gap-1.5 text-center">{[["PAC", card.pace], ["SHO", card.shooting], ["PAS", card.passing]].map(([name, value]) => <div key={String(name)} className="rounded-lg border border-white/8 bg-black/20 px-2 py-1.5"><div className="font-mono text-[6px] font-black tracking-[0.14em] text-white/25">{name}</div><div className="font-mono text-[10px] font-black text-white/70">{value}</div></div>)}</div></button>;
+  return <button type="button" onClick={onOpen} className="group relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-white/[0.055] to-white/[0.015] p-3 text-left transition hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_25px_60px_-35px_hsl(var(--primary)/0.75)]"><div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,hsl(var(--primary)/0.16),transparent_30%)] opacity-70" /><div className="relative flex items-start justify-between gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-black/30 font-display text-xl text-primary">{card.rating}</div><span className="rounded-full border border-white/10 bg-black/25 px-2 py-1 font-mono text-[7px] font-black uppercase tracking-[0.14em] text-white/40">{card.position}</span></div><div className="relative mt-3"><p className="truncate font-display text-lg uppercase tracking-[0.05em] text-white">{card.name}</p><p className="mt-1 truncate text-[10px] text-white/35">{card.club}</p></div><div className="relative mt-3 grid grid-cols-3 gap-1.5 text-center">{[["PAC", card.pac], ["SHO", card.sho], ["PAS", card.pas]].map(([name, value]) => <div key={String(name)} className="rounded-lg border border-white/8 bg-black/20 px-2 py-1.5"><div className="font-mono text-[6px] font-black tracking-[0.14em] text-white/25">{name}</div><div className="font-mono text-[10px] font-black text-white/70">{value}</div></div>)}</div></button>;
 }
 
 function EmptyCard({ onGo }: { onGo: () => void }) {
