@@ -74,7 +74,7 @@ export const NAV_ITEMS: NavEntry[] = [
   { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS },
 ];
 
-const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "boro"]);
+const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "boro", "boro nezastavitelny"]);
 
 export function matchesRoute(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.to;
