@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileView } from "@/components/ProfileView";
+import { ProfileAchievements } from "@/components/ProfileAchievements";
 import { AccountSecurity } from "@/components/AccountSecurity";
 
 export const Route = createFileRoute("/profile/")({
@@ -17,10 +18,12 @@ export const Route = createFileRoute("/profile/")({
 });
 
 function ProfilePage() {
+  const userId = undefined;
   return (
     <>
       <ProfileView />
       <div className="mx-auto max-w-6xl px-3 sm:px-4">
+        <ProfileAchievements userId={userId} />
         <AccountSecurity />
       </div>
     </>
