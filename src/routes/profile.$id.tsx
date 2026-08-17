@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ProfileView } from "@/components/ProfileView";
-import { ProfileAchievements } from "@/components/ProfileAchievements";
 import { PlayerLocator } from "@/components/PlayerLocator";
 import { PublicPhoneActions } from "@/components/PublicPhoneActions";
 import { useAuth } from "@/lib/auth";
@@ -26,7 +25,6 @@ function PublicProfile() {
   return (
     <>
       <ProfileView userId={id} />
-      <div className="mx-auto max-w-6xl px-3 sm:px-4"><ProfileAchievements userId={id} /></div>
       {user && <PublicPhoneActions userId={id} isSelf={Boolean(isSelf)} />}
       {user && <LocatorWrapper userId={id} isSelf={Boolean(isSelf)} nickname={isSelf ? nickname : null} />}
     </>
