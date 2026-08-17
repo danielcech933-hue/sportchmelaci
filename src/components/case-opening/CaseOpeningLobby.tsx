@@ -61,7 +61,9 @@ export function CaseOpeningLobby() {
       supabase.rpc("case_opening_stock_inventory_summary"),
     ]);
     setHistory((hist ?? []) as HistoryRow[]);
-    const parsed = (Array.isArray(inv) ? inv[0] : inv) ?? [];
+    // The RPC returns the inventory as a JSON array. Do not unwrap the first item,
+    // otherwise the client treats a single row as the entire response and renders an empty vault.
+    const parsed = Array.isArray(inv) ? inv : (inv ?? []);
     setInventory(Array.isArray(parsed) ? (parsed as InventoryRow[]) : []);
   }, [allowed, user]);
 
