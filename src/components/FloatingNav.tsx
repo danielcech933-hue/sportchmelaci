@@ -144,13 +144,7 @@ export function FloatingNav() {
         }`}
       >
         <div
-          className="nav-dock pointer-events-auto relative isolate flex max-w-[min(78rem,97vw)] items-center gap-1 overflow-x-auto rounded-[1.35rem] px-1.5 py-1.5 shadow-2xl sm:gap-1.5 sm:px-2 md:overflow-visible"
-          onWheel={(e) => {
-            const el = e.currentTarget;
-            if (el.scrollWidth <= el.clientWidth) return;
-            e.preventDefault();
-            el.scrollLeft += e.deltaY + e.deltaX;
-          }}
+          className="nav-dock pointer-events-auto relative isolate flex max-w-[min(78rem,97vw)] items-center gap-1 overflow-visible rounded-[1.35rem] px-1.5 py-1.5 shadow-2xl sm:gap-1.5 sm:px-2"
           onPointerDown={(e) => e.stopPropagation()}
         >
           <span aria-hidden className="pointer-events-none absolute inset-x-8 -top-px h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent opacity-80" />
