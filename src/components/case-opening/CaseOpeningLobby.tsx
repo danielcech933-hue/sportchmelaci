@@ -1,127 +1,171 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Boxes, Crown, Gem, History, LockKeyhole, PackageOpen, Sparkles, Trophy, Zap } from "lucide-react";
+import { BadgeDollarSign, Boxes, Cpu, Factory, Gamepad2, Globe2, History, LockKeyhole, PackageOpen, Sparkles, Zap } from "lucide-react";
 import { Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useWallet } from "@/lib/wallet";
 import { cn } from "@/lib/utils";
 
-type CaseId = "starter" | "gold" | "mythic";
-type Reward = { case_id: CaseId; cost: number; reward_czk: number; rarity: string; reward_label: string; slot_czk: number };
-type HistoryRow = { id: string; case_id: CaseId; case_cost: number; reward_czk: number; rarity: string; reward_label: string; created_at: string };
+type CaseId = "tech" | "ai" | "finance" | "energy" | "gaming" | "mobility" | "industrial" | "global" | "quantum" | "omega";
+type StockDrop = { case_id: CaseId; case_name: string; cost: number; company_name: string; ticker: string; sector: string; share_count: number; rarity: string; rarity_score: number; serial: string; balance: number; virtual_only: boolean };
+type HistoryRow = { id: string; case_id: CaseId; case_cost: number; company_name: string; ticker: string; sector: string; share_count: number; rarity: string; rarity_score: number; serial: string; created_at: string };
+type InventoryRow = Omit<HistoryRow, "id" | "case_cost">;
+
+type CaseConfig = { id: CaseId; name: string; sector: string; cost: number; description: string; accent: string; icon: typeof Boxes };
 
 const PRIVILEGED = new Set(["danko", "chlaďar", "chladar", "midas", "m1das"]);
-const CASES: Array<{ id: CaseId; name: string; kicker: string; cost: number; glow: string; border: string; badge: string; rewards: string; icon: typeof Boxes }> = [
-  { id: "starter", name: "CHMEL STARTER", kicker: "FIELD DROP", cost: 100, glow: "from-emerald-400/30 via-cyan-400/10 to-transparent", border: "border-emerald-300/25", badge: "COMMON", rewards: "75 → 1 000 CZK", icon: Boxes },
-  { id: "gold", name: "GOLDEN VAULT", kicker: "PREMIUM DROP", cost: 500, glow: "from-amber-400/35 via-yellow-200/10 to-transparent", border: "border-amber-300/35", badge: "EPIC", rewards: "350 → 10 000 CZK", icon: Crown },
-  { id: "mythic", name: "MYTHIC ASCENSION", kicker: "ULTRA DROP", cost: 2500, glow: "from-fuchsia-500/35 via-violet-500/10 to-transparent", border: "border-fuchsia-300/35", badge: "ULTRA", rewards: "1 500 → 100 000 CZK", icon: Gem },
+const CASES: CaseConfig[] = [
+  { id: "tech", name: "TECHNOLOGY VAULT", sector: "Technology", cost: 10_000_000_000, description: "Semiconductors, cloud, robotics and future infrastructure.", accent: "cyan", icon: Cpu },
+  { id: "ai", name: "AI / CLOUD BLACKBOX", sector: "AI & Cloud", cost: 25_000_000_000, description: "Frontier models, AI compute and cloud empires.", accent: "violet", icon: Zap },
+  { id: "finance", name: "FINANCE DYNASTY", sector: "Finance", cost: 50_000_000_000, description: "Banks, exchanges, payments and market infrastructure.", accent: "emerald", icon: BadgeDollarSign },
+  { id: "energy", name: "ENERGY FRONTIER", sector: "Energy", cost: 75_000_000_000, description: "Fusion, renewables, grid storage and advanced materials.", accent: "amber", icon: Zap },
+  { id: "gaming", name: "GAMING & MEDIA", sector: "Gaming & Media", cost: 100_000_000_000, description: "Game studios, streaming, media tech and digital worlds.", accent: "pink", icon: Gamepad2 },
+  { id: "mobility", name: "MOBILITY TITANS", sector: "Mobility", cost: 125_000_000_000, description: "Autonomy, EV systems, aerospace mobility and logistics.", accent: "orange", icon: Globe2 },
+  { id: "industrial", name: "INDUSTRIAL CORE", sector: "Industry", cost: 150_000_000_000, description: "Robotics, aerospace and advanced manufacturing.", accent: "slate", icon: Factory },
+  { id: "global", name: "GLOBAL GIANTS", sector: "Global", cost: 250_000_000_000, description: "Cross-sector pool with boosted high-tier odds.", accent: "gold", icon: Globe2 },
+  { id: "quantum", name: "QUANTUM FRONTIER", sector: "Quantum", cost: 500_000_000_000, description: "Quantum compute, photonics and frontier science.", accent: "fuchsia", icon: Cpu },
+  { id: "omega", name: "OMEGA BLACK RESERVE", sector: "Omega", cost: 1_000_000_000_000, description: "The deepest case: rarest companies and microscopic lots.", accent: "gold", icon: PackageOpen },
 ];
 
+const FILTERS = ["All", "Technology", "AI & Cloud", "Finance", "Energy", "Gaming & Media", "Mobility", "Quantum"];
 const RARITY_STYLES: Record<string, string> = {
-  COMMON: "text-white/70 border-white/10 bg-white/[.03]",
+  COMMON: "text-white/65 border-white/10 bg-white/[.03]",
   UNCOMMON: "text-emerald-200 border-emerald-300/25 bg-emerald-300/10",
   RARE: "text-cyan-200 border-cyan-300/30 bg-cyan-300/10",
   EPIC: "text-amber-200 border-amber-300/30 bg-amber-300/10",
   LEGENDARY: "text-fuchsia-200 border-fuchsia-300/30 bg-fuchsia-400/15",
   ULTRA: "text-violet-100 border-violet-200/40 bg-violet-400/15",
+  MYTHIC: "text-white border-white/30 bg-white/10 shadow-[0_0_35px_rgba(255,255,255,.15)]",
 };
 
+const dollars = (value: number) => `${Math.round(value).toLocaleString("en-US")} $`;
+const shares = (value: number) => `${Math.round(value).toLocaleString("en-US")} SHARES`;
+
 export function CaseOpeningLobby() {
-  const { user, nickname, loading } = useAuth();
-  const { slotCZK } = useWallet();
+  const { user, nickname, balance, loading } = useAuth();
   const allowed = PRIVILEGED.has((nickname ?? "").trim().toLocaleLowerCase("cs-CZ"));
-  const [balance, setBalance] = useState(slotCZK);
+  const [cash, setCash] = useState(Number(balance ?? 0));
+  const [filter, setFilter] = useState("All");
   const [opening, setOpening] = useState<CaseId | null>(null);
-  const [reward, setReward] = useState<Reward | null>(null);
+  const [drop, setDrop] = useState<StockDrop | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
+  const [inventory, setInventory] = useState<InventoryRow[]>([]);
 
-  useEffect(() => setBalance(slotCZK), [slotCZK]);
+  useEffect(() => setCash(Number(balance ?? 0)), [balance]);
 
-  const loadHistory = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user || !allowed) return;
-    const { data } = await supabase.from("case_opening_history").select("id,case_id,case_cost,reward_czk,rarity,reward_label,created_at").order("created_at", { ascending: false }).limit(8);
-    setHistory((data ?? []) as HistoryRow[]);
+    const [{ data: hist }, { data: inv }] = await Promise.all([
+      supabase.from("case_opening_stock_history").select("id,case_id,case_cost,company_name,ticker,sector,share_count,rarity,rarity_score,serial,created_at").order("created_at", { ascending: false }).limit(12),
+      supabase.rpc("case_opening_stock_inventory_summary"),
+    ]);
+    setHistory((hist ?? []) as HistoryRow[]);
+    const parsed = (Array.isArray(inv) ? inv[0] : inv) ?? [];
+    setInventory(Array.isArray(parsed) ? (parsed as InventoryRow[]) : []);
   }, [allowed, user]);
 
-  useEffect(() => { void loadHistory(); }, [loadHistory]);
+  useEffect(() => { void loadData(); }, [loadData]);
 
-  const currentCase = useMemo(() => CASES.find((item) => item.id === opening) ?? null, [opening]);
+  const visibleCases = useMemo(() => filter === "All" ? CASES : CASES.filter((item) => item.sector === filter), [filter]);
+  const currentCase = CASES.find((item) => item.id === opening) ?? null;
 
   if (loading) return null;
   if (!user || !allowed) return <Navigate to="/" replace />;
 
   const openCase = async (caseId: CaseId) => {
     if (opening) return;
-    const cfg = CASES.find((item) => item.id === caseId)!;
-    if (balance < cfg.cost) { toast.error("Nemáš dostatek Slot CZK."); return; }
+    const cfg = CASES.find((item) => item.id === caseId);
+    if (!cfg) return;
+    if (cash < cfg.cost) { toast.error("Nemáš dostatek betting dolarů."); return; }
     setOpening(caseId);
-    setReward(null);
-    const { data, error } = await supabase.rpc("case_opening_open", { _case_id: caseId });
+    setDrop(null);
+    const { data, error } = await supabase.rpc("case_opening_stock_open", { _case_id: caseId });
     if (error) {
-      toast.error(error.message.includes("case_opening_forbidden") ? "Case Opening je jen pro autorizované hráče." : error.message);
       setOpening(null);
+      toast.error(error.message.includes("case_opening_forbidden") ? "Case Opening je pouze pro autorizované hráče." : error.message);
       return;
     }
-    const next = (Array.isArray(data) ? data[0] : data) as Reward;
+    const next = (Array.isArray(data) ? data[0] : data) as StockDrop;
     window.setTimeout(() => {
-      setReward(next);
-      setBalance(Number(next.slot_czk));
+      setDrop(next);
+      setCash(Number(next.balance));
       setOpening(null);
-      void loadHistory();
-      toast.success(`${next.rarity}: +${Number(next.reward_czk).toLocaleString("cs-CZ")} CZK`);
-    }, 1200);
+      void loadData();
+    }, 1500);
   };
 
   return (
-    <main className="min-h-screen bg-[#03070c] pb-28 text-white">
+    <main className="min-h-screen bg-[#02060b] pb-28 text-white">
       <div className="mx-auto max-w-7xl px-3 pt-6 sm:px-5 lg:pt-10">
-        <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_25%_0%,rgba(255,204,68,.13),transparent_30%),radial-gradient(circle_at_85%_10%,rgba(160,90,255,.12),transparent_28%),linear-gradient(180deg,#081018,#03070c)] p-4 shadow-[0_45px_140px_-70px_rgba(255,204,68,.6)] sm:p-7">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] [background-size:28px_28px]" />
+        <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_18%_0%,rgba(83,193,255,.14),transparent_28%),radial-gradient(circle_at_84%_8%,rgba(211,99,255,.12),transparent_26%),linear-gradient(180deg,#09131d,#02060b)] p-4 shadow-[0_50px_150px_-70px_rgba(60,180,255,.5)] sm:p-7">
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] [background-size:30px_30px]" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 font-mono text-[9px] font-black uppercase tracking-[.32em] text-amber-200/75"><PackageOpen className="h-4 w-4" /> PRIVILEGED GAME LOBBY</div>
-              <h1 className="mt-2 font-display text-4xl tracking-[.14em] sm:text-6xl">CASE OPENING</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-white/48">Exkluzivní box-opening lobby pro Danko, Chlaďara a Midase. Otevři case, sleduj cinematic reveal a získej Slot CZK dropy přímo ze serverové RNG.</p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.18em] text-emerald-200"><LockKeyhole className="h-3.5 w-3.5" /> PRIVATE ACCESS</div>
-                <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.18em] text-white/55">BALANCE · {Number(balance).toLocaleString("cs-CZ")} CZK</div>
+              <div className="flex items-center gap-2 font-mono text-[9px] font-black uppercase tracking-[.32em] text-cyan-200/75"><PackageOpen className="h-4 w-4" /> PRIVATE MARKET DROP LOUNGE</div>
+              <h1 className="mt-2 font-display text-4xl tracking-[.13em] sm:text-6xl">CASE OPENING</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-white/50">Otevírej virtuální investment cases za betting dolary. Získáváš unikátní digitální share collectibles od fiktivních společností; nejde o skutečné akcie ani skutečné cenné papíry.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.18em] text-emerald-200"><LockKeyhole className="h-3.5 w-3.5" /> PRIVATE ACCESS</span>
+                <span className="inline-flex items-center gap-2 rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.18em] text-amber-200">10B $ MINIMUM</span>
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.18em] text-white/55"><BadgeDollarSign className="h-3.5 w-3.5" /> BETTING BANKROLL</span>
               </div>
             </div>
-            <div className="rounded-2xl border border-amber-300/25 bg-amber-300/5 p-4 lg:min-w-[240px]"><div className="font-mono text-[8px] font-black uppercase tracking-[.2em] text-amber-200/60">PLAYER</div><div className="mt-1 font-display text-2xl tracking-[.08em]">{nickname}</div><div className="mt-1 flex items-center gap-2 text-xs text-white/40"><Sparkles className="h-3.5 w-3.5 text-amber-300" /> SERVER RNG · PLAY MONEY</div></div>
+            <div className="rounded-2xl border border-cyan-300/25 bg-cyan-300/5 p-4 lg:min-w-[280px]">
+              <div className="font-mono text-[8px] font-black uppercase tracking-[.2em] text-cyan-200/55">PLAYER BANKROLL</div>
+              <div className="mt-1 font-display text-2xl tracking-[.07em]">{dollars(cash)}</div>
+              <div className="mt-1 flex items-center gap-2 text-xs text-white/40"><Sparkles className="h-3.5 w-3.5 text-cyan-300" /> {nickname} · VIRTUAL ECONOMY</div>
+            </div>
           </div>
         </section>
 
-        <section className="mt-5 grid gap-4 lg:grid-cols-3">
-          {CASES.map((cfg, index) => {
+        <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+          {FILTERS.map((item) => <button key={item} type="button" onClick={() => setFilter(item)} className={cn("shrink-0 rounded-xl border px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.16em] transition", filter === item ? "border-cyan-200/45 bg-cyan-200/10 text-cyan-100" : "border-white/10 bg-white/[.02] text-white/40 hover:text-white/70")}>{item}</button>)}
+        </div>
+
+        <section className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {visibleCases.map((cfg) => {
             const Icon = cfg.icon;
             const busy = opening === cfg.id;
-            return <motion.article key={cfg.id} whileHover={{ y: -5 }} className={cn("relative overflow-hidden rounded-[26px] border bg-[#071018] p-4 shadow-2xl", cfg.border)}>
-              <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br", cfg.glow)} />
-              <div className="relative flex items-center justify-between gap-3"><div className="rounded-xl border border-white/10 bg-black/30 p-2.5"><Icon className="h-5 w-5 text-white/85" /></div><span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 font-mono text-[7px] font-black uppercase tracking-[.18em] text-white/50">{cfg.badge}</span></div>
-              <div className="relative mt-5 rounded-2xl border border-white/8 bg-black/25 p-5 text-center"><div className="font-mono text-[8px] font-black uppercase tracking-[.35em] text-white/30">{cfg.kicker}</div><div className="mt-3 text-7xl drop-shadow-[0_0_30px_rgba(255,255,255,.15)]">{index === 0 ? "📦" : index === 1 ? "💎" : "👑"}</div><div className="mt-3 font-display text-2xl tracking-[.08em]">{cfg.name}</div><div className="mt-2 text-xs text-white/40">Rewards · {cfg.rewards}</div></div>
-              <div className="relative mt-4 flex items-center justify-between gap-3"><div><div className="font-mono text-[8px] uppercase tracking-[.16em] text-white/35">OPEN COST</div><div className="font-display text-xl text-amber-200">{cfg.cost.toLocaleString("cs-CZ")} CZK</div></div><button type="button" onClick={() => void openCase(cfg.id)} disabled={Boolean(opening) || balance < cfg.cost} className="rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-2.5 font-mono text-[9px] font-black uppercase tracking-[.17em] text-amber-100 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-30">{busy ? "OPENING…" : "OPEN CASE"}</button></div>
+            return <motion.article key={cfg.id} whileHover={{ y: -5 }} className={cn("relative overflow-hidden rounded-[28px] border bg-[#071018] p-4 shadow-2xl", cfg.accent === "cyan" ? "border-cyan-300/25" : cfg.accent === "violet" ? "border-violet-300/25" : cfg.accent === "gold" ? "border-amber-300/30" : "border-white/10")}>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,.08),transparent_35%)]" />
+              <div className="relative flex items-center justify-between gap-3"><div className="rounded-xl border border-white/10 bg-black/30 p-2.5"><Icon className="h-5 w-5 text-white/85" /></div><span className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1 font-mono text-[7px] font-black uppercase tracking-[.18em] text-white/45">{cfg.sector}</span></div>
+              <div className="relative mt-4 rounded-2xl border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.18))] p-5">
+                <div className="font-mono text-[8px] font-black uppercase tracking-[.3em] text-white/30">CASE {CASES.findIndex((x) => x.id === cfg.id) + 1} / 10</div>
+                <div className="mt-2 font-display text-2xl tracking-[.08em]">{cfg.name}</div>
+                <p className="mt-2 min-h-10 text-xs leading-relaxed text-white/40">{cfg.description}</p>
+                <div className="mt-4 grid grid-cols-2 gap-2"><Stat label="ENTRY" value={dollars(cfg.cost)} /><Stat label="POOL" value="50+ companies" /></div>
+              </div>
+              <button type="button" onClick={() => void openCase(cfg.id)} disabled={Boolean(opening) || cash < cfg.cost} className="relative mt-4 w-full rounded-xl border border-cyan-200/30 bg-cyan-200/10 px-4 py-3 font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-100 transition hover:bg-cyan-200/15 disabled:cursor-not-allowed disabled:opacity-25">{busy ? "REVEALING DROP…" : `OPEN FOR ${dollars(cfg.cost)}`}</button>
             </motion.article>;
           })}
         </section>
 
         <section className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="rounded-[26px] border border-white/10 bg-[#071018] p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-3"><div><div className="font-mono text-[8px] font-black uppercase tracking-[.28em] text-white/35">OPENING ENGINE</div><h2 className="mt-1 font-display text-2xl tracking-[.09em]">DROP POOL</h2></div><div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 font-mono text-[8px] font-black text-white/50"><Zap className="h-3.5 w-3.5 text-amber-300" /> SERVER AUTHORITATIVE</div></div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5"><Drop name="COMMON" chance="34–45%" tone="COMMON"/><Drop name="UNCOMMON" chance="29–32%" tone="UNCOMMON"/><Drop name="RARE" chance="13–21%" tone="RARE"/><Drop name="EPIC" chance="3–13%" tone="EPIC"/><Drop name="LEGENDARY / ULTRA" chance="0.5–7%" tone="LEGENDARY"/></div>
+            <div className="flex items-center justify-between gap-3"><div><div className="font-mono text-[8px] font-black uppercase tracking-[.28em] text-white/35">COLLECTIBLE INVENTORY</div><h2 className="mt-1 font-display text-2xl tracking-[.09em]">YOUR SHARE VAULT</h2></div><div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 font-mono text-[8px] font-black uppercase tracking-[.15em] text-white/45">{inventory.length} / 100</div></div>
+            {inventory.length ? <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{inventory.slice(0,12).map((row) => <InventoryCard key={row.serial} row={row} />)}</div> : <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/30">Vault je zatím prázdný. Otevři první case.</div>}
           </div>
-          <div className="rounded-[26px] border border-white/10 bg-[#071018] p-4 sm:p-5"><div className="flex items-center gap-2 font-mono text-[8px] font-black uppercase tracking-[.22em] text-white/35"><History className="h-4 w-4" /> RECENT OPENINGS</div><div className="mt-3 space-y-2">{history.length ? history.map((row) => <div key={row.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-black/25 px-3 py-2"><div className="min-w-0"><div className="truncate text-xs text-white/70">{row.reward_label}</div><div className="font-mono text-[7px] uppercase tracking-[.14em] text-white/30">{row.case_id} · {new Date(row.created_at).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}</div></div><div className="text-right"><div className={cn("inline-flex rounded-full border px-2 py-0.5 font-mono text-[7px] font-black", RARITY_STYLES[row.rarity] ?? RARITY_STYLES.COMMON)}>{row.rarity}</div><div className="mt-1 font-mono text-[9px] font-black text-amber-200">+{Number(row.reward_czk).toLocaleString("cs-CZ")}</div></div></div>) : <div className="rounded-xl border border-dashed border-white/10 p-5 text-center text-xs text-white/30">Zatím žádné otevřené case.</div>}</div></div>
+          <div className="rounded-[26px] border border-white/10 bg-[#071018] p-4 sm:p-5"><div className="flex items-center gap-2 font-mono text-[8px] font-black uppercase tracking-[.22em] text-white/35"><History className="h-4 w-4" /> RECENT DROPS</div><div className="mt-3 space-y-2">{history.length ? history.map((row) => <div key={row.id} className="rounded-xl border border-white/8 bg-black/25 px-3 py-2"><div className="flex items-center justify-between gap-2"><div className="min-w-0"><div className="truncate text-xs font-semibold text-white/75">{row.company_name}</div><div className="font-mono text-[7px] uppercase tracking-[.14em] text-white/30">{row.ticker} · {row.share_count.toLocaleString("en-US")} shares</div></div><span className={cn("rounded-full border px-2 py-0.5 font-mono text-[7px] font-black", RARITY_STYLES[row.rarity] ?? RARITY_STYLES.COMMON)}>{row.rarity}</span></div></div>) : <div className="rounded-xl border border-dashed border-white/10 p-5 text-center text-xs text-white/30">Zatím žádné drops.</div>}</div></div>
         </section>
       </div>
 
-      <AnimatePresence>{opening && currentCase && <motion.div className="fixed inset-0 z-[11000] grid place-items-center bg-black/75 px-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><div className="w-full max-w-md rounded-[28px] border border-amber-300/35 bg-[#081018] p-7 text-center shadow-[0_0_100px_rgba(255,204,68,.2)]"><motion.div animate={{ rotate: [0, 2, -2, 0], scale: [1, 1.03, 1] }} transition={{ duration: .75, repeat: Infinity }} className="text-8xl">📦</motion.div><div className="mt-5 font-mono text-[9px] font-black uppercase tracking-[.3em] text-amber-200/65">{currentCase.name}</div><div className="mt-2 font-display text-2xl tracking-[.12em]">OPENING DROP…</div><div className="mt-5 h-2 overflow-hidden rounded-full bg-white/5"><motion.div className="h-full rounded-full bg-gradient-to-r from-amber-300 via-yellow-100 to-fuchsia-300" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.1, ease: "easeInOut" }} /></div></div></motion.div>}</AnimatePresence>
+      <AnimatePresence>{opening && currentCase && <motion.div className="fixed inset-0 z-[11000] grid place-items-center bg-black/80 px-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><div className="w-full max-w-lg rounded-[30px] border border-cyan-300/25 bg-[#081018] p-8 text-center shadow-[0_0_120px_rgba(83,193,255,.16)]"><motion.div animate={{ rotate: [0, -2, 2, 0], scale: [1, 1.04, 1] }} transition={{ duration: .7, repeat: Infinity }} className="mx-auto grid h-28 w-28 place-items-center rounded-3xl border border-cyan-200/20 bg-cyan-200/5"><Boxes className="h-14 w-14 text-cyan-200" /></motion.div><div className="mt-5 font-mono text-[9px] font-black uppercase tracking-[.3em] text-cyan-200/65">{currentCase.name}</div><div className="mt-2 font-display text-3xl tracking-[.1em]">ALLOCATING DIGITAL EQUITY…</div><div className="mt-5 h-2 overflow-hidden rounded-full bg-white/5"><motion.div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.35, ease: "easeInOut" }} /></div></div></motion.div>}</AnimatePresence>
 
-      <AnimatePresence>{reward && <motion.div className="fixed inset-0 z-[11100] grid place-items-center bg-black/80 px-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setReward(null)}><motion.div initial={{ scale: .76, y: 30 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-xl rounded-[32px] border border-amber-300/40 bg-[radial-gradient(circle_at_50%_0%,rgba(255,204,68,.14),transparent_36%),#081018] p-7 text-center shadow-[0_0_130px_rgba(255,204,68,.18)]" onClick={(e) => e.stopPropagation()}><Trophy className="mx-auto h-10 w-10 text-amber-300"/><div className="mt-4 font-mono text-[9px] font-black uppercase tracking-[.34em] text-white/40">CASE REVEALED</div><div className="mt-2 font-display text-4xl tracking-[.12em] sm:text-5xl">{reward.reward_label}</div><div className={cn("mx-auto mt-4 inline-flex rounded-full border px-3 py-1 font-mono text-[9px] font-black uppercase tracking-[.2em]", RARITY_STYLES[reward.rarity] ?? RARITY_STYLES.COMMON)}>{reward.rarity}</div><div className="mt-5 font-display text-5xl text-amber-200">+{Number(reward.reward_czk).toLocaleString("cs-CZ")} CZK</div><div className="mt-6 text-xs text-white/35">Klikni kamkoliv mimo panel pro zavření.</div></motion.div></motion.div>}</AnimatePresence>
+      <AnimatePresence>{drop && <motion.div className="fixed inset-0 z-[11100] grid place-items-center bg-black/80 px-4 backdrop-blur-lg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDrop(null)}><motion.div initial={{ scale: .75, y: 30 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-2xl rounded-[32px] border border-cyan-200/30 bg-[radial-gradient(circle_at_50%_0%,rgba(83,193,255,.14),transparent_38%),#081018] p-7 text-center shadow-[0_0_150px_rgba(83,193,255,.2)]" onClick={(e) => e.stopPropagation()}>
+          <div className="font-mono text-[9px] font-black uppercase tracking-[.34em] text-cyan-200/55">CASE REVEALED · VIRTUAL COLLECTIBLE</div>
+          <div className="mt-3 font-display text-4xl tracking-[.1em] sm:text-5xl">{drop.company_name}</div>
+          <div className="mt-2 font-mono text-sm font-black tracking-[.22em] text-white/45">{drop.ticker} · {drop.sector}</div>
+          <div className="mt-6 grid grid-cols-2 gap-3"><RevealStat label="SHARE LOT" value={shares(drop.share_count)} /><RevealStat label="RARITY SCORE" value={String(drop.rarity_score)} /></div>
+          <div className={cn("mx-auto mt-5 inline-flex rounded-full border px-4 py-2 font-mono text-[9px] font-black uppercase tracking-[.23em]", RARITY_STYLES[drop.rarity] ?? RARITY_STYLES.COMMON)}>{drop.rarity}</div>
+          <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4"><div className="font-mono text-[8px] uppercase tracking-[.18em] text-white/30">SERIAL</div><div className="mt-1 font-mono text-sm font-black tracking-[.18em] text-white/70">{drop.serial}</div></div>
+          <p className="mt-5 text-xs leading-relaxed text-white/35">Vzácnost = kombinace rarity společnosti a velikosti share lotu. Čím vzácnější společnost a menší počet akcií, tím vyšší tier. Jedná se pouze o virtuální herní collectible.</p>
+          <button type="button" onClick={() => setDrop(null)} className="mt-6 rounded-xl border border-cyan-200/25 bg-cyan-200/10 px-5 py-3 font-mono text-[9px] font-black uppercase tracking-[.18em] text-cyan-100">ADD TO VAULT</button>
+        </motion.div></motion.div>}</AnimatePresence>
     </main>
   );
 }
 
-function Drop({ name, chance, tone }: { name: string; chance: string; tone: string }) {
-  return <div className={cn("rounded-xl border p-3", RARITY_STYLES[tone] ?? RARITY_STYLES.COMMON)}><div className="font-mono text-[8px] font-black uppercase tracking-[.14em]">{name}</div><div className="mt-1 text-[11px] opacity-70">{chance}</div></div>;
-}
+function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-white/8 bg-black/25 px-3 py-2"><div className="font-mono text-[7px] uppercase tracking-[.16em] text-white/30">{label}</div><div className="mt-1 text-xs font-semibold text-white/70">{value}</div></div>; }
+function RevealStat({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border border-white/10 bg-black/30 p-4"><div className="font-mono text-[8px] uppercase tracking-[.18em] text-white/30">{label}</div><div className="mt-1 font-display text-lg tracking-[.06em] text-white/80">{value}</div></div>; }
+function InventoryCard({ row }: { row: InventoryRow }) { return <div className="rounded-2xl border border-white/8 bg-black/25 p-3"><div className="flex items-center justify-between gap-2"><span className={cn("rounded-full border px-2 py-0.5 font-mono text-[7px] font-black", RARITY_STYLES[row.rarity] ?? RARITY_STYLES.COMMON)}>{row.rarity}</span><span className="font-mono text-[7px] text-white/25">{row.ticker}</span></div><div className="mt-3 font-display text-lg tracking-[.05em]">{row.company_name}</div><div className="mt-1 font-mono text-[8px] uppercase tracking-[.14em] text-white/35">{shares(row.share_count)}</div><div className="mt-3 font-mono text-[7px] tracking-[.14em] text-white/25">{row.serial}</div></div>; }
