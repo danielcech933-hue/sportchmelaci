@@ -22,8 +22,10 @@ export const SLOT_SYMBOLS: Record<SymKey, SymbolDef> = {
   scatter: { key: "scatter", label: "SCATTER — půllitr", glyph: "🍺", tier: "special", pays: [5, 20, 100], weight: 4, scatter: true },
 };
 export const SYMBOL_ORDER: SymKey[] = ["gold", "silver", "boots", "whistle", "a", "k", "q", "j", "ten", "wild", "scatter"];
-export const BETS = [5, 10, 20, 50, 100, 200, 500];
-export const MAX_BET = 500;
+export const BETS = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000];
+export const STANDARD_MAX_BET = 500;
+export const PRIVILEGED_MAX_BET = 1000000;
+export const MAX_BET = PRIVILEGED_MAX_BET;
 export const START_BALANCE = 10000;
 export const REELS = 5;
 export const ROWS = 3;
