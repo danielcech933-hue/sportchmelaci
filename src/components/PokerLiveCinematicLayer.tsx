@@ -81,7 +81,7 @@ export function PokerLiveCinematicLayer() {
       </div>
 
       <div className="relative mx-auto aspect-[1.65] max-w-6xl [perspective:1800px] sm:aspect-[1.8]">
-        <motion.div animate={{ rotateX: 56 }} transition={{ duration: 0.8 }} className="absolute left-1/2 top-[54%] h-[66%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[5px] border-amber-200/20 bg-[radial-gradient(ellipse_at_center,rgba(16,90,55,.96),rgba(4,19,17,.99)_55%,#020507_75%)] shadow-[0_50px_120px_-35px_rgba(0,0,0,.95),inset_0_0_60px_rgba(0,0,0,.95)] [transform-style:preserve-3d]>
+        <motion.div animate={{ rotateX: 56 }} transition={{ duration: 0.8 }} className="absolute left-1/2 top-[54%] h-[66%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-[5px] border-amber-200/20 bg-[radial-gradient(ellipse_at_center,rgba(16,90,55,.96),rgba(4,19,17,.99)_55%,#020507_75%)] shadow-[0_50px_120px_-35px_rgba(0,0,0,.95),inset_0_0_60px_rgba(0,0,0,.95)] [transform-style:preserve-3d]">
           <div className="absolute inset-[6%] rounded-[50%] border border-amber-100/10" />
           <div className="absolute inset-[11%] rounded-[50%] border border-white/5" />
           <motion.div animate={{ scale: [1, 1.03, 1], opacity: [0.75, 1, 0.75] }} transition={{ duration: 1.8, repeat: Infinity }} className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-[24px] border border-white/8 bg-black/30 px-4 py-3 backdrop-blur">
