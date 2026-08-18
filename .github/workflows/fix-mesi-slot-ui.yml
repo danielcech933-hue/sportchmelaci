@@ -1,0 +1,47 @@
+name: Fix Mesi privileged slot UI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Mesi to privileged slot lists
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          targets = [
+              Path('src/components/slots/SlotMachine.tsx'),
+              Path('src/components/slots/EpicSlotMachineCinematic.tsx'),
+          ]
+          changed = False
+          for path in targets:
+              text = path.read_text(encoding='utf-8')
+              new = text.replace('"messi"]', '"messi", "mesi"]')
+              if new != text:
+                  path.write_text(new, encoding='utf-8')
+                  changed = True
+          if changed:
+              print('patched')
+          else:
+              print('already patched')
+          PY
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/slots/SlotMachine.tsx src/components/slots/EpicSlotMachineCinematic.tsx
+          git commit -m 'fix(slots): add Mesi to privileged max bet'
+          git push
