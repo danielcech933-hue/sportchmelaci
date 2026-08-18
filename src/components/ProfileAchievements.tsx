@@ -123,7 +123,7 @@ export function ProfileAchievements({ userId }: { userId: string }) {
         </div>
 
         <div className="relative mt-5 flex gap-2 overflow-x-auto pb-1">
-          {(["all", ...Object.keys(categoryMeta)] as const).map((key) => { const meta = key === "all" ? null : categoryMeta[key]; const Icon = meta?.icon ?? Sparkles; return <button key={key} onClick={() => setFilter(key as "all" | Category)} className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${filter === key ? "border-primary/50 bg-primary/10 text-primary shadow-[0_0_25px_-12px_var(--color-primary)]" : "border-white/10 bg-white/[0.02] text-white/40 hover:border-white/20 hover:text-white/70"}`}><Icon className="h-3.5 w-3.5" />{key === "all" ? "Vše" : meta.title}</button>; })}
+          {(["all", ...(Object.keys(categoryMeta) as Category[])] as Array<"all" | Category>).map((key) => { const meta = key === "all" ? null : categoryMeta[key]; const Icon = meta?.icon ?? Sparkles; return <button key={key} onClick={() => setFilter(key as "all" | Category)} className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${filter === key ? "border-primary/50 bg-primary/10 text-primary shadow-[0_0_25px_-12px_var(--color-primary)]" : "border-white/10 bg-white/[0.02] text-white/40 hover:border-white/20 hover:text-white/70"}`}><Icon className="h-3.5 w-3.5" />{key === "all" ? "Vše" : meta?.title}</button>; })}
         </div>
       </div>
 

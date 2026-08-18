@@ -21,7 +21,7 @@ const isRed = (card: Card) => card.s === "h" || card.s === "d";
 function phaseFromTransition(current: Hand | null, previous: Hand | null): Phase {
   if (!current) return "waiting";
   if (current.stage === "done") return previous?.stage && previous.stage !== "done" ? "showdown" : "win";
-  const before = previous?.id === current.id ? previous.communityCards?.length ?? 0 : -1;
+  const before = previous && previous.id === current.id ? previous.communityCards?.length ?? 0 : -1;
   const now = current.communityCards?.length ?? 0;
   if (previous?.id !== current.id) return "deal";
   if (now === 3 && before < 3) return "flop";
