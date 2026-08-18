@@ -35,6 +35,7 @@ import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SupportReturnRouteImport } from './routes/support/return'
 import { Route as SlotsChmelovciCupRouteImport } from './routes/slots.chmelovci-cup'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
+import { Route as GamesCaseOpeningRouteImport } from './routes/games.case-opening'
 import { Route as GamesGameRouteImport } from './routes/games.$game'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -173,6 +174,11 @@ const ProfileIdRoute = ProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesCaseOpeningRoute = GamesCaseOpeningRouteImport.update({
+  id: '/games/case-opening',
+  path: '/games/case-opening',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesGameRoute = GamesGameRouteImport.update({
   id: '/games/$game',
   path: '/games/$game',
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/games/$game': typeof GamesGameRoute
+  '/games/case-opening': typeof GamesCaseOpeningRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/games/$game': typeof GamesGameRoute
+  '/games/case-opening': typeof GamesCaseOpeningRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/games/$game': typeof GamesGameRoute
+  '/games/case-opening': typeof GamesCaseOpeningRoute
   '/profile/$id': typeof ProfileIdRoute
   '/slots/chmelovci-cup': typeof SlotsChmelovciCupRoute
   '/support/return': typeof SupportReturnRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/games/$game'
+    | '/games/case-opening'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
     | '/support/return'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/games/$game'
+    | '/games/case-opening'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
     | '/support/return'
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/games/$game'
+    | '/games/case-opening'
     | '/profile/$id'
     | '/slots/chmelovci-cup'
     | '/support/return'
@@ -451,6 +463,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   GamesGameRoute: typeof GamesGameRoute
+  GamesCaseOpeningRoute: typeof GamesCaseOpeningRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -643,6 +656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/case-opening': {
+      id: '/games/case-opening'
+      path: '/games/case-opening'
+      fullPath: '/games/case-opening'
+      preLoaderRoute: typeof GamesCaseOpeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games/$game': {
       id: '/games/$game'
       path: '/games/$game'
@@ -744,6 +764,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   GamesGameRoute: GamesGameRoute,
+  GamesCaseOpeningRoute: GamesCaseOpeningRoute,
   ProfileIdRoute: ProfileIdRoute,
   ProfileIndexRoute: ProfileIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
