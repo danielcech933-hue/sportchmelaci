@@ -1,6 +1,6 @@
 import { Activity, Clock3, Flame, Radio, ShieldCheck, Swords, Zap } from "lucide-react";
-import type { Match } from "@/lib/matches";
-import { SPORTS } from "@/lib/matches";
+import type { ReactNode } from "react";
+import { SPORTS, type Match } from "@/lib/matches";
 
 function setsWon(match: Match, side: "a" | "b") {
   return match.sets.filter((s) => (side === "a" ? s.a > s.b : s.b > s.a)).length;
@@ -16,8 +16,7 @@ function buildPulse(match: Match) {
 export function MatchCenterPulse({ match }: { match: Match }) {
   const cfg = SPORTS[match.sport];
   const ended = Boolean(match.endedAt);
-  const pulse = buildPulse(match);
-  const edge = Math.min(100, Math.max(0, pulse));
+  const edge = Math.min(100, Math.max(0, buildPulse(match)));
   const status = ended ? "FINALIZED" : "LIVE TELEMETRY";
   const eventItems = [
     { label: "MATCH CREATED", value: new Date(match.startedAt).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" }), icon: Clock3 },
@@ -67,6 +66,6 @@ function Metric({ label, value, tone }: { label: string; value: number | string;
   return <div className="rounded-xl border border-white/8 bg-white/[.02] p-3"><div className="aaa-meta">{label}</div><div className={`mt-1 font-display text-2xl tracking-[.05em] ${cls}`}>{value}</div></div>;
 }
 
-function FooterSignal({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+function FooterSignal({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
   return <div className="flex items-center gap-2 border-r border-white/8 px-4 py-3 last:border-r-0"><span className="text-cyan-200/55">{icon}</span><div className="min-w-0"><div className="aaa-meta">{label}</div><div className="truncate font-mono text-[9px] font-bold text-white/55">{value}</div></div></div>;
 }
