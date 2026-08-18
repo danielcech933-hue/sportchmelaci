@@ -1,5 +1,5 @@
 -- Canonical sport-betting guard: keep database writes aligned with the UI contract.
--- Bets are stored as JSON on matches, so enforce the same $1..$250 range at the
+-- Bets are stored as JSON on matches, so enforce the same $1..$10,000 range at the
 -- database boundary as well as in the client.
 
 CREATE OR REPLACE FUNCTION public.guard_match_bet_amounts()
@@ -26,7 +26,7 @@ BEGIN
         RAISE EXCEPTION 'invalid_bet_amount';
       END;
 
-      IF amount < 1 OR amount > 250 THEN
+      IF amount < 1 OR amount > 10000 THEN
         RAISE EXCEPTION 'invalid_amount';
       END IF;
     END IF;
