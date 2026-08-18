@@ -10,7 +10,7 @@ import { useMatchesRealtime, LiveBadge } from "@/lib/live";
 import { NickLink } from "@/lib/profile-links";
 import { BettingModule } from "@/components/BettingModule";
 
-const searchSchema = z.object({ id: z.string() });
+const searchSchema = z.object({ id: z.string().optional() });
 export const Route = createFileRoute("/match")({
   validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Match Center — SportChmeláci" }, { name: "description", content: "Ultra S+ live match center SportChmeláci." }, { name: "robots", content: "noindex" }] }),
@@ -30,12 +30,27 @@ function MatchPage() {
   const dirty = useRef(false);
 
   useEffect(() => {
-    fetchMatch(id).then((m) => (m ? setMatch(m) : setNotFound(true))).catch((e) => setActionError(e instanceof Error ? e.message : "Zápas se nepodařilo načíst."));
+    setNotFound(false);
+    setActionError(null);
     fetchAllMatches().then(setAllMatches).catch(() => setAllMatches([]));
+    if (!id) {
+      setMatch(null);
+      return;
+    }
+    fetchMatch(id)
+      .then((m) => (m ? setMatch(m) : setNotFound(true)))
+      .catch((e) => setActionError(e instanceof Error ? e.message : "Zápas se nepodařilo načíst."));
   }, [id]);
-  useMatchesRealtime(() => { if (!dirty.current) fetchMatch(id).then((m) => m && setMatch(m)).catch(() => undefined); }, { matchId: id });
+  useMatchesRealtime(
+    () => {
+      if (!id || dirty.current) return;
+      fetchMatch(id).then((m) => m && setMatch(m)).catch(() => undefined);
+    },
+    { matchId: id, enabled: Boolean(id) },
+  );
   useEffect(() => { if (!match || !dirty.current) return; const timer = setTimeout(() => { dirty.current = false; saveMatch(match).catch((e) => console.error("save failed", e)); }, 400); return () => clearTimeout(timer); }, [match]);
 
+  if (!id) return <main className="mx-auto max-w-6xl px-4 py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/5 text-amber-200"><Radio className="h-7 w-7" /></div><h1 className="mt-5 font-display text-4xl tracking-wider text-amber-100">MATCH CENTER</h1><p className="mt-2 text-white/40">Vyber konkrétní zápas z lobby, plánu nebo scoreboardu.</p><Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-amber-300/20 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-amber-200 hover:bg-amber-300/10"><ArrowLeft className="h-4 w-4" /> Lobby</Link></main>;
   if (notFound) return <main className="mx-auto max-w-6xl px-4 py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/5 text-amber-200"><Shield className="h-7 w-7" /></div><h1 className="mt-5 font-display text-4xl tracking-wider text-amber-100">MATCH NOT FOUND</h1><p className="mt-2 text-white/35">Tento zápas už není dostupný.</p><Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-amber-300/20 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-amber-200 hover:bg-amber-300/10"><ArrowLeft className="h-4 w-4" /> Lobby</Link></main>;
   if (!match || authLoading) return null;
 
