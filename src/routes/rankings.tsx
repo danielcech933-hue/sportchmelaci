@@ -3,12 +3,11 @@ import { BarChart3, Crown, Flame, Medal, Radio, Shield, Sparkles, Trophy, Users,
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
-import { buildLeaderboard, type LeaderRow } from "@/lib/stats";
-import { splitPlayers } from "@/lib/stats";
+import { buildLeaderboard, splitPlayers, type LeaderRow } from "@/lib/stats";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
-import { playerEmoji, rankEmoji, statEmoji } from "@/lib/emoji";
+import { playerEmoji, rankEmoji } from "@/lib/emoji";
 import heroImg from "@/assets/scoreboard-hero.jpg";
 import goldImg from "@/assets/rank-gold.jpg";
 import silverImg from "@/assets/rank-silver.jpg";
@@ -162,11 +161,11 @@ function RankingsPage() {
 function winRate(r: LeaderRow) { return r.played ? r.wins / r.played : 0; }
 function currentStreak(row: LeaderRow, matches: Match[]) {
   const name = row.key.toLowerCase();
-  const relevant = matches.filter((m) => m.endedAt && splitPlayers(m).some((n) => n.toLowerCase() === name)).sort((a, b) => Number(b.endedAt ?? 0) - Number(a.endedAt ?? 0));
+  const relevant = matches.filter((m) => m.endedAt && (splitPlayers(m.teamA).some((n) => n.toLowerCase() === name) || splitPlayers(m.teamB).some((n) => n.toLowerCase() === name))).sort((a, b) => Number(b.endedAt ?? 0) - Number(a.endedAt ?? 0));
   let streak = 0;
   for (const m of relevant) {
-    const a = splitPlayers(m.teamA ?? "").some((n) => n.toLowerCase() === name);
-    const b = splitPlayers(m.teamB ?? "").some((n) => n.toLowerCase() === name);
+    const a = splitPlayers(m.teamA).some((n) => n.toLowerCase() === name);
+    const b = splitPlayers(m.teamB).some((n) => n.toLowerCase() === name);
     if (m.scoreA === m.scoreB) break;
     const won = (a && m.scoreA > m.scoreB) || (b && m.scoreB > m.scoreA);
     if (!won) break;
@@ -174,9 +173,8 @@ function currentStreak(row: LeaderRow, matches: Match[]) {
   }
   return streak;
 }
-
 function Metric({ label, value, sub, icon }: { label: string; value: string | number; sub: string; icon: React.ReactNode }) { return <div className="border-b border-r border-white/8 p-5 last:border-r-0"><div className="flex items-center gap-2 text-white/30"><span className="text-amber-200/80">{icon}</span><span className="font-mono text-[8px] font-black uppercase tracking-[.22em]">{label}</span></div><div className="mt-3 font-display text-3xl text-white">{value}</div><div className="mt-1 text-[10px] text-white/25">{sub}</div></div>; }
 function SignalCard({ label, value, hint, icon }: { label: string; value: string; hint: string; icon: React.ReactNode }) { return <div className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center gap-2 text-amber-200/70">{icon}<span className="aaa-meta">{label}</span></div><div className="mt-3 truncate font-display text-xl text-white">{value}</div><div className="mt-1 truncate text-[10px] text-white/25">{hint}</div></div>; }
-function PodiumCard({ row, index, avatarPath }: { row: LeaderRow; index: number; avatarPath?: string | null }) { const p = PODIUM[index]; return <Link to="/profile/$id" params={{ id: row.userId ?? row.key }} className={`group relative overflow-hidden rounded-2xl border bg-black/20 p-4 transition hover:-translate-y-1 ${p.ring}`}><div className="absolute inset-0 grid-bg opacity-15" /><div className="relative flex items-center gap-3"><div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl"><img src={p.img} alt="" width={800} height={800} className="h-full w-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /><div className="absolute bottom-1 left-0 right-0 text-center font-display text-xl text-amber-100">#{index + 1}</div></div>{avatarPath && <Avatar path={avatarPath} nickname={row.label} size={42} />}<div className="min-w-0"><div className="aaa-meta">{rankEmoji(index + 1)} {p.label}</div><div className="truncate font-display text-lg text-white"><span className="mr-1">{playerEmoji(row.label)}</span><NickLink nickname={row.label} /></div><div className="mt-1 flex gap-2 font-mono text-[9px] text-white/35"><span className="text-amber-200">{row.elo} ELO</span><span>{row.wins}W</span><span>{row.losses}L</span></div></div></div></Link>; }
+function PodiumCard({ row, index, avatarPath }: { row: LeaderRow; index: number; avatarPath?: string | null }) { const p = PODIUM[index]; return <div className={`group relative overflow-hidden rounded-2xl border bg-black/20 p-4 transition hover:-translate-y-1 ${p.ring}`}><div className="absolute inset-0 grid-bg opacity-15" /><div className="relative flex items-center gap-3"><div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl"><img src={p.img} alt="" width={800} height={800} className="h-full w-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" /><div className="absolute bottom-1 left-0 right-0 text-center font-display text-xl text-amber-100">#{index + 1}</div></div>{avatarPath && <Avatar path={avatarPath} nickname={row.label} size={42} />}<div className="min-w-0"><div className="aaa-meta">{rankEmoji(index + 1)} {p.label}</div><div className="truncate font-display text-lg text-white"><span className="mr-1">{playerEmoji(row.label)}</span><NickLink nickname={row.label} /></div><div className="mt-1 flex gap-2 font-mono text-[9px] text-white/35"><span className="text-amber-200">{row.elo} ELO</span><span>{row.wins}W</span><span>{row.losses}L</span></div></div></div></div>; }
 function RankingRow({ row, rank, avatarPath }: { row: LeaderRow; rank: number; avatarPath?: string | null }) { const pct = Math.round(winRate(row) * 100); return <tr className="border-t border-white/5 hover:bg-white/[.02]"><td className="px-5 py-4 font-mono text-white/25">{String(rank).padStart(2, "0")}</td><td className="px-5 py-4"><div className="flex items-center gap-3">{avatarPath && <Avatar path={avatarPath} nickname={row.label} size={34} />}<div className="min-w-0"><div className="truncate font-display text-base text-white"><span className="mr-1">{playerEmoji(row.label)}</span><NickLink nickname={row.label} /></div><div className="aaa-meta mt-1">{row.played} MATCHES</div></div></div></td><td className="px-5 py-4 text-right font-display text-xl text-amber-200">{row.elo}</td><td className="px-5 py-4 text-right font-mono text-emerald-200">{row.wins}</td><td className="px-5 py-4 text-right font-mono text-rose-200">{row.losses}</td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300" /><span className="h-2 w-2 rounded-full bg-emerald-300/50" /><span className="h-2 w-2 rounded-full bg-white/15" /><span className="h-2 w-2 rounded-full bg-rose-300/40" /></div></td><td className="px-5 py-4 text-right"><div className="inline-flex items-center gap-2"><div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-amber-200 to-amber-300" style={{ width: `${pct}%` }} /></div><span className="font-mono text-xs text-white/55">{pct}%</span></div></td></tr>; }
 function EmptyState() { return <div className="grid min-h-28 place-items-center p-6 text-center"><div><Medal className="mx-auto h-6 w-6 text-amber-200/50" /><div className="mt-2 font-mono text-[10px] font-black uppercase tracking-[.25em] text-white/30">NO SIGNAL</div><div className="mt-1 text-sm text-white/20">Jakmile budou výsledky, ranking se automaticky naplní.</div></div></div>; }
