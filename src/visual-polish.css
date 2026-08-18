@@ -137,3 +137,158 @@ main li > button:hover {
   border-radius: 999px;
 }
 *::-webkit-scrollbar-thumb:hover { background: color-mix(in oklab, var(--color-primary) 50%, transparent); }
+
+/* ===== DEVICE HARDENING 2.0 =====
+   Keep the same AAA identity across macOS, Windows, iOS and Android without
+   forcing desktop-only hover/FX behaviour onto touch devices. */
+html,
+body {
+  min-height: 100%;
+  min-height: 100dvh;
+  overscroll-behavior-x: none;
+}
+
+/* iOS / Android browser chrome and Home Indicator safe-area. */
+body {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 640px) {
+  html {
+    min-height: 100dvh;
+    scroll-padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Move the whole navigation dock above the Home Indicator rather than
+     changing the dock's internal height. */
+  nav[aria-label="Hlavní navigace"] {
+    bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Avoid horizontal rubber-banding on mobile Safari/Chrome. */
+  .nav-dock {
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Keep glass premium, but reduce the most expensive blur on small GPUs. */
+  .nav-dock,
+  .glass,
+  .aaa-surface,
+  .aaa-card {
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+
+  /* Continuous ambient effects run slower on phones. */
+  .aurora-blob,
+  .spotlight-beam,
+  .brand-shimmer {
+    animation-duration: 24s;
+  }
+
+  /* Desktop hover is meaningless on touch screens. */
+  main li > a:hover,
+  main li > button:hover,
+  h1:hover,
+  h2:hover,
+  h3:hover,
+  button:hover:not(:disabled) {
+    transform: none;
+    filter: none;
+    text-shadow: none;
+  }
+
+  /* Keep text and controls inside the viewport on 320–390px phones. */
+  main {
+    overflow-x: clip;
+  }
+
+  /* iOS inputs should not zoom when focused. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Pointer devices only: retain the full AAA hover treatment. */
+@media (hover: hover) and (pointer: fine) {
+  main li > a:hover,
+  main li > button:hover {
+    transform: translateY(-2px);
+  }
+
+  h1:hover,
+  h2:hover,
+  h3:hover {
+    text-shadow:
+      0 0 10px color-mix(in oklab, var(--color-primary) 70%, transparent),
+      0 0 30px color-mix(in oklab, var(--color-primary) 40%, transparent);
+  }
+
+  button:hover:not(:disabled) {
+    filter: drop-shadow(0 0 10px color-mix(in oklab, var(--color-primary) 55%, transparent));
+  }
+}
+
+/* Landscape phones: give game tables and docks more vertical room. */
+@media (max-width: 900px) and (orientation: landscape) {
+  body {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+
+  nav[aria-label="Hlavní navigace"] {
+    bottom: calc(0.45rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .nav-chip {
+    min-width: 3.3rem;
+    padding-top: .45rem;
+    padding-bottom: .45rem;
+  }
+}
+
+/* Wide desktop / ultrawide: preserve cinematic density instead of stretching
+   important content across the entire monitor. */
+@media (min-width: 1920px) {
+  main > * {
+    max-width: min(1680px, calc(100vw - 96px));
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 3000px) {
+  main > * {
+    max-width: min(1820px, calc(100vw - 180px));
+  }
+
+  .nav-dock {
+    transform: scale(1.04);
+    transform-origin: center bottom;
+  }
+}
+
+/* Reduce decorative cost on small/mobile devices while preserving game FX. */
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .hero-surface::before,
+  .scanline::after {
+    animation-duration: 14s;
+  }
+
+  [data-live="true"]::after,
+  .live::after {
+    animation-duration: 3.2s;
+  }
+}
+
+/* Avoid accidental selection during fast touch interactions while keeping
+   text/content selectable. */
+@media (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
