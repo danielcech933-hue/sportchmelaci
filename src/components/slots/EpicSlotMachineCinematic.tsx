@@ -55,7 +55,7 @@ const META: Record<EpicGame, { title: string; kicker: string; cols: number; rows
 
 const STANDARD_BETS = [5, 10, 20, 50, 100, 250, 500];
 const PRIVILEGED_BETS = [5, 10, 20, 50, 100, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000];
-const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das"]);
+const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "messi"]);
 
 function playTone(kind: "spin" | "stop" | "win" | "bonus") {
   if (typeof window === "undefined") return;
