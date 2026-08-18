@@ -41,6 +41,7 @@ function MatchPage() {
       .then((m) => (m ? setMatch(m) : setNotFound(true)))
       .catch((e) => setActionError(e instanceof Error ? e.message : "Zápas se nepodařilo načíst."));
   }, [id]);
+
   useMatchesRealtime(
     () => {
       if (!id || dirty.current) return;
@@ -48,41 +49,59 @@ function MatchPage() {
     },
     { matchId: id, enabled: Boolean(id) },
   );
-  useEffect(() => { if (!match || !dirty.current) return; const timer = setTimeout(() => { dirty.current = false; saveMatch(match).catch((e) => console.error("save failed", e)); }, 400); return () => clearTimeout(timer); }, [match]);
 
-  if (!id) return <main className="mx-auto max-w-6xl px-4 py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/5 text-amber-200"><Radio className="h-7 w-7" /></div><h1 className="mt-5 font-display text-4xl tracking-wider text-amber-100">MATCH CENTER</h1><p className="mt-2 text-white/40">Vyber konkrétní zápas z lobby, plánu nebo scoreboardu.</p><Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-amber-300/20 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-amber-200 hover:bg-amber-300/10"><ArrowLeft className="h-4 w-4" /> Lobby</Link></main>;
-  if (notFound) return <main className="mx-auto max-w-6xl px-4 py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/5 text-amber-200"><Shield className="h-7 w-7" /></div><h1 className="mt-5 font-display text-4xl tracking-wider text-amber-100">MATCH NOT FOUND</h1><p className="mt-2 text-white/35">Tento zápas už není dostupný.</p><Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-amber-300/20 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-amber-200 hover:bg-amber-300/10"><ArrowLeft className="h-4 w-4" /> Lobby</Link></main>;
-  if (!match || authLoading) return null;
+  useEffect(() => {
+    if (!match || !dirty.current) return;
+    const timer = setTimeout(() => {
+      dirty.current = false;
+      saveMatch(match).catch((e) => console.error("save failed", e));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [match]);
 
-  const cfg = SPORTS[match.sport];
-  const isOwner = !!user && user.id === match.ownerId;
-  const ended = !!match.endedAt;
-  const live = !ended;
-  const setsA = match.sets.filter((s) => s.a > s.b).length;
-  const setsB = match.sets.filter((s) => s.b > s.a).length;
-  const currentTotal = match.scoreA + match.scoreB;
-  const teamAPlayers = match.teamAPlayers ?? splitPlayers(match.teamA);
-  const teamBPlayers = match.teamBPlayers ?? splitPlayers(match.teamB);
+  const cfg = match ? SPORTS[match.sport] : null;
+  const isOwner = !!user && !!match && user.id === match.ownerId;
+  const ended = !!match?.endedAt;
+  const live = !!match && !ended;
+  const setsA = match ? match.sets.filter((s) => s.a > s.b).length : 0;
+  const setsB = match ? match.sets.filter((s) => s.b > s.a).length : 0;
+  const currentTotal = match ? match.scoreA + match.scoreB : 0;
+  const teamAPlayers = match ? (match.teamAPlayers ?? splitPlayers(match.teamA)) : [];
+  const teamBPlayers = match ? (match.teamBPlayers ?? splitPlayers(match.teamB)) : [];
 
   const h2h = useMemo(() => {
+    if (!match) return [];
     const keyA = match.teamA.trim().toLowerCase();
     const keyB = match.teamB.trim().toLowerCase();
     return allMatches.filter((m) => m.id !== match.id && !!m.endedAt && m.sport === match.sport && ((m.teamA.trim().toLowerCase() === keyA && m.teamB.trim().toLowerCase() === keyB) || (m.teamA.trim().toLowerCase() === keyB && m.teamB.trim().toLowerCase() === keyA))).slice(0, 8);
   }, [allMatches, match]);
-  const form = useMemo(() => allMatches.filter((m) => !!m.endedAt && m.sport === match.sport && (m.teamA === match.teamA || m.teamB === match.teamA || m.teamA === match.teamB || m.teamB === match.teamB)).slice(0, 6).map((m) => { const sameA = m.teamA === match.teamA || m.teamA === match.teamB; const forScore = sameA ? m.scoreA : m.scoreB; const against = sameA ? m.scoreB : m.scoreA; return forScore > against ? "W" : forScore < against ? "L" : "D"; }), [allMatches, match]);
+
+  const form = useMemo(() => {
+    if (!match) return [];
+    return allMatches.filter((m) => !!m.endedAt && m.sport === match.sport && (m.teamA === match.teamA || m.teamB === match.teamA || m.teamA === match.teamB || m.teamB === match.teamB)).slice(0, 6).map((m) => {
+      const sameA = m.teamA === match.teamA || m.teamA === match.teamB;
+      const forScore = sameA ? m.scoreA : m.scoreB;
+      const against = sameA ? m.scoreB : m.scoreA;
+      return forScore > against ? "W" : forScore < against ? "L" : "D";
+    });
+  }, [allMatches, match]);
 
   const update = (next: Match) => { dirty.current = true; setActionError(null); setMatch(next); };
-  const bump = (side: "a" | "b", delta: number) => { if (!isOwner || ended) return; const key = side === "a" ? "scoreA" : "scoreB"; update({ ...match, [key]: Math.max(0, match[key] + delta) }); };
-  const finishSet = () => { if (!isOwner || ended) return; update({ ...match, sets: [...match.sets, { a: match.scoreA, b: match.scoreB }], scoreA: 0, scoreB: 0 }); };
-  const resetScore = () => { if (isOwner && !ended) update({ ...match, scoreA: 0, scoreB: 0 }); };
+  const bump = (side: "a" | "b", delta: number) => { if (!isOwner || ended || !match) return; const key = side === "a" ? "scoreA" : "scoreB"; update({ ...match, [key]: Math.max(0, match[key] + delta) }); };
+  const finishSet = () => { if (!isOwner || ended || !match) return; update({ ...match, sets: [...match.sets, { a: match.scoreA, b: match.scoreB }], scoreA: 0, scoreB: 0 }); };
+  const resetScore = () => { if (isOwner && !ended && match) update({ ...match, scoreA: 0, scoreB: 0 }); };
   const finishMatch = async () => {
-    if (!isOwner || finishBusy || ended) return;
+    if (!isOwner || finishBusy || ended || !match) return;
     setActionError(null); setFinishBusy(true); const next = { ...match, endedAt: Date.now() }; setMatch(next); dirty.current = false;
     try { await saveMatch(next); const persisted = await fetchMatch(match.id); if (!persisted?.endedAt) throw new Error("Zápas se nepodařilo v databázi označit jako ukončený."); setMatch(persisted); navigate({ to: "/admin", hash: "pending-approvals" }); }
     catch (e) { setActionError(e instanceof Error ? e.message : "Ukončení zápasu se nepodařilo."); const persisted = await fetchMatch(match.id).catch(() => null); if (persisted) setMatch(persisted); }
     finally { setFinishBusy(false); }
   };
-  const remove = async () => { if (!isOwner || !confirm("Delete this match? Any open bets will be refunded.")) return; await removeMatch(match.id); navigate({ to: "/" }); };
+  const remove = async () => { if (!isOwner || !match || !confirm("Delete this match? Any open bets will be refunded.")) return; await removeMatch(match.id); navigate({ to: "/" }); };
+
+  if (!id) return <main className="mx-auto max-w-6xl px-4 py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/5 text-amber-200"><Radio className="h-7 w-7" /></div><h1 className="mt-5 font-display text-4xl tracking-wider text-amber-100">MATCH CENTER</h1><p className="mt-2 text-white/40">Vyber konkrétní zápas z lobby, plánu nebo scoreboardu.</p><Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-amber-300/20 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-amber-200 hover:bg-amber-300/10"><ArrowLeft className="h-4 w-4" /> Lobby</Link></main>;
+  if (notFound) return <main className="mx-auto max-w-6xl px-4 py-16 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-amber-300/20 bg-amber-300/5 text-amber-200"><Shield className="h-7 w-7" /></div><h1 className="mt-5 font-display text-4xl tracking-wider text-amber-100">MATCH NOT FOUND</h1><p className="mt-2 text-white/35">Tento zápas už není dostupný.</p><Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-amber-300/20 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-amber-200 hover:bg-amber-300/10"><ArrowLeft className="h-4 w-4" /> Lobby</Link></main>;
+  if (!match || authLoading || !cfg) return null;
 
   return <main className="relative mx-auto max-w-[1450px] px-3 pb-28 pt-4 sm:px-5 lg:px-7">
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"><div className="absolute left-1/2 top-0 h-[650px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(250,204,21,.12),transparent_64%)] blur-3xl" /><div className="absolute right-0 top-[35%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(34,211,238,.05),transparent_62%)] blur-3xl" /></div>
