@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ComponentType } from "react";
-import { Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, Beer, Layers, Dices, Spade, PackageOpen, ChevronUp, BarChart3 } from "lucide-react";
+import { Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, Beer, Layers, Dices, Spade, PackageOpen, ChevronUp, BarChart3, Crown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { IncomingCallPrompt } from "@/components/IncomingCallPrompt";
 
@@ -11,7 +11,7 @@ type NavEntry = NavItem | NavGroup;
 const RESULTS_ITEMS: NavItem[] = [{ to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" }, { to: "/bets", label: "Sázky", icon: Coins }, { to: "/history", label: "Historie", icon: HistoryIcon }];
 const SPORT_ITEMS: NavItem[] = [{ to: "/schedule", label: "Plán", icon: CalendarDays }, { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/teams", label: "Týmy", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin }];
 const GAME_ITEMS: NavItem[] = [{ to: "/games/poker", label: "Poker", icon: Spade }, { to: "/games/roulette", label: "Ruleta", icon: Dices }, { to: "/games/ultimate", label: "Ultimate", icon: Layers }, { to: "/slots", label: "Sloty", icon: Beer }, { to: "/games/roll", label: "Roll", icon: Dices, authOnly: true, boroBlocked: true }, { to: "/games/case-opening", label: "Case Opening", icon: PackageOpen, privilegedOnly: true, boroBlocked: true }];
-const COMMUNITY_ITEMS: NavItem[] = [{ to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
+const COMMUNITY_ITEMS: NavItem[] = [{ to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/trophy-room", label: "Trophy Room", icon: Crown, authOnly: true }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
 export const NAV_ITEMS: NavEntry[] = [{ to: "/", label: "Lobby", icon: Home, exact: true }, { label: "Sport", icon: Trophy, items: SPORT_ITEMS }, { label: "Výsledky", icon: BarChart3, items: RESULTS_ITEMS }, { label: "Hry", icon: Dices, items: GAME_ITEMS }, { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS }];
 
 const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das"]);
