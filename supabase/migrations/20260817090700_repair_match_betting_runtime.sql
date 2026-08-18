@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION public.wallet_betting_credit(_user_id uuid,_amount nu
 RETURNS numeric LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE v_balance numeric; v_kind text;
 BEGIN
-  IF _user_id IS NULL OR _amount IS NULL OR _amount<=0 OR _amount>100000 THEN RAISE EXCEPTION 'invalid_wallet_credit'; END IF;
+  IF _user_id IS NULL OR _amount IS NULL OR _amount<=0 OR _amount>1000000 THEN RAISE EXCEPTION 'invalid_wallet_credit'; END IF;
   v_kind:=CASE WHEN _reason='bet_refund' THEN 'bet_refund' ELSE 'bet_payout' END;
   IF _match_id IS NOT NULL THEN
     INSERT INTO public.wallet_betting_ledger(user_id,match_id,amount,kind)
@@ -44,7 +44,7 @@ BEGIN
   IF _market_id IS NULL OR length(trim(_market_id))=0 THEN RAISE EXCEPTION 'invalid_market'; END IF;
   IF _option_id IS NULL OR length(trim(_option_id))=0 THEN RAISE EXCEPTION 'invalid_option'; END IF;
   IF _pick NOT IN ('a','b','draw') THEN RAISE EXCEPTION 'invalid_pick'; END IF;
-  IF _amount IS NULL OR _amount<1 OR _amount>250 THEN RAISE EXCEPTION 'invalid_amount'; END IF;
+  IF _amount IS NULL OR _amount<1 OR _amount>10000 THEN RAISE EXCEPTION 'invalid_amount'; END IF;
   IF _locked_odds IS NULL OR _locked_odds<1.05 OR _locked_odds>50 THEN RAISE EXCEPTION 'invalid_odds'; END IF;
   SELECT nickname,balance INTO nick,bal FROM public.profiles WHERE id=uid FOR UPDATE;
   IF nick IS NULL THEN RAISE EXCEPTION 'no_profile'; END IF;
