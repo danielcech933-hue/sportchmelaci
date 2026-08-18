@@ -20,6 +20,7 @@ import { NotificationsBell } from "@/lib/notifications";
 import { DmProvider, DmBell } from "@/lib/dm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingNav } from "@/components/FloatingNav";
+import { CommandPalette } from "@/components/CommandPalette";
 import { WinCelebrations } from "@/lib/win-toasts";
 import { WalletProvider, useWallet } from "@/lib/wallet";
 import { Toaster } from "@/components/ui/sonner";
@@ -150,14 +151,14 @@ function SiteHeader() {
             <span className="brand-shimmer truncate font-display text-lg tracking-[0.07em] neon-text sm:hidden">CHM SPORT</span>
           </Link>
 
-          {current && (
-            <div className="hidden shrink-0 items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 md:flex">
-              <current.icon className="h-3.5 w-3.5 text-primary" />
-              <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-primary/90">{current.label}</span>
-            </div>
-          )}
-
           <div className="flex shrink-0 items-center gap-1">
+            <CommandPalette />
+            {current && (
+              <div className="hidden shrink-0 items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 md:flex">
+                <current.icon className="h-3.5 w-3.5 text-primary" />
+                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-primary/90">{current.label}</span>
+              </div>
+            )}
             <DmBell />
             <NotificationsBell />
             <AuthNav user={user} nickname={nickname} avatarPath={avatarPath} loading={loading} />
