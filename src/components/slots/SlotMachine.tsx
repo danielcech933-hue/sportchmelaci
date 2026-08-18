@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Reel } from "./Reel";
@@ -7,12 +7,13 @@ import { SlotsScoreboard } from "./SlotsScoreboard";
 import { PaytableModal } from "./PaytableModal";
 import { BonusPickModal, BonusRecapModal, type BonusOption } from "./BonusModal";
 import { BigWinOverlay } from "./BigWinOverlay";
-import { MAX_BET, PAYLINES, REELS, ROWS, formatKc, hasAnticipation, loadBestMultiplier, saveBestMultiplier, spinGrid, type Grid, type LineWin } from "@/lib/slots";
+import { MAX_BET, PRIVILEGED_MAX_BET, PAYLINES, REELS, ROWS, formatKc, hasAnticipation, loadBestMultiplier, saveBestMultiplier, spinGrid, type Grid, type LineWin } from "@/lib/slots";
 import { useWallet } from "@/lib/wallet";
 
 const SPIN_DURATION = 2500;
 const STOP_STEP = 200;
 const STOP_BASE = SPIN_DURATION - STOP_STEP * (REELS - 1);
+const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "messi"]);
 
 function fireConfetti() {
   const shoot = (x: number) => confetti({ particleCount: 90, spread: 80, startVelocity: 55, origin: { x, y: 0.75 }, colors: ["#ffcc44", "#b8860b", "#4dffa6", "#fff3bf"], scalar: 1.1 });
@@ -25,8 +26,14 @@ function normalizeGrid(value: unknown): Grid {
 
 export function SlotMachine({ playerName, onExchange, onWin }: { playerName: string; onExchange?: () => void; onWin?: (multiplier: number) => void }) {
   const { slotCZK, spinSlot, pickBonus } = useWallet();
+  const privileged = PRIVILEGED_NAMES.has(playerName.trim().toLocaleLowerCase("cs-CZ"));
+  const maxBet = privileged ? PRIVILEGED_MAX_BET : MAX_BET;
   const [isSpinning, setIsSpinning] = useState(false); const [bet, setBet] = useState(10); const [grid, setGrid] = useState<Grid>(() => spinGrid()); const [stoppedReels, setStoppedReels] = useState(REELS); const [anticipation, setAnticipation] = useState(false); const [winLines, setWinLines] = useState<LineWin[]>([]); const [scatterCells, setScatterCells] = useState<[number, number][]>([]); const [lastWin, setLastWin] = useState(0); const [message, setMessage] = useState<string | null>(null); const [freeSpinsLeft, setFreeSpinsLeft] = useState(0); const [bonusMultiplier, setBonusMultiplier] = useState(1); const [bonusTotal, setBonusTotal] = useState(0); const [bonusSpinsGranted, setBonusSpinsGranted] = useState(0); const [pickOptions, setPickOptions] = useState<BonusOption[] | null>(null); const [recap, setRecap] = useState<{ total: number; spins: number; mult: number } | null>(null); const [bigWin, setBigWin] = useState<{ amount: number; multiplier: number } | null>(null); const [showPaytable, setShowPaytable] = useState(false); const [showHof, setShowHof] = useState(false); const [bestMultiplier, setBestMultiplier] = useState(0); const [autoLeft, setAutoLeft] = useState(0); const busy = isSpinning; const timers = useRef<number[]>([]);
   useEffect(() => setBestMultiplier(loadBestMultiplier()), []); useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
+
+  useEffect(() => {
+    if (bet > maxBet) setBet(maxBet);
+  }, [bet, maxBet]);
 
   const doSpin = useCallback(async () => {
     if (busy || pickOptions || recap) return;
@@ -73,7 +80,7 @@ export function SlotMachine({ playerName, onExchange, onWin }: { playerName: str
           <div className={`relative rounded-[1.5rem] border border-hop-gold/45 bg-[linear-gradient(145deg,#0b351e,#03140a_45%,#061b0f)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.1),0_25px_70px_-35px_rgba(255,204,68,.8)] sm:p-4 ${anticipation ? "brightness-75" : ""}`}><div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-hop-gold/70 to-transparent" /><div className="relative rounded-xl border border-hop-gold/15 bg-black/35 p-2 sm:p-3"><div className="relative flex gap-2 sm:gap-3">{grid.slice(0, REELS).map((col, reel) => <Reel key={reel} reelIndex={reel} final={col.slice(0, ROWS)} spinning={isSpinning && reel >= stoppedReels} slow={anticipation && reel >= 2} winningRows={winningRowsFor(reel)} hasWin={hasWin} />)}<svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none"><AnimatePresence>{winLines.map((w) => { const pattern = PAYLINES[w.line]; if (!pattern) return null; const pts = pattern.slice(0, w.count).map((row, reel) => `${(reel + .5) * (100 / REELS)},${(row + .5) * (100 / ROWS)}`).join(" "); return <motion.polyline key={w.line} points={pts} fill="none" stroke="#ffcc44" strokeWidth={1.1} strokeLinecap="round" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: [.4, 1, .7] }} exit={{ opacity: 0 }} transition={{ duration: .5, opacity: { duration: 1, repeat: Infinity } }} style={{ filter: "drop-shadow(0 0 6px #ffcc44)" }} />; })}</AnimatePresence></svg></div></div>
             <div className="mt-3 flex min-h-7 items-center justify-center text-center">{message ? <span className="flex flex-wrap items-center justify-center gap-2"><span className="rounded-full border border-rose-400/50 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300">{message}</span>{onExchange && <button onClick={onExchange} className="rounded-full border border-hop-gold/50 bg-hop-gold/15 px-3 py-1 text-[11px] font-black uppercase tracking-[.14em] text-hop-gold">Směnárna</button>}</span> : lastWin > 0 ? <motion.span key={lastWin} initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="font-display text-sm tracking-[.14em] slot-gold-text">VÝHRA {formatKc(lastWin)} · {(lastWin / bet).toFixed(1)}x</motion.span> : <span className="font-mono text-[10px] uppercase tracking-[.28em] text-hop-neon/60">5 VÁLCŮ · 3 ŘADY · 5 LINIÍ</span>}</div>
           </div>
-          <ControlBar balance={slotCZK} bet={bet} lastWin={lastWin} spinning={busy} freeSpinsLeft={freeSpinsLeft} autoLeft={autoLeft} onBet={setBet} onMaxBet={() => setBet(MAX_BET)} onSpin={() => void doSpin()} onAuto={(n) => setAutoLeft(n)} onStopAuto={() => setAutoLeft(0)} onInfo={() => setShowPaytable(true)} onHof={() => setShowHof(true)} />
+          <ControlBar balance={slotCZK} bet={bet} maxBet={maxBet} lastWin={lastWin} spinning={busy} freeSpinsLeft={freeSpinsLeft} autoLeft={autoLeft} onBet={setBet} onMaxBet={() => setBet(maxBet)} onSpin={() => void doSpin()} onAuto={(n) => setAutoLeft(n)} onStopAuto={() => setAutoLeft(0)} onInfo={() => setShowPaytable(true)} onHof={() => setShowHof(true)} />
         </div>
         <aside className="hidden lg:block"><SlotsScoreboard playerName={playerName} playerBest={bestMultiplier} /></aside>
       </div>
