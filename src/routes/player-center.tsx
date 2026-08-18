@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { ArrowLeft, BarChart3, Flame, Gauge, Medal, ShieldCheck, Swords, Trophy, Users, Zap } from "lucide-react";
+import { ArrowLeft, BarChart3, ChevronRight, Flame, Gauge, Medal, ShieldCheck, Swords, Trophy, Users, Zap } from "lucide-react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { buildLeaderboard, type LeaderRow } from "@/lib/stats";
 import { supabase } from "@/integrations/supabase/client";
