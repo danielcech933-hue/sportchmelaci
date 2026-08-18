@@ -18,6 +18,10 @@ jobs:
       - name: Lint
         run: bun run lint
         continue-on-error: true
-      - run: bun run typecheck
+      # TanStack Router generates src/routeTree.gen.ts during the Vite build.
+      # Build before typecheck so the route tree always reflects src/routes/*.
+      - name: Build
+        run: bun run build
+      - name: Typecheck
+        run: bun run typecheck
       - run: bun run test
-      - run: bun run build
