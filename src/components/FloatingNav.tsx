@@ -99,7 +99,7 @@ export function FloatingNav() {
       )}
 
       <nav aria-label="Hlavní navigace" className={`pointer-events-none fixed inset-x-0 bottom-3 z-[9999] flex justify-center px-2 transition-[transform,opacity] duration-300 ease-out will-change-transform sm:bottom-5 ${hidden && !openGroup ? "translate-y-[150%] opacity-0" : "translate-y-0 opacity-100"}`}>
-        <div className="nav-dock pointer-events-auto relative isolate flex max-w-[min(78rem,97vw)] items-center gap-1 overflow-x-auto rounded-[1.35rem] px-1.5 py-1.5 no-scrollbar sm:gap-1.5 sm:px-2 md:overflow-visible">
+        <div className="nav-dock pointer-events-auto relative isolate flex max-w-[min(78rem,97vw)] items-center gap-1 overflow-x-auto rounded-[1.35rem] px-1.5 py-1.5 sm:gap-1.5 sm:px-2 md:overflow-visible">
           <span aria-hidden className="pointer-events-none absolute inset-x-8 -top-px h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent opacity-80" />
           {visible.map((entry) => {
             if ("items" in entry) {
