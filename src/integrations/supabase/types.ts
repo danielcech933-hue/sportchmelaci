@@ -343,6 +343,231 @@ export type Database = {
           },
         ]
       }
+      case_opening_history: {
+        Row: {
+          case_cost: number
+          case_id: string
+          created_at: string
+          id: string
+          rarity: string
+          reward_czk: number
+          reward_label: string
+          user_id: string
+        }
+        Insert: {
+          case_cost: number
+          case_id: string
+          created_at?: string
+          id?: string
+          rarity: string
+          reward_czk: number
+          reward_label: string
+          user_id: string
+        }
+        Update: {
+          case_cost?: number
+          case_id?: string
+          created_at?: string
+          id?: string
+          rarity?: string
+          reward_czk?: number
+          reward_label?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_opening_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_opening_stock_cases: {
+        Row: {
+          accent: string
+          active: boolean
+          cost: number
+          description: string
+          id: string
+          name: string
+          sector: string
+        }
+        Insert: {
+          accent?: string
+          active?: boolean
+          cost: number
+          description: string
+          id: string
+          name: string
+          sector: string
+        }
+        Update: {
+          accent?: string
+          active?: boolean
+          cost?: number
+          description?: string
+          id?: string
+          name?: string
+          sector?: string
+        }
+        Relationships: []
+      }
+      case_opening_stock_companies: {
+        Row: {
+          company_name: string
+          company_tier: number
+          id: number
+          rarity_note: string
+          sector: string
+          ticker: string
+        }
+        Insert: {
+          company_name: string
+          company_tier: number
+          id?: number
+          rarity_note: string
+          sector: string
+          ticker: string
+        }
+        Update: {
+          company_name?: string
+          company_tier?: number
+          id?: number
+          rarity_note?: string
+          sector?: string
+          ticker?: string
+        }
+        Relationships: []
+      }
+      case_opening_stock_history: {
+        Row: {
+          case_cost: number
+          case_id: string
+          company_name: string
+          created_at: string
+          id: string
+          rarity: string
+          rarity_score: number
+          sector: string
+          serial: string
+          share_count: number
+          ticker: string
+          user_id: string
+        }
+        Insert: {
+          case_cost: number
+          case_id: string
+          company_name: string
+          created_at?: string
+          id?: string
+          rarity: string
+          rarity_score: number
+          sector: string
+          serial: string
+          share_count: number
+          ticker: string
+          user_id: string
+        }
+        Update: {
+          case_cost?: number
+          case_id?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          rarity?: string
+          rarity_score?: number
+          sector?: string
+          serial?: string
+          share_count?: number
+          ticker?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_opening_stock_history_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "case_opening_stock_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_opening_stock_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_opening_stock_inventory: {
+        Row: {
+          case_id: string
+          company_id: number
+          company_name: string
+          created_at: string
+          id: string
+          rarity: string
+          rarity_score: number
+          sector: string
+          serial: string
+          share_count: number
+          ticker: string
+          user_id: string
+        }
+        Insert: {
+          case_id: string
+          company_id: number
+          company_name: string
+          created_at?: string
+          id?: string
+          rarity: string
+          rarity_score: number
+          sector: string
+          serial: string
+          share_count: number
+          ticker: string
+          user_id: string
+        }
+        Update: {
+          case_id?: string
+          company_id?: number
+          company_name?: string
+          created_at?: string
+          id?: string
+          rarity?: string
+          rarity_score?: number
+          sector?: string
+          serial?: string
+          share_count?: number
+          ticker?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_opening_stock_inventory_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "case_opening_stock_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_opening_stock_inventory_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "case_opening_stock_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_opening_stock_inventory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       casino_chat: {
         Row: {
           content: string | null
@@ -1149,6 +1374,7 @@ export type Database = {
           created_at: string
           ended_at: string | null
           id: string
+          match_format: string
           owner_id: string
           round: number | null
           scheduled_at: string | null
@@ -1159,8 +1385,10 @@ export type Database = {
           sport: string
           started_at: string
           team_a: string
+          team_a_players: Json
           team_a_ref: string | null
           team_b: string
+          team_b_players: Json
           team_b_ref: string | null
           tournament_id: string | null
           updated_at: string
@@ -1174,6 +1402,7 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          match_format?: string
           owner_id: string
           round?: number | null
           scheduled_at?: string | null
@@ -1184,8 +1413,10 @@ export type Database = {
           sport: string
           started_at?: string
           team_a: string
+          team_a_players?: Json
           team_a_ref?: string | null
           team_b: string
+          team_b_players?: Json
           team_b_ref?: string | null
           tournament_id?: string | null
           updated_at?: string
@@ -1199,6 +1430,7 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          match_format?: string
           owner_id?: string
           round?: number | null
           scheduled_at?: string | null
@@ -1209,8 +1441,10 @@ export type Database = {
           sport?: string
           started_at?: string
           team_a?: string
+          team_a_players?: Json
           team_a_ref?: string | null
           team_b?: string
+          team_b_players?: Json
           team_b_ref?: string | null
           tournament_id?: string | null
           updated_at?: string
@@ -1873,6 +2107,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_betting_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          match_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          kind: string
+          match_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          match_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_betting_ledger_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_betting_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_bonus_claims: {
         Row: {
           last_claim_at: string | null
@@ -1924,6 +2200,9 @@ export type Database = {
           user_id: string
         }[]
       }
+      case_opening_open: { Args: { _case_id: string }; Returns: Json }
+      case_opening_stock_inventory_summary: { Args: never; Returns: Json }
+      case_opening_stock_open: { Args: { _case_id: string }; Returns: Json }
       confirm_match: {
         Args: { _confirm: boolean; _match_id: string }
         Returns: undefined
@@ -2118,6 +2397,18 @@ export type Database = {
         }
         Returns: Json
       }
+      place_market_bet: {
+        Args: {
+          _amount: number
+          _locked_odds: number
+          _market_id: string
+          _match_id: string
+          _note: string
+          _option_id: string
+          _pick: string
+        }
+        Returns: Json
+      }
       poker_action: {
         Args: { _action: string; _amount?: number; _tournament_id: string }
         Returns: Json
@@ -2185,6 +2476,7 @@ export type Database = {
           created_at: string
           ended_at: string | null
           id: string
+          match_format: string
           owner_id: string
           round: number | null
           scheduled_at: string | null
@@ -2195,8 +2487,10 @@ export type Database = {
           sport: string
           started_at: string
           team_a: string
+          team_a_players: Json
           team_a_ref: string | null
           team_b: string
+          team_b_players: Json
           team_b_ref: string | null
           tournament_id: string | null
           updated_at: string
@@ -2273,6 +2567,15 @@ export type Database = {
           _reason?: string
         }
         Returns: Json
+      }
+      wallet_betting_credit: {
+        Args: {
+          _amount: number
+          _match_id?: string
+          _reason?: string
+          _user_id: string
+        }
+        Returns: number
       }
       withdraw_bet: { Args: { _match_id: string }; Returns: Json }
       write_audit: {
