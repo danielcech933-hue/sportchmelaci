@@ -1,20 +1,20 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { SPORTS, MIN_BET, betsPool, uniqueBettors, type Match } from "@/lib/matches";
+import { SPORTS, MIN_BET, MAX_BET, betsPool, uniqueBettors, type Match } from "@/lib/matches";
 import { placeMarketBet, withdrawBet } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useMatchHistory, computeOdds, formatOdds, formatPct } from "@/lib/odds";
 import { marketsFor, type MarketOption } from "@/lib/markets";
 import { OddsBoard } from "@/components/OddsBoard";
 
-const QUICK = [10, 50, 100, 500];
+const QUICK = [10, 50, 100, MAX_BET];
 
 function prettyErr(msg: string): string {
   if (msg.includes("already_bet")) return "Na tento zápas už máš sázku.";
   if (msg.includes("insufficient_balance")) return "Nemáš dost peněz.";
   if (msg.includes("match_ended")) return "Zápas už skončil.";
-  if (msg.includes("invalid_amount")) return `Minimální sázka je $${MIN_BET}.`;
+  if (msg.includes("invalid_amount")) return `Sázka musí být $${MIN_BET}–$${MAX_BET}.`;
   if (msg.includes("invalid_odds")) return "Neplatný kurz.";
   if (msg.includes("no_bet")) return "Není co stáhnout.";
   return msg;
@@ -57,10 +57,19 @@ export function BettingModule({ match, onRefresh }: { match: Match; onRefresh: (
   };
   const pctA = pool ? (totals.a / pool) * 100 : 50;
 
+  function setSafeAmount(next: number) {
+    if (!Number.isFinite(next)) {
+      setAmount(0);
+      return;
+    }
+    setAmount(Math.min(MAX_BET, Math.max(0, Math.floor(next))));
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user || ended || myBet) return;
     if (!Number.isFinite(amount) || amount < MIN_BET) { setErr(`Minimální sázka je $${MIN_BET}.`); return; }
+    if (amount > MAX_BET) { setErr(`Maximální sázka je $${MAX_BET}.`); return; }
     if (amount > balance) { setErr("Nemáš dost peněz."); return; }
     setBusy(true); setErr(null);
     try {
@@ -134,12 +143,12 @@ export function BettingModule({ match, onRefresh }: { match: Match; onRefresh: (
             <div className="rounded-xl border border-primary/50 bg-primary/10 p-3 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><div><span className="mr-2 rounded bg-primary px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-primary-foreground">Tiket aktivní</span><span className="font-mono text-primary">${myBet.amount}</span> · {myBet.marketLabel ?? myBet.marketId ?? "Vítěz"} · {myBet.selectionLabel ?? (myBet.pick === "draw" ? "Remíza" : myBet.pick === "a" ? match.teamA : match.teamB)} · <span className="text-accent">@ {myLockedOdds?.toFixed(2)}</span></div><button onClick={withdraw} disabled={busy} className="glass-glow rounded border border-border px-3 py-1 text-xs disabled:opacity-50">Stáhnout sázku</button></div></div>
           ) : balance <= 0 ? <p className="rounded border p-3 text-sm" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>💀 Bankrot — žádný zůstatek na sázky.</p> : (
             <form onSubmit={submit} className="rounded-xl border border-primary/25 bg-background/40 p-3">
-              <div className="flex flex-wrap items-center gap-2"><div className="relative flex-1 min-w-[140px]"><span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span><input value={String(amount)} onChange={(e)=>setAmount(Number(e.target.value.replace(/[^\d]/g,""))||0)} inputMode="numeric" className="w-full rounded-md border border-border bg-background/60 py-2 pl-6 pr-3 font-mono text-lg outline-none focus:border-primary" /></div>{QUICK.map(q=><motion.button key={q} type="button" whileTap={{scale:0.94}} onClick={()=>setAmount(a=>a+q)} className="glass-glow rounded-md border border-primary/40 bg-primary/10 px-3 py-2 font-mono text-xs text-primary">+${q}</motion.button>)}<motion.button type="button" whileTap={{scale:0.94}} onClick={()=>setAmount(Math.floor(balance))} className="glass-glow rounded-md border border-accent bg-accent/15 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.15em] text-accent">Max / All-in</motion.button></div>
+              <div className="flex flex-wrap items-center gap-2"><div className="relative flex-1 min-w-[140px]"><span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span><input value={String(amount)} onChange={(e)=>setSafeAmount(Number(e.target.value.replace(/[^\d]/g,""))||0)} inputMode="numeric" min={MIN_BET} max={MAX_BET} aria-label={`Částka sázky ${MIN_BET} až ${MAX_BET} USD`} className="w-full rounded-md border border-border bg-background/60 py-2 pl-6 pr-3 font-mono text-lg outline-none focus:border-primary" /></div>{QUICK.map(q=><motion.button key={q} type="button" whileTap={{scale:0.94}} onClick={()=>setSafeAmount(amount+q)} className="glass-glow rounded-md border border-primary/40 bg-primary/10 px-3 py-2 font-mono text-xs text-primary">+${q}</motion.button>)}<motion.button type="button" whileTap={{scale:0.94}} onClick={()=>setSafeAmount(Math.min(Math.floor(balance), MAX_BET))} className="glass-glow rounded-md border border-accent bg-accent/15 px-3 py-2 font-mono text-xs font-bold uppercase tracking-[0.15em] text-accent">Max / ${MAX_BET}</motion.button></div>
               <div className="mt-3 grid gap-2 sm:grid-cols-3"><div className="rounded-lg border border-accent/40 bg-accent/5 p-2"><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-accent">Kurz</p><p className="font-mono text-xl text-accent">@ {formatOdds(option.odds)}</p></div><div className="rounded-lg border border-primary/40 bg-primary/5 p-2"><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary">Potenciální výhra</p><p className="font-mono text-xl text-primary">${potentialWin.toFixed(2)}</p></div><div className="rounded-lg border border-border bg-background/40 p-2"><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Šance modelu</p><p className="font-mono text-xl">{formatPct(option.modelProbability ?? 0.5)}</p></div></div>
               <input value={note} onChange={e=>setNote(e.target.value)} maxLength={80} placeholder="Poznámka (nepovinné)" className="mt-2 w-full rounded-md border border-border bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary" />
-              <motion.button type="submit" disabled={busy} whileHover={{scale:1.01}} whileTap={{scale:0.98}} className="mt-3 w-full rounded-md bg-accent px-4 py-3 font-display text-lg tracking-widest text-accent-foreground shadow-[0_0_30px_-10px_var(--color-accent)] disabled:opacity-50">{busy?"…":`VSADIT $${amount} · ${option.label}`}</motion.button>
+              <motion.button type="submit" disabled={busy || amount < MIN_BET || amount > MAX_BET} whileHover={{scale:1.01}} whileTap={{scale:0.98}} className="mt-3 w-full rounded-md bg-accent px-4 py-3 font-display text-lg tracking-widest text-accent-foreground shadow-[0_0_30px_-10px_var(--color-accent)] disabled:opacity-50">{busy?"…":`VSADIT $${amount} · ${option.label}`}</motion.button>
               {err && <p className="mt-2 text-xs" style={{color:"var(--danger)"}}>{err}</p>}
-              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Zůstatek ${balance.toFixed(2)} · min ${MIN_BET} · kurz {formatOdds(option.odds)} · šance {formatPct(option.modelProbability ?? 0.5)}</p>
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Zůstatek ${balance.toFixed(2)} · min ${MIN_BET} · max ${MAX_BET} · kurz {formatOdds(option.odds)} · šance {formatPct(option.modelProbability ?? 0.5)}</p>
             </form>
           )}
           {myBet && myPotential !== null && <div className="mt-2 text-xs text-muted-foreground">Uzamčený kurz <b className="text-accent">@ {myLockedOdds?.toFixed(2)}</b> · potenciální návrat ${myPotential.toFixed(2)}</div>}
