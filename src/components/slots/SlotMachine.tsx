@@ -13,7 +13,7 @@ import { useWallet } from "@/lib/wallet";
 const SPIN_DURATION = 2500;
 const STOP_STEP = 200;
 const STOP_BASE = SPIN_DURATION - STOP_STEP * (REELS - 1);
-const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "messi"]);
+const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "messi", "mesi"]);
 
 function fireConfetti() {
   const shoot = (x: number) => confetti({ particleCount: 90, spread: 80, startVelocity: 55, origin: { x, y: 0.75 }, colors: ["#ffcc44", "#b8860b", "#4dffa6", "#fff3bf"], scalar: 1.1 });
