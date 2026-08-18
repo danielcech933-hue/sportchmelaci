@@ -23,7 +23,7 @@ export const SPORTS:Record<SportId,SportConfig>={
  topspin:{id:"topspin",name:"TopSpin",emoji:"🎾",hasSets:true,setLabel:"Set",quickPoints:[1],defaultTeams:["Hráč 1","Hráč 2"],esport:true,market:"sets"},
 };
 export const SPORT_LIST=Object.values(SPORTS); export const CLASSIC_SPORTS=SPORT_LIST.filter(s=>!s.esport); export const ESPORT_SPORTS=SPORT_LIST.filter(s=>!!s.esport);
-export const BET_CURRENCY="USD" as const; export const GAME_CURRENCY="CZK" as const; export const USD_TO_CZK=100; export const MAX_BET=250; export const MIN_BET=1;
+export const BET_CURRENCY="USD" as const; export const GAME_CURRENCY="CZK" as const; export const USD_TO_CZK=100; export const MAX_BET=10000; export const MIN_BET=1;
 export interface SetScore{a:number;b:number}
 export interface Bet{id:string;userId?:string;bettor:string;pick:"a"|"b"|"draw";amount?:number;note?:string;marketId?:string;optionId?:string;lockedOdds?:number;selectionLabel?:string;marketLabel?:string;status?:"open"|"won"|"lost"|"refunded";payout?:number;createdAt:number}
 export interface Match{id:string;ownerId:string;ownerNickname:string;sport:SportId;matchFormat?:MatchFormat;teamA:string;teamB:string;teamAPlayers?:string[];teamBPlayers?:string[];scoreA:number;scoreB:number;sets:SetScore[];bets:Bet[];betsLockedAt?:number;startedAt:number;endedAt?:number;scheduledAt?:number;confirmedAt?:number;confirmedBy?:string|null;tournamentId?:string|null;round?:number|null;slot?:number|null;teamARef?:string|null;teamBRef?:string|null}
