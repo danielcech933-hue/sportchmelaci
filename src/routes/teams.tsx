@@ -1,26 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Crown, Plus, ShieldCheck, Sparkles, Trash2, UserPlus, Users, X, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import {
-  fetchAllTeams,
-  createTeam,
-  deleteTeam,
-  addMemberByNickname,
-  removeMember,
-  type Team,
-} from "@/lib/teams-db";
+import { fetchAllTeams, createTeam, deleteTeam, addMemberByNickname, removeMember, type Team } from "@/lib/teams-db";
 import { useNicknames, NicknamesDatalist, NICKNAMES_DATALIST_ID } from "@/lib/nicknames";
-import heroImg from "@/assets/teams-hero.jpg";
 
 export const Route = createFileRoute("/teams")({
-  head: () => ({
-    meta: [
-      { title: "Courtside — Teams" },
-      { name: "description", content: "Create teams from registered players and manage their rosters." },
-      { property: "og:title", content: "Courtside — Teams" },
-      { property: "og:description", content: "Create teams from registered players and manage their rosters." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Team HQ — SportChmeláci" }, { name: "description", content: "Ultra S+ týmové centrum pro 1v1, 2v2 a sportovní ligy." }] }),
   component: TeamsPage,
 });
 
@@ -31,146 +17,67 @@ function TeamsPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function reload() {
+  const reload = async () => {
     try { setTeams(await fetchAllTeams()); } catch (e) { setErr((e as Error).message); }
-  }
+  };
+  useEffect(() => { if (user) void reload(); }, [user]);
 
-  useEffect(() => { if (user) reload(); }, [user]);
+  const stats = useMemo(() => ({
+    squads: teams.length,
+    members: teams.reduce((sum, t) => sum + t.members.length, 0),
+    captains: new Set(teams.map((t) => t.ownerId)).size,
+  }), [teams]);
 
   if (loading) return null;
-  if (!user) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <p className="text-muted-foreground">Please <Link to="/auth" className="text-primary underline">sign in</Link> to manage teams.</p>
-      </main>
-    );
-  }
+  if (!user) return <main className="min-h-screen px-4 py-12"><div className="mx-auto max-w-xl rounded-3xl border border-amber-300/15 bg-black/30 p-8 text-center backdrop-blur-xl"><ShieldCheck className="mx-auto h-8 w-8 text-amber-200" /><h1 className="mt-4 font-display text-4xl text-white">TEAM HQ</h1><p className="mt-2 text-sm text-white/35">Přihlas se a vytvoř svůj tým.</p><Link to="/auth" className="mt-6 inline-flex rounded-xl bg-amber-300 px-5 py-3 text-sm font-black text-black">PŘIHLÁSIT</Link></div></main>;
 
   async function submitCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     setBusy(true); setErr(null);
-    try {
-      await createTeam(user!.id, name.trim());
-      setName("");
-      await reload();
-    } catch (e) { setErr((e as Error).message); }
-    finally { setBusy(false); }
-  }
-
-  return (
-    <main className="relative mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
-      <section className="relative overflow-hidden rounded-2xl neon-border scanline">
-        <img src={heroImg} alt="" width={1600} height={720} className="h-40 w-full object-cover opacity-70 sm:h-60" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
-        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6">
-          <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary/80 sm:text-xs">
-            <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_10px] shadow-primary" />
-            Roster grid
-          </div>
-          <h1 className="mt-2 font-display text-3xl tracking-wider neon-text sm:text-6xl">TEAMS</h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">// Build squads from registered nicknames</p>
-        </div>
-      </section>
-
-      <form onSubmit={submitCreate} className="relative mt-6 flex flex-col gap-2 overflow-hidden rounded-2xl border border-primary/25 bg-background/60 p-3 backdrop-blur sm:flex-row sm:p-4">
-        <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="New team name"
-          className="relative flex-1 rounded-md border border-primary/30 bg-background/40 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:shadow-[0_0_20px_-8px_var(--color-primary)]"
-          maxLength={60}
-        />
-        <button disabled={busy} className="relative rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_-4px_hsl(45_100%_60%/0.7)] disabled:opacity-50">
-          Create team
-        </button>
-      </form>
-      {err && <p className="mt-3 text-sm text-destructive">{err}</p>}
-
-      <NicknamesList />
-
-      <ul className="mt-6 space-y-3">
-        {teams.map((t) => (
-          <TeamCard key={t.id} team={t} currentUserId={user!.id} onChange={reload} />
-        ))}
-        {teams.length === 0 && (
-          <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-background/40 px-4 py-8 text-center backdrop-blur">
-            <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-            <div className="relative font-display text-xl tracking-widest text-muted-foreground neon-text">NO SQUADS</div>
-            <p className="relative mt-1 text-xs uppercase tracking-[0.25em] text-muted-foreground">Create your first team above</p>
-          </div>
-        )}
-      </ul>
-    </main>
-  );
-}
-
-function NicknamesList() {
-  const nicknames = useNicknames();
-  return <NicknamesDatalist options={nicknames} />;
-}
-
-function TeamCard({ team, currentUserId, onChange }: { team: Team; currentUserId: string; onChange: () => void }) {
-  const isOwner = team.ownerId === currentUserId;
-  const [nick, setNick] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    if (!nick.trim()) return;
-    setBusy(true); setErr(null);
-    try { await addMemberByNickname(team.id, nick.trim()); setNick(""); onChange(); }
+    try { await createTeam(user.id, name.trim()); setName(""); await reload(); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }
 
-  return (
-    <li className="relative overflow-hidden rounded-xl border border-primary/25 bg-background/60 p-4 backdrop-blur transition hover:border-primary/60">
-      <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-lg tracking-wider neon-text sm:text-xl">{team.name}</h3>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
-            captain <span className="text-primary">{team.ownerNickname}</span> · {team.members.length} member{team.members.length === 1 ? "" : "s"}
-          </p>
-        </div>
-        {isOwner && (
-          <button
-            onClick={async () => { if (confirm(`Delete team "${team.name}"?`)) { await deleteTeam(team.id); onChange(); } }}
-            className="shrink-0 rounded-md border border-primary/25 px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive"
-          >Delete</button>
-        )}
+  return <main className="relative mx-auto max-w-[1450px] px-3 pb-28 pt-4 sm:px-5 lg:px-7">
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"><div className="absolute left-1/2 top-0 h-[620px] w-[1100px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(250,204,21,.12),transparent_64%)] blur-3xl" /><div className="absolute right-0 top-[35%] h-[600px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(34,211,238,.08),transparent_64%)] blur-3xl" /></div>
+    <section className="relative overflow-hidden rounded-[32px] border border-amber-300/20 bg-[linear-gradient(135deg,rgba(9,12,17,.98),rgba(2,5,8,.99))] shadow-[0_40px_130px_-65px_rgba(250,204,21,.6)]">
+      <div className="absolute inset-0 opacity-[.08] [background-image:linear-gradient(rgba(255,255,255,.3)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.3)_1px,transparent_1px)] [background-size:40px_40px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_20%,rgba(34,211,238,.12),transparent_26%),radial-gradient(circle_at_20%_80%,rgba(250,204,21,.10),transparent_25%)]" />
+      <div className="relative grid gap-0 xl:grid-cols-[1fr_380px]">
+        <div className="p-6 sm:p-9 lg:p-11"><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] font-black tracking-[.35em] text-amber-200/75">SPORTCHMELÁCI · TEAM OPERATIONS</span><span className="rounded-full border border-emerald-300/20 bg-emerald-300/5 px-2.5 py-1 font-mono text-[8px] font-black uppercase tracking-[.2em] text-emerald-200">2V2 READY</span></div><h1 className="mt-5 font-display text-6xl font-black tracking-[.07em] text-white sm:text-7xl lg:text-8xl">TEAM <span className="text-amber-200 [text-shadow:0_0_35px_rgba(250,204,21,.22)]">HQ</span></h1><p className="mt-4 max-w-2xl text-sm leading-7 text-white/40 sm:text-base">Sestav soupisku, nastav kapitána a připrav tým na 2v2, ligové matchday a další sportovní bitvy.</p><div className="mt-7 flex flex-wrap gap-2"><a href="#roster" className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-[10px] font-black uppercase tracking-[.18em] text-black shadow-[0_0_35px_-14px_rgba(250,204,21,.9)]"><Users className="h-4 w-4" /> ROSTER GRID</a><Link to="/leagues" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-5 py-3 text-[10px] font-black uppercase tracking-[.18em] text-white/70 hover:border-cyan-300/30 hover:text-white"><Crown className="h-4 w-4" /> CHMEL LEAGUE</Link></div></div>
+        <aside className="border-t border-white/8 bg-black/20 p-6 sm:p-8 xl:border-l xl:border-t-0"><div className="font-mono text-[9px] font-bold tracking-[.3em] text-cyan-200/70">TEAM SIGNAL</div><div className="mt-5 grid grid-cols-3 gap-2"><Stat label="SQUADS" value={String(stats.squads)} /><Stat label="MEMBERS" value={String(stats.members)} /><Stat label="CAPTAINS" value={String(stats.captains)} /></div><div className="mt-4 rounded-2xl border border-cyan-300/12 bg-cyan-300/[.03] p-4"><div className="font-mono text-[8px] font-black tracking-[.2em] text-cyan-200/55">READY STATE</div><div className="mt-2 flex items-center gap-2"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,.9)]" /><span className="font-display text-2xl text-emerald-200">ONLINE</span></div><p className="mt-1 text-[10px] leading-5 text-white/25">Týmová infrastruktura je připravena pro 2v2 matchy.</p></div></aside>
       </div>
+    </section>
 
-      {team.members.length > 0 && (
-        <ul className="relative mt-3 flex flex-wrap gap-2">
-          {team.members.map((m) => (
-            <li key={m.id} className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-xs">
-              <span className="font-mono text-primary">{m.nickname}</span>
-              {isOwner && (
-                <button onClick={async () => { await removeMember(m.id); onChange(); }} className="text-muted-foreground hover:text-destructive">×</button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+    <section className="mt-4 rounded-3xl border border-white/8 bg-black/25 p-4 sm:p-5" id="roster"><form onSubmit={submitCreate} className="relative flex flex-col gap-2 sm:flex-row"><div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_10%_50%,rgba(250,204,21,.08),transparent_30%)]" /><div className="relative flex-1"><div className="mb-2 font-mono text-[8px] font-black tracking-[.25em] text-white/30">NEW SQUAD</div><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Název nového týmu" className="w-full rounded-xl border border-white/10 bg-white/[.03] px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/40 focus:bg-amber-300/[.02]" maxLength={60} /></div><button disabled={busy} className="relative mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-black text-black disabled:opacity-50"><Plus className="h-4 w-4" /> VYTVOŘIT TÝM</button></form>{err && <p className="mt-3 rounded-xl border border-rose-300/15 bg-rose-300/[.04] px-3 py-2 text-xs text-rose-200">{err}</p>}</section>
 
-      {isOwner && (
-        <form onSubmit={add} className="relative mt-3 flex gap-2">
-          <input
-            value={nick}
-            onChange={(e) => setNick(e.target.value)}
-            list={NICKNAMES_DATALIST_ID}
-            placeholder="Add player by nickname"
-            className="flex-1 rounded-md border border-primary/30 bg-background/40 px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
-          />
-          <button disabled={busy} className="rounded-md bg-primary/90 px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50">Add</button>
-        </form>
-      )}
-      {err && <p className="relative mt-2 text-xs text-destructive">{err}</p>}
-    </li>
-  );
+    <NicknamesList />
+
+    <section className="mt-4 grid gap-4 lg:grid-cols-2">
+      {teams.map((team, index) => <TeamCard key={team.id} team={team} currentUserId={user.id} onChange={reload} index={index} />)}
+      {teams.length === 0 && <div className="lg:col-span-2 rounded-3xl border border-white/8 bg-black/20 p-12 text-center"><Sparkles className="mx-auto h-8 w-8 text-amber-200/60" /><div className="mt-4 font-display text-3xl text-white/60">NO SQUADS</div><p className="mt-2 text-sm text-white/25">Vytvoř první tým a připrav ho na další 2v2 battle.</p></div>}
+    </section>
+  </main>;
+}
+
+function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border border-white/8 bg-black/20 p-3 text-center"><div className="font-mono text-[8px] font-black tracking-[.18em] text-white/25">{label}</div><div className="mt-2 font-display text-2xl text-white">{value}</div></div>; }
+function NicknamesList() { const nicknames = useNicknames(); return <NicknamesDatalist options={nicknames} />; }
+
+function TeamCard({ team, currentUserId, onChange, index }: { team: Team; currentUserId: string; onChange: () => void; index: number }) {
+  const isOwner = team.ownerId === currentUserId;
+  const [nick, setNick] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function add(e: React.FormEvent) { e.preventDefault(); if (!nick.trim()) return; setBusy(true); setErr(null); try { await addMemberByNickname(team.id, nick.trim()); setNick(""); onChange(); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); } }
+  return <article className="group relative overflow-hidden rounded-[28px] border border-white/8 bg-[linear-gradient(135deg,rgba(15,18,24,.98),rgba(3,6,10,.98))] p-5 shadow-[0_30px_90px_-55px_rgba(0,0,0,.9)] transition hover:-translate-y-1 hover:border-amber-300/20">
+    <div className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-[radial-gradient(circle_at_85%_15%,rgba(250,204,21,.08),transparent_30%)]" />
+    <div className="relative flex items-start justify-between gap-4"><div><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl border border-amber-300/20 bg-amber-300/10 font-display text-lg text-amber-200">{String(index + 1).padStart(2,"0")}</span><div><h2 className="font-display text-2xl tracking-wide text-white">{team.name}</h2><p className="font-mono text-[8px] uppercase tracking-[.2em] text-white/25">CAPTAIN · {team.ownerNickname}</p></div></div></div>{isOwner && <button onClick={async()=>{if(confirm(`Smazat tým „${team.name}“?`)){await deleteTeam(team.id);onChange();}}} className="grid h-9 w-9 place-items-center rounded-xl border border-white/8 text-white/25 hover:border-rose-300/30 hover:text-rose-200" title="Smazat tým"><Trash2 className="h-4 w-4" /></button>}</div>
+    <div className="relative mt-5 flex items-center justify-between"><div className="font-mono text-[8px] font-black tracking-[.22em] text-white/25">ROSTER · {team.members.length}/4</div><div className="flex -space-x-2">{team.members.slice(0,4).map((m)=><div key={m.id} className="grid h-9 w-9 place-items-center rounded-full border-2 border-[#06080b] bg-amber-300/10 font-mono text-[9px] text-amber-100" title={m.nickname}>{m.nickname.slice(0,2).toUpperCase()}</div>)}{team.members.length===0&&<div className="grid h-9 w-9 place-items-center rounded-full border border-dashed border-white/10 text-white/20"><Users className="h-4 w-4" /></div>}</div></div>
+    {team.members.length>0&&<ul className="relative mt-4 grid gap-2 sm:grid-cols-2">{team.members.map((m)=><li key={m.id} className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[.02] px-3 py-2"><span className="flex items-center gap-2 text-xs text-white/70"><span className="grid h-6 w-6 place-items-center rounded-lg bg-cyan-300/10 text-[9px] font-black text-cyan-200">{m.nickname.slice(0,1).toUpperCase()}</span>{m.nickname}</span>{isOwner&&<button onClick={async()=>{await removeMember(m.id);onChange();}} className="text-white/20 hover:text-rose-200" title="Odebrat"><X className="h-3.5 w-3.5" /></button>}</li>)}</ul>}
+    {isOwner&&team.members.length<4&&<form onSubmit={add} className="relative mt-4 flex gap-2"><input value={nick} onChange={(e)=>setNick(e.target.value)} list={NICKNAMES_DATALIST_ID} placeholder="Přidat hráče…" className="min-w-0 flex-1 rounded-xl border border-white/8 bg-white/[.03] px-3 py-2 text-xs text-white outline-none focus:border-cyan-300/30" /><button disabled={busy} className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-bold text-cyan-200 disabled:opacity-50"><UserPlus className="h-3.5 w-3.5" /> ADD</button></form>}
+    {err&&<p className="relative mt-2 text-xs text-rose-200">{err}</p>}
+    <div className="relative mt-4 flex items-center justify-between border-t border-white/8 pt-3"><div className="flex items-center gap-1.5 text-[9px] text-white/25"><Zap className="h-3.5 w-3.5 text-amber-200/70" /> 2V2 READY</div><Link to="/leagues" className="font-mono text-[8px] font-black tracking-[.2em] text-amber-200/70 hover:text-amber-200">OPEN LEAGUE →</Link></div>
+  </article>;
 }
