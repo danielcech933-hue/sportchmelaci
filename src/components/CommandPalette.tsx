@@ -34,7 +34,7 @@ export function CommandPalette() {
   const visibleItems = useMemo(() => ITEMS.filter((item) => {
     if (item.to === "/games/case-opening" && !user) return false;
     if (item.to === "/profile" && !user) return false;
-    if (item.to === "/admin" && !isAdmin) return false;
+    if ((item.to as string) === "/admin" && !isAdmin) return false;
     return true;
   }), [isAdmin, user]);
 

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Clock, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyWallet } from "@/lib/wallet-rpc";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -96,8 +97,8 @@ export function LiveRouletteServer() {
     setRotation((current) => current + 360 * 5 + (360 - index * segment));
     await refreshProfile?.();
     if (user) {
-      const { data: balanceRow } = await supabase.from("profiles").select("balance").eq("id", user.id).maybeSingle();
-      if (balanceRow?.balance != null) setServerBalance(Number(balanceRow.balance));
+      const wallet = await fetchMyWallet();
+      if (wallet) setServerBalance(wallet.balance);
     }
   }, [refreshProfile, user]);
 

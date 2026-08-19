@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function useNicknames() {
   const [nicknames, setNicknames] = useState<string[]>([]);
   useEffect(() => {
-    supabase.from("profiles").select("nickname").order("nickname").then(({ data }) => {
-      setNicknames((data ?? []).map((r) => r.nickname).filter(Boolean));
+    supabase.from("profile_public").select("nickname").order("nickname").then(({ data }) => {
+      setNicknames((data ?? []).map((r) => r.nickname).filter((n): n is string => !!n));
     });
   }, []);
   return nicknames;

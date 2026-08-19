@@ -235,7 +235,7 @@ export async function buyListing(listingId: string): Promise<void> {
 
 export async function fetchArcadeProfile(userId: string): Promise<{ arcadePoints: number; elo: number }> {
   const { data, error } = await supabase
-    .from("profiles")
+    .from("profile_public")
     .select("arcade_points,elo")
     .eq("id", userId)
     .maybeSingle();

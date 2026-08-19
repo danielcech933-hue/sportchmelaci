@@ -37,10 +37,10 @@ export async function fetchAllTeams(): Promise<Team[]> {
   rows.forEach((t) => userIds.add(t.owner_id));
   memberRows.forEach((m) => userIds.add(m.user_id));
   const { data: profs } = await supabase
-    .from("profiles")
+    .from("profile_public")
     .select("id,nickname")
     .in("id", Array.from(userIds));
-  const nickMap = new Map<string, string>((profs ?? []).map((p) => [p.id, p.nickname]));
+  const nickMap = new Map<string, string>((profs ?? []).map((p) => [String(p.id), p.nickname ?? "player"] as [string, string]));
 
   return rows.map((t) => ({
     id: t.id,
@@ -71,7 +71,7 @@ export async function deleteTeam(id: string): Promise<void> {
 
 export async function addMemberByNickname(teamId: string, nickname: string): Promise<void> {
   const { data: prof, error: pe } = await supabase
-    .from("profiles")
+    .from("profile_public")
     .select("id")
     .eq("nickname", nickname)
     .maybeSingle();
@@ -79,7 +79,7 @@ export async function addMemberByNickname(teamId: string, nickname: string): Pro
   if (!prof) throw new Error(`No user with nickname "${nickname}"`);
   const { error } = await supabase
     .from("team_members")
-    .insert({ team_id: teamId, user_id: prof.id });
+    .insert({ team_id: teamId, user_id: String(prof.id) });
   if (error) throw error;
 }
 

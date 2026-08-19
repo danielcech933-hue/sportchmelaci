@@ -15,7 +15,7 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return errorResult(NOT_AUTHENTICATED);
     const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase
-      .from("profiles")
+      .from("profile_public")
       .select("nickname,elo,arcade_points")
       .order("elo", { ascending: false })
       .limit(limit);

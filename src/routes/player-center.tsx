@@ -24,7 +24,7 @@ function PlayerCenter() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("profiles").select("nickname, avatar_path, elo"),
+      supabase.from("profile_public").select("nickname, avatar_path, elo"),
       fetchAllMatches(),
     ]).then(([profileResult, all]) => {
       setProfiles((profileResult.data ?? []).filter((p) => !!p.nickname) as Profile[]);

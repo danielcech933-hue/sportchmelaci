@@ -58,7 +58,7 @@ export function ProfileAchievements({ userId }: { userId: string }) {
   useEffect(() => {
     let active = true;
     Promise.all([
-      supabase.from("profiles").select("nickname").eq("id", userId).maybeSingle(),
+      supabase.from("profile_public").select("nickname").eq("id", userId).maybeSingle(),
       fetchAllMatches(),
     ]).then(([profileResult, allMatches]) => {
       if (!active) return;

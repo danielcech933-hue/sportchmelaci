@@ -11,13 +11,19 @@ export default defineTool({
   handler: async (_input, ctx) => {
     if (!ctx.isAuthenticated()) return errorResult(NOT_AUTHENTICATED);
     const supabase = supabaseForUser(ctx);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id,nickname,elo,balance,slot_czk,arcade_points,created_at")
-      .eq("id", ctx.getUserId()!)
-      .maybeSingle();
+    const [{ data, error }, { data: wallet }] = await Promise.all([
+      supabase
+        .from("profile_public")
+        .select("id,nickname,elo,arcade_points,created_at")
+        .eq("id", ctx.getUserId()!)
+        .maybeSingle(),
+      supabase.rpc("get_my_wallet"),
+    ]);
     if (error) return errorResult(error.message);
     if (!data) return errorResult("No profile found for this account.");
-    return textResult(JSON.stringify(data), { profile: data });
+    const w = (Array.isArray(wallet) ? wallet[0] : wallet) as { balance?: number; slot_czk?: number } | null;
+    const profile = { ...data, balance: Number(w?.balance ?? 0), slot_czk: Number(w?.slot_czk ?? 0) };
+    return textResult(JSON.stringify(profile), { profile });
+
   },
 });

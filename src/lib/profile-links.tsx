@@ -12,7 +12,7 @@ export async function loadProfileDirectory(): Promise<DirectoryEntry[]> {
   if (cache) return cache;
   if (!inflight) {
     inflight = (async () => {
-      const { data } = await supabase.from("profiles").select("id,nickname,avatar_path");
+      const { data } = await supabase.from("profile_public").select("id,nickname,avatar_path");
       const rows = ((data ?? []) as DirectoryEntry[]).filter((p) => !!p.nickname);
       cache = rows;
       listeners.forEach((l) => l(rows));

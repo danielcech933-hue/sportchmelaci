@@ -379,6 +379,13 @@ export type Database = {
             foreignKeyName: "case_opening_history_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profile_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_opening_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -496,6 +503,13 @@ export type Database = {
             foreignKeyName: "case_opening_stock_history_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profile_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_opening_stock_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -557,6 +571,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "case_opening_stock_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_opening_stock_inventory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profile_public"
             referencedColumns: ["id"]
           },
           {
@@ -1282,6 +1303,29 @@ export type Database = {
           },
         ]
       }
+      match_elo_applications: {
+        Row: {
+          applied_at: string
+          match_id: string
+        }
+        Insert: {
+          applied_at?: string
+          match_id: string
+        }
+        Update: {
+          applied_at?: string
+          match_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_elo_applications_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_notification_jobs: {
         Row: {
           channel: string
@@ -1696,6 +1740,27 @@ export type Database = {
         }
         Relationships: []
       }
+      roulette_settlement_ledger: {
+        Row: {
+          paid: number
+          result: number
+          round_no: number
+          settled_at: string
+        }
+        Insert: {
+          paid?: number
+          result: number
+          round_no: number
+          settled_at?: string
+        }
+        Update: {
+          paid?: number
+          result?: number
+          round_no?: number
+          settled_at?: string
+        }
+        Relationships: []
+      }
       slot_bonus_sessions: {
         Row: {
           base_bet: number | null
@@ -1797,6 +1862,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "slot_variant_bonus_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profile_public"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "slot_variant_bonus_sessions_user_id_fkey"
             columns: ["user_id"]
@@ -2144,6 +2216,13 @@ export type Database = {
             foreignKeyName: "wallet_betting_ledger_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profile_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_betting_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2166,7 +2245,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profile_public: {
+        Row: {
+          arcade_points: number | null
+          avatar_path: string | null
+          created_at: string | null
+          elo: number | null
+          id: string | null
+          nickname: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          arcade_points?: number | null
+          avatar_path?: string | null
+          created_at?: string | null
+          elo?: number | null
+          id?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          arcade_points?: number | null
+          avatar_path?: string | null
+          created_at?: string | null
+          elo?: number | null
+          id?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_remove_bet: {
@@ -2350,6 +2458,7 @@ export type Database = {
           venue_name: string
         }[]
       }
+      get_my_wallet: { Args: never; Returns: Json }
       get_public_user_location: {
         Args: { _user_id: string }
         Returns: {
