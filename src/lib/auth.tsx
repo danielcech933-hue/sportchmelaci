@@ -44,28 +44,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Wallet migration is now installed, so read all profile wallet fields
-    // in one query. This prevents balance/avatar/slot values from getting out
-    // of sync because of multiple overlapping profile requests.
-    const [{ data: prof, error: profileError }, { data: roles }] = await Promise.all([
+    // Public profile fields come from the safe `profile_public` projection.
+    // Wallet balances are only ever read through the secure get_my_wallet() RPC.
+    const [{ data: prof, error: profileError }, wallet, { data: roles }] = await Promise.all([
       supabase
-        .from("profiles")
-        .select("nickname,balance,slot_czk,avatar_path")
+        .from("profile_public")
+        .select("nickname,avatar_path")
         .eq("id", uid)
         .maybeSingle(),
+      fetchMyWallet(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
 
     if (!profileError) {
       const p = prof as ProfileRow | null;
       setNickname(p?.nickname ?? null);
-      setBalance(Number(p?.balance ?? 0));
-      const slotValue = Number(p?.slot_czk);
-      setSlotCZK(Number.isFinite(slotValue) ? slotValue : DEFAULT_SLOT_CZK);
       setAvatarPath(p?.avatar_path ?? null);
     }
 
+    if (wallet) {
+      setBalance(wallet.balance);
+      setSlotCZK(Number.isFinite(wallet.slotCZK) ? wallet.slotCZK : DEFAULT_SLOT_CZK);
+    }
+
     setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
+
   }
 
   useEffect(() => {
