@@ -46,7 +46,7 @@ function TeamsPage() {
     e.preventDefault();
     if (!name.trim()) return;
     setBusy(true); setErr(null);
-    try { await createTeam(user.id, name.trim()); setName(""); await reload(); }
+    try { await createTeam(user!.id, name.trim()); setName(""); await reload(); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   }

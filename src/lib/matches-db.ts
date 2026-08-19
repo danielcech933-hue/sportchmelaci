@@ -31,7 +31,7 @@ function toMatch(r: Row, nickname: string): Match {
 async function attachNicknames(rows: Row[]): Promise<Match[]> {
   const ids=Array.from(new Set(rows.map(r=>r.owner_id))); if(!ids.length) return [];
   const {data:profs}=await supabase.from("profile_public").select("id,nickname").in("id",ids);
-  const map=new Map<string,string>((profs??[]).map(p=>[p.id,p.nickname])); return rows.map(r=>toMatch(r,map.get(r.owner_id)??"player"));
+  const map=new Map<string,string>((profs??[]).map(p=>[String(p.id),p.nickname??"player"] as [string,string])); return rows.map(r=>toMatch(r,map.get(r.owner_id)??"player"));
 }
 export async function fetchAllMatches():Promise<Match[]> { const {data,error}=await supabase.from("matches").select("*").order("started_at",{ascending:false}); if(error) throw error; return attachNicknames((data??[]) as Row[]); }
 export async function fetchMatch(id:string):Promise<Match|null>{ const {data,error}=await supabase.from("matches").select("*").eq("id",id).maybeSingle(); if(error) throw error; if(!data) return null; const [m]=await attachNicknames([data as Row]); return m; }

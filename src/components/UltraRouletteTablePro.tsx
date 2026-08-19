@@ -169,7 +169,7 @@ export function UltraRouletteTablePro() {
     const { data, error } = await supabase.rpc("roulette_place_bet", {
       _round_no: round,
       _bet_type: bet.type,
-      _bet_value: bet.value,
+      _bet_value: bet.value as string,
       _amount: chip,
     });
     if (error) {

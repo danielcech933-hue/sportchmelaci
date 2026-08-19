@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyWallet } from "@/lib/wallet-rpc";
 
 interface AuthState {
   session: Session | null;
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSlotCZK(Number.isFinite(wallet.slotCZK) ? wallet.slotCZK : DEFAULT_SLOT_CZK);
     }
 
-    setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
+    setIsAdmin(((roles ?? []) as { role: string }[]).some((r) => r.role === "admin"));
 
   }
 
