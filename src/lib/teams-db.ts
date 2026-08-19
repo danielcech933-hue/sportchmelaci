@@ -37,7 +37,7 @@ export async function fetchAllTeams(): Promise<Team[]> {
   rows.forEach((t) => userIds.add(t.owner_id));
   memberRows.forEach((m) => userIds.add(m.user_id));
   const { data: profs } = await supabase
-    .from("profiles")
+    .from("profile_public")
     .select("id,nickname")
     .in("id", Array.from(userIds));
   const nickMap = new Map<string, string>((profs ?? []).map((p) => [p.id, p.nickname]));
@@ -71,7 +71,7 @@ export async function deleteTeam(id: string): Promise<void> {
 
 export async function addMemberByNickname(teamId: string, nickname: string): Promise<void> {
   const { data: prof, error: pe } = await supabase
-    .from("profiles")
+    .from("profile_public")
     .select("id")
     .eq("nickname", nickname)
     .maybeSingle();

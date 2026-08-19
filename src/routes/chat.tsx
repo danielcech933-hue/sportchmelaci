@@ -44,7 +44,7 @@ function ChatPage() {
   const loadAvatarsFor = useCallback(async (ids: string[]) => {
     if (ids.length === 0) return;
     const { data } = await supabase
-      .from("profiles")
+      .from("profile_public")
       .select("id,avatar_path")
       .in("id", ids);
     if (!data) return;

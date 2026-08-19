@@ -35,7 +35,7 @@ export function ProfileView({ userId }: { userId?: string }) {
   const [profile, setProfile] = useState<{ nickname: string; avatar_path: string | null } | null>(null);
   const [profileMissing, setProfileMissing] = useState(false); const [matches, setMatches] = useState<Match[]>([]); const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (!targetId) return; setProfileMissing(false); supabase.from("profiles").select("nickname,avatar_path").eq("id", targetId).maybeSingle().then(({ data }) => { if (data) setProfile(data as { nickname: string; avatar_path: string | null }); else setProfileMissing(true); }); }, [targetId, isSelf ? myNickname : null, isSelf ? myAvatar : null]);
+  useEffect(() => { if (!targetId) return; setProfileMissing(false); supabase.from("profile_public").select("nickname,avatar_path").eq("id", targetId).maybeSingle().then(({ data }) => { if (data) setProfile(data as { nickname: string; avatar_path: string | null }); else setProfileMissing(true); }); }, [targetId, isSelf ? myNickname : null, isSelf ? myAvatar : null]);
   useEffect(() => { if (!targetId) return; setLoading(true); fetchAllMatches().then(setMatches).finally(() => setLoading(false)); }, [targetId]);
 
   const nickname = isSelf ? (myNickname ?? profile?.nickname ?? null) : (profile?.nickname ?? null); const avatarPath = isSelf ? myAvatar : (profile?.avatar_path ?? null);

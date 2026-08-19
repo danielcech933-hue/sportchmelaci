@@ -15,7 +15,7 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return errorResult(NOT_AUTHENTICATED);
     const supabase = supabaseForUser(ctx);
     const userId = ctx.getUserId()!;
-    const { data: profile } = await supabase.from("profiles").select("nickname").eq("id", userId).maybeSingle();
+    const { data: profile } = await supabase.from("profile_public").select("nickname").eq("id", userId).maybeSingle();
     const { data, error } = await supabase
       .from("chat_messages")
       .insert({ user_id: userId, nickname: profile?.nickname ?? "player", content })

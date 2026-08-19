@@ -44,7 +44,7 @@ function RankingsPage() {
       try {
         const [m, p] = await Promise.all([
           fetchAllMatches(),
-          supabase.from("profiles").select("nickname, avatar_path, elo").then((r) => (r.data ?? []) as { nickname: string; avatar_path: string | null; elo: number | null }[]),
+          supabase.from("profile_public").select("nickname, avatar_path, elo").then((r) => (r.data ?? []) as { nickname: string; avatar_path: string | null; elo: number | null }[]),
         ]);
         if (!active) return;
         setMatches(m);

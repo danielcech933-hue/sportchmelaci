@@ -47,7 +47,7 @@ export function OnlineMatchLobby({ userId }: Props) {
   useEffect(() => {
     reload();
     supabase
-      .from("profiles")
+      .from("profile_public")
       .select("id,nickname")
       .neq("id", userId)
       .order("nickname")

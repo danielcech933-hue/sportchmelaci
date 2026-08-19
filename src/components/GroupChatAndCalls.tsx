@@ -56,7 +56,7 @@ export function GroupChatHub({ onBack, onClose }: { onBack: () => void; onClose:
   useEffect(() => { void loadGroups(); }, [loadGroups]);
 
   useEffect(() => {
-    supabase.from("profiles").select("id,nickname,avatar_path").order("nickname", { ascending: true }).limit(200).then(({ data }) => setProfiles((data ?? []) as Profile[]));
+    supabase.from("profile_public").select("id,nickname,avatar_path").order("nickname", { ascending: true }).limit(200).then(({ data }) => setProfiles((data ?? []) as Profile[]));
   }, []);
 
   const create = async () => {
@@ -115,7 +115,7 @@ function GroupChatPane({ group, onBack, onClose }: { group: Group; onBack: () =>
   const send = async () => { const content = text.trim(); if (!user || !content) return; setText(""); const { error } = await supabase.from("dm_group_messages").insert({ group_id: group.id, sender_id: user.id, content }); if (error) setText(content); };
 
   const nicknameMap = useMemo(() => new Map<string,string>(), []);
-  useEffect(() => { if (!members.length) return; supabase.from("profiles").select("id,nickname").in("id", members).then(({data}) => (data ?? []).forEach((p) => nicknameMap.set(p.id as string, p.nickname as string))); }, [members, nicknameMap]);
+  useEffect(() => { if (!members.length) return; supabase.from("profile_public").select("id,nickname").in("id", members).then(({data}) => (data ?? []).forEach((p) => nicknameMap.set(p.id as string, p.nickname as string))); }, [members, nicknameMap]);
 
   return <>
     <header className="flex items-center gap-2 border-b border-primary/20 px-3 py-2.5"><button aria-label="Zpět" onClick={onBack} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></button><div className="grid h-8 w-8 place-items-center rounded-full border border-accent/30 bg-accent/10 text-accent"><Users className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{group.name}</div><div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{members.length} hráčů</div></div><GroupCallButton groupId={group.id} /><button aria-label="Zavřít" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button></header>

@@ -37,7 +37,7 @@ export function ProfileIdentity2({ userId }: { userId: string }) {
     Promise.all([
       fetchAllMatches(),
       fetchAllTeams(),
-      supabase.from("profiles").select("nickname,avatar_path").eq("id", userId).maybeSingle(),
+      supabase.from("profile_public").select("nickname,avatar_path").eq("id", userId).maybeSingle(),
     ]).then(([matchRows, teamRows, profileRow]) => {
       if (cancelled) return;
       setMatches(matchRows as Match[]);
