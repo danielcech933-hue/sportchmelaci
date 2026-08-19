@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, RotateCcw, ShieldCheck, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyWallet } from "@/lib/wallet-rpc";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -126,8 +127,8 @@ export function UltraRouletteTablePro() {
       setHistory((xs) => [result, ...xs].slice(0, 14));
       void refreshProfile?.();
       if (user) {
-        void supabase.from("profiles").select("balance").eq("id", user.id).maybeSingle().then(({ data: row }) => {
-          if (row?.balance != null) setServerBalance(Number(row.balance));
+        void fetchMyWallet().then((w) => {
+          if (w) setServerBalance(w.balance);
         });
       }
     }, SPIN_SEC * 1000);
