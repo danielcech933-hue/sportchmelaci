@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, Flame, Gamepad2, Medal, Radio, Search, Shield, Sparkles, Trophy, Users, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
-import { SPORTS, SPORT_LIST, type Match } from "@/lib/matches";
+import { SPORTS, SPORT_LIST, type Match, type SportId } from "@/lib/matches";
 import { splitPlayers, winnerSideOf } from "@/lib/stats";
 import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";
 
