@@ -65,7 +65,7 @@ function Lobby() {
                 <span className="aaa-chip"><Activity className="h-3 w-3" /> COMMAND LOBBY</span>
                 <span className="aaa-chip text-emerald-200"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(77,255,166,.9)]" /> LIVE SYNC</span>
               </div>
-              <h1 className="mt-6 font-display text-5xl leading-[.86] tracking-[.08em] text-white sm:text-7xl lg:text-8xl">SPORT<br /><span className="gold-text">COMMAND</span></h1>
+              <h1 className="mt-6 font-display text-5xl leading-[.86] tracking-[.08em] text-white sm:text-7xl lg:text-8xl">TAKŽE VY GAYOVÉ<br /><span className="gold-text">NOHEJBAL SE RUŠÍ</span></h1>
               <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/58 sm:text-base">{nickname ? <>Vítej zpět, <strong className="text-white">{nickname}</strong>. Všechno důležité máš na jednom místě.</> : "Jedna obrazovka pro live zápasy, plán, týmy, sázky, sporty a komunitní akci."}</p>
             </div>
             <div className="grid gap-2 sm:flex sm:flex-wrap">
