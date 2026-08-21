@@ -171,31 +171,40 @@ export type Database = {
       }
       arcade_matches: {
         Row: {
+          confirmed_at: string | null
+          confirmed_by: string | null
           crate_opened: boolean
           created_at: string
           id: string
           player_a: string
           player_b: string | null
+          points_awarded: boolean
           score_a: number
           score_b: number
           winner_id: string | null
         }
         Insert: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           crate_opened?: boolean
           created_at?: string
           id?: string
           player_a: string
           player_b?: string | null
+          points_awarded?: boolean
           score_a?: number
           score_b?: number
           winner_id?: string | null
         }
         Update: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           crate_opened?: boolean
           created_at?: string
           id?: string
           player_a?: string
           player_b?: string | null
+          points_awarded?: boolean
           score_a?: number
           score_b?: number
           winner_id?: string | null
@@ -2287,6 +2296,7 @@ export type Database = {
         Args: { _listing_id: string }
         Returns: undefined
       }
+      arcade_confirm_match: { Args: { _match_id: string }; Returns: Json }
       arcade_equip: {
         Args: { _equip: boolean; _inventory_id: string }
         Returns: undefined
@@ -2493,6 +2503,14 @@ export type Database = {
       }
       join_call: { Args: { _call_id: string }; Returns: boolean }
       leave_call: { Args: { _call_id: string }; Returns: boolean }
+      match_market_odds: {
+        Args: { _market_id: string; _match_id: string; _option_id: string }
+        Returns: Json
+      }
+      match_side_stats: {
+        Args: { _exclude: string; _name: string; _sport: string }
+        Returns: Json
+      }
       notify_win: {
         Args: { _body: string; _kind: string; _title: string; _user_id: string }
         Returns: undefined
