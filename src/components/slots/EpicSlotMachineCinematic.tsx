@@ -95,7 +95,7 @@ export function EpicSlotMachineCinematic({ game, playerName }: { game: EpicGame;
   const meta = META[game];
   const thunder = game === "thunder-egg";
   const { slotCZK, ready } = useWallet();
-  const { nickname } = useAuth();
+  const { isAdmin, hasRole } = useAuth();
   const privileged = hasRole("high_roller") || isAdmin;
   const betOptions = privileged ? PRIVILEGED_BETS : STANDARD_BETS;
   const [balance, setBalance] = useState(slotCZK);
