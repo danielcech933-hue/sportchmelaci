@@ -10,6 +10,8 @@ interface AuthState {
   balance: number;
   slotCZK: number;
   avatarPath: string | null;
+  roles: AppRole[];
+  hasRole: (role: AppRole) => boolean;
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
