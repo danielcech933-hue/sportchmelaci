@@ -13,7 +13,6 @@ type HistoryRow = { id: string; case_id: CaseId; case_cost: number; company_name
 type InventoryRow = Omit<HistoryRow, "id" | "case_cost">;
 type CaseConfig = { id: CaseId; name: string; sector: string; cost: number; description: string; accent: string; icon: typeof Boxes };
 
-const PRIVILEGED = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "boro"]);
 const CASES: CaseConfig[] = [
   { id: "tech", name: "TECHNOLOGY VAULT", sector: "Technology", cost: 10_000_000_000, description: "Semiconductors, cloud, robotics and future infrastructure.", accent: "cyan", icon: Cpu },
   { id: "ai", name: "AI / CLOUD BLACKBOX", sector: "AI & Cloud", cost: 25_000_000_000, description: "Frontier models, AI compute and cloud empires.", accent: "violet", icon: Zap },
@@ -40,8 +39,8 @@ const dollars = (value: number) => `${Math.round(value).toLocaleString("en-US")}
 const shares = (value: number) => `${Math.round(value).toLocaleString("en-US")} SHARES`;
 
 export function CaseOpeningLobby() {
-  const { user, nickname, balance, loading } = useAuth();
-  const allowed = PRIVILEGED.has((nickname ?? "").trim().toLocaleLowerCase("cs-CZ"));
+  const { user, nickname, balance, loading, isAdmin, hasRole } = useAuth();
+  const allowed = (hasRole("case_opener") || isAdmin) && !hasRole("restricted");
   const [cash, setCash] = useState(Number(balance ?? 0));
   const [filter, setFilter] = useState("All");
   const [opening, setOpening] = useState<CaseId | null>(null);

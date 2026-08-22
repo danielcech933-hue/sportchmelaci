@@ -8,9 +8,9 @@ export const Route = createFileRoute("/games/case-opening")({
 });
 
 function CaseOpeningGate() {
-  const { user, nickname, loading } = useAuth();
+  const { user, loading, hasRole } = useAuth();
   if (loading) return null;
-  if ((nickname ?? "").trim().toLocaleLowerCase("cs-CZ") === "boro nezastavitelny") return <Navigate to="/" replace />;
+  if (hasRole("restricted")) return <Navigate to="/" replace />;
   if (!user) return <Navigate to="/auth" replace />;
   return <CaseOpeningLobby />;
 }

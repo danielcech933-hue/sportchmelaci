@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ComponentType } from "react";
 import { Activity, Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, Beer, Layers, Dices, Spade, PackageOpen, ChevronUp, BarChart3 } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type AppRole } from "@/lib/auth";
 import { IncomingCallPrompt } from "@/components/IncomingCallPrompt";
 
 export type NavItem = { to: string; label: string; icon: ComponentType<{ className?: string }>; exact?: boolean; admin?: boolean; authOnly?: boolean; privilegedOnly?: boolean; boroBlocked?: boolean; fx?: "trophy" };
@@ -14,26 +14,24 @@ const GAME_ITEMS: NavItem[] = [{ to: "/games/poker", label: "Poker", icon: Spade
 const COMMUNITY_ITEMS: NavItem[] = [{ to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
 export const NAV_ITEMS: NavEntry[] = [{ to: "/", label: "Lobby", icon: Home, exact: true }, { to: "/activity", label: "Live Pulse", icon: Activity }, { label: "Sport", icon: Trophy, items: SPORT_ITEMS }, { label: "Výsledky", icon: BarChart3, items: RESULTS_ITEMS }, { label: "Hry", icon: Dices, items: GAME_ITEMS }, { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS }];
 
-const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das"]);
-
 export function matchesRoute(pathname: string, item: NavItem) {
   if (item.exact) return pathname === item.to;
   return pathname === item.to || pathname.startsWith(item.to + "/");
 }
 
 type AuthUser = ReturnType<typeof useAuth>["user"];
+type RoleSet = { isAdmin: boolean; hasRole: (role: AppRole) => boolean };
 
-function itemIsVisible(item: NavItem, user: AuthUser, isAdmin: boolean, nickname: string | null | undefined) {
-  const normalized = (nickname ?? "").trim().toLocaleLowerCase("cs-CZ");
-  if (item.boroBlocked && normalized === "boro nezastavitelny") return false;
+function itemIsVisible(item: NavItem, user: AuthUser, { isAdmin, hasRole }: RoleSet) {
+  if (item.boroBlocked && hasRole("restricted")) return false;
   if (item.admin) return !!user && isAdmin;
   if (item.authOnly && !user) return false;
-  if (item.privilegedOnly && !PRIVILEGED_NAMES.has(normalized)) return false;
+  if (item.privilegedOnly && !(hasRole("case_opener") || isAdmin)) return false;
   return true;
 }
 
-function entryIsVisible(entry: NavEntry, user: AuthUser, isAdmin: boolean, nickname: string | null | undefined) {
-  return "items" in entry ? entry.items.some((i) => itemIsVisible(i, user, isAdmin, nickname)) : itemIsVisible(entry, user, isAdmin, nickname);
+function entryIsVisible(entry: NavEntry, user: AuthUser, roleSet: RoleSet) {
+  return "items" in entry ? entry.items.some((i) => itemIsVisible(i, user, roleSet)) : itemIsVisible(entry, user, roleSet);
 }
 
 function groupIsActive(pathname: string, group: NavGroup) {
@@ -43,7 +41,7 @@ function groupIsActive(pathname: string, group: NavGroup) {
 const CHIP = "nav-chip group relative flex min-w-[3.6rem] shrink-0 touch-manipulation flex-col items-center gap-1 rounded-xl px-2.5 py-2 transition sm:min-w-[4.1rem]";
 
 export function FloatingNav() {
-  const { user, nickname, isAdmin, loading } = useAuth();
+  const { user, isAdmin, hasRole, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
@@ -53,7 +51,8 @@ export function FloatingNav() {
 
   if (loading) return null;
 
-  const visible = NAV_ITEMS.filter((e) => entryIsVisible(e, user, isAdmin, nickname));
+  const roleSet = { isAdmin, hasRole };
+  const visible = NAV_ITEMS.filter((e) => entryIsVisible(e, user, roleSet));
   const activeGroup = visible.find((e) => "items" in e && e.label === openGroup) as NavGroup | undefined;
 
   return (
@@ -67,7 +66,7 @@ export function FloatingNav() {
             <div className="pointer-events-auto aaa-surface aaa-hairline-top w-full max-w-md p-2 backdrop-blur-xl">
               <p className="aaa-meta px-2 pb-2 pt-1">{activeGroup.label}</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {activeGroup.items.filter((item) => itemIsVisible(item, user, isAdmin, nickname)).map((item) => {
+                {activeGroup.items.filter((item) => itemIsVisible(item, user, roleSet)).map((item) => {
                   const ItemIcon = item.icon;
                   const itemActive = matchesRoute(pathname, item);
                   return (

@@ -55,7 +55,6 @@ const META: Record<EpicGame, { title: string; kicker: string; cols: number; rows
 
 const STANDARD_BETS = [5, 10, 20, 50, 100, 250, 500];
 const PRIVILEGED_BETS = [5, 10, 20, 50, 100, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000];
-const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "messi", "mesi"]);
 
 function playTone(kind: "spin" | "stop" | "win" | "bonus") {
   if (typeof window === "undefined") return;
@@ -96,8 +95,8 @@ export function EpicSlotMachineCinematic({ game, playerName }: { game: EpicGame;
   const meta = META[game];
   const thunder = game === "thunder-egg";
   const { slotCZK, ready } = useWallet();
-  const { nickname } = useAuth();
-  const privileged = PRIVILEGED_NAMES.has((nickname ?? "").trim().toLocaleLowerCase("cs-CZ"));
+  const { isAdmin, hasRole } = useAuth();
+  const privileged = hasRole("high_roller") || isAdmin;
   const betOptions = privileged ? PRIVILEGED_BETS : STANDARD_BETS;
   const [balance, setBalance] = useState(slotCZK);
   const [betIndex, setBetIndex] = useState(1);

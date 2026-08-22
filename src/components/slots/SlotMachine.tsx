@@ -9,11 +9,11 @@ import { BonusPickModal, BonusRecapModal, type BonusOption } from "./BonusModal"
 import { BigWinOverlay } from "./BigWinOverlay";
 import { MAX_BET, PRIVILEGED_MAX_BET, PAYLINES, REELS, ROWS, formatKc, hasAnticipation, loadBestMultiplier, saveBestMultiplier, spinGrid, type Grid, type LineWin } from "@/lib/slots";
 import { useWallet } from "@/lib/wallet";
+import { useAuth } from "@/lib/auth";
 
 const SPIN_DURATION = 2500;
 const STOP_STEP = 200;
 const STOP_BASE = SPIN_DURATION - STOP_STEP * (REELS - 1);
-const PRIVILEGED_NAMES = new Set(["danko", "chlaďar", "chladar", "midas", "m1das", "messi", "mesi"]);
 
 function fireConfetti() {
   const shoot = (x: number) => confetti({ particleCount: 90, spread: 80, startVelocity: 55, origin: { x, y: 0.75 }, colors: ["#ffcc44", "#b8860b", "#4dffa6", "#fff3bf"], scalar: 1.1 });
@@ -26,7 +26,8 @@ function normalizeGrid(value: unknown): Grid {
 
 export function SlotMachine({ playerName, onExchange, onWin }: { playerName: string; onExchange?: () => void; onWin?: (multiplier: number) => void }) {
   const { slotCZK, spinSlot, pickBonus } = useWallet();
-  const privileged = PRIVILEGED_NAMES.has(playerName.trim().toLocaleLowerCase("cs-CZ"));
+  const { isAdmin, hasRole } = useAuth();
+  const privileged = hasRole("high_roller") || isAdmin;
   const maxBet = privileged ? PRIVILEGED_MAX_BET : MAX_BET;
   const [isSpinning, setIsSpinning] = useState(false); const [bet, setBet] = useState(10); const [grid, setGrid] = useState<Grid>(() => spinGrid()); const [stoppedReels, setStoppedReels] = useState(REELS); const [anticipation, setAnticipation] = useState(false); const [winLines, setWinLines] = useState<LineWin[]>([]); const [scatterCells, setScatterCells] = useState<[number, number][]>([]); const [lastWin, setLastWin] = useState(0); const [message, setMessage] = useState<string | null>(null); const [freeSpinsLeft, setFreeSpinsLeft] = useState(0); const [bonusMultiplier, setBonusMultiplier] = useState(1); const [bonusTotal, setBonusTotal] = useState(0); const [bonusSpinsGranted, setBonusSpinsGranted] = useState(0); const [pickOptions, setPickOptions] = useState<BonusOption[] | null>(null); const [recap, setRecap] = useState<{ total: number; spins: number; mult: number } | null>(null); const [bigWin, setBigWin] = useState<{ amount: number; multiplier: number } | null>(null); const [showPaytable, setShowPaytable] = useState(false); const [showHof, setShowHof] = useState(false); const [bestMultiplier, setBestMultiplier] = useState(0); const [autoLeft, setAutoLeft] = useState(0); const busy = isSpinning; const timers = useRef<number[]>([]);
   useEffect(() => setBestMultiplier(loadBestMultiplier()), []); useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
