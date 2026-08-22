@@ -18,6 +18,8 @@ interface AuthState {
   refreshProfile: () => Promise<void>;
 }
 
+export type AppRole = "admin" | "moderator" | "user" | "high_roller" | "case_opener" | "restricted";
+
 const Ctx = createContext<AuthState | undefined>(undefined);
 const DEFAULT_SLOT_CZK = 10000;
 
@@ -34,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [balance, setBalance] = useState<number>(0);
   const [slotCZK, setSlotCZK] = useState<number>(DEFAULT_SLOT_CZK);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadProfile(uid: string | undefined) {
@@ -43,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setBalance(0);
       setSlotCZK(DEFAULT_SLOT_CZK);
       setAvatarPath(null);
-      setIsAdmin(false);
+      setRoles([]);
       return;
     }
 
@@ -70,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSlotCZK(Number.isFinite(wallet.slotCZK) ? wallet.slotCZK : DEFAULT_SLOT_CZK);
     }
 
-    setIsAdmin(((roles ?? []) as { role: string }[]).some((r) => r.role === "admin"));
+    setRoles(((roles ?? []) as { role: AppRole }[]).map((r) => r.role));
 
   }
 
@@ -95,7 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     balance,
     slotCZK,
     avatarPath,
-    isAdmin,
+    roles,
+    hasRole: (role) => roles.includes(role),
+    isAdmin: roles.includes("admin"),
     loading,
     signOut: async () => {
       await supabase.auth.signOut();
