@@ -1,13 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-  useRouterState,
-  HeadContent,
-  Scripts,
-} from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, useRouter, useRouterState, HeadContent, Scripts } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { UserRound, Radio, WalletCards } from "lucide-react";
 
@@ -25,6 +17,7 @@ import { WinCelebrations } from "@/lib/win-toasts";
 import { WalletProvider, useWallet } from "@/lib/wallet";
 import { Toaster } from "@/components/ui/sonner";
 import { StadiumBackdrop } from "@/components/StadiumBackdrop";
+import { CallPushRegistrar } from "@/components/CallPushRegistrar";
 import { motion } from "framer-motion";
 
 function NotFoundComponent() {
@@ -119,6 +112,7 @@ function RootComponent() {
               <SiteFooter />
               <FloatingNav />
               <WinCelebrations />
+              <CallPushRegistrar />
               <Toaster />
             </div>
           </DmProvider>
