@@ -17,6 +17,7 @@ jobs:
       - run: bun install --no-frozen-lockfile
       # TanStack Router generates src/routeTree.gen.ts during the Vite build.
       # Build before typecheck so the route tree always reflects src/routes/*.
+      # Diagnostic refresh after dependency-range correction.
       - name: Build
         run: bun run build
       - name: Typecheck
