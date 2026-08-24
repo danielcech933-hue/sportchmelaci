@@ -1,0 +1,64 @@
+name: native-voip-verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'capacitor.config.ts'
+      - 'src/lib/native-call-bridge.ts'
+      - 'src/components/CallPushRegistrar.tsx'
+      - 'MOBILE.md'
+
+jobs:
+  android-native-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+      - run: bun run build
+      - run: npx cap add android
+      - run: npx cap sync android
+      - name: Validate Android native project
+        run: |
+          test -f android/app/src/main/AndroidManifest.xml
+          grep -R "ConnectionService\|kapsula" -n android/app/src/main android/variables.gradle || true
+      - name: Build debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+  ios-native-sync:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+      - run: bun run build
+      - run: npx cap add ios
+      - run: npx cap sync ios
+      - name: Validate iOS native project
+        run: |
+          test -d ios/App
+          grep -R "UIBackgroundModes\|voip" -n ios/App || true
+          grep -R "PushKit\|CallKit\|kapsula" -n ios/App || true
+      - name: Build unsigned iOS app
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' CODE_SIGNING_ALLOWED=NO build
+
+  native-credentials-check:
+    runs-on: ubuntu-latest
+    needs: [android-native-sync, ios-native-sync]
+    if: ${{ always() }}
+    steps:
+      - name: Explain remaining production prerequisites
+        run: |
+          echo 'Native source/project generation is verified.'
+          echo 'Production device ringing additionally requires Apple VoIP/APNs credentials and Firebase/FCM credentials plus platform signing.'
+          echo 'Secrets must never be committed to GitHub.'
