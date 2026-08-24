@@ -121,14 +121,17 @@ grant execute on function public.call_target_devices(uuid) to authenticated;
 
 create or replace function public.touch_call_device(_device_id text)
 returns boolean
-language sql
+language plpgsql
 security definer
 set search_path=public
 as $$
+begin
+  if auth.uid() is null then raise exception 'not_authenticated'; end if;
   update public.call_devices
      set last_seen_at=now(), updated_at=now()
    where user_id=auth.uid() and device_id=trim(_device_id) and enabled=true;
-  select found;
+  return found;
+end;
 $$;
 
 revoke all on function public.touch_call_device(text) from public,anon;
