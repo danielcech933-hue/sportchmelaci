@@ -18,6 +18,7 @@ import { WalletProvider, useWallet } from "@/lib/wallet";
 import { Toaster } from "@/components/ui/sonner";
 import { StadiumBackdrop } from "@/components/StadiumBackdrop";
 import { CallPushRegistrar } from "@/components/CallPushRegistrar";
+import { NativeCallSessionHost } from "@/components/NativeCallSessionHost";
 import { motion } from "framer-motion";
 
 function NotFoundComponent() {
@@ -113,6 +114,7 @@ function RootComponent() {
               <FloatingNav />
               <WinCelebrations />
               <CallPushRegistrar />
+              <NativeCallSessionHost />
               <Toaster />
             </div>
           </DmProvider>
