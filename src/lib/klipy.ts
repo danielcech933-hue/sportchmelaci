@@ -53,11 +53,12 @@ function mapItem(raw: any, mediaType: KlipyMediaType): KlipyItem | null {
     nestedImage(file, "md", "gif") ??
     nestedImage(file, "md", "webp") ??
     nestedImage(file, "hd", "gif") ??
-    nestedImage(file, "mediumgif");
+    mapImage(file?.mediumgif) ??
+    mapImage(file?.gif);
   const original =
     nestedImage(file, "hd", "gif") ??
     nestedImage(file, "lg", "gif") ??
-    nestedImage(file, "gif");
+    mapImage(file?.gif);
 
   if (!raw?.id || !preview?.url || !fixedWidth?.url || !original?.url) return null;
 
