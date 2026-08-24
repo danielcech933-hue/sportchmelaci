@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EMOJI, encodeMediaMessage, type MediaMessage } from "@/lib/dm-media";
 import { LOCAL_SPORT_GIFS } from "@/lib/dm-local-gifs";
 import { isGiphyConfigured, searchGiphy, trendingGiphy, type GiphyItem } from "@/lib/giphy";
+import { isKlipyConfigured, searchKlipy, trendingKlipy, type KlipyItem } from "@/lib/klipy";
 
 type SentCallback = () => void;
 type LocalGifItem = { id: string; title: string; url: string; preview: string; sport: string };
@@ -14,7 +15,7 @@ type GifItem = {
   title: string;
   url: string;
   preview: string;
-  source: "SPORTCHMELACI" | "GIPHY";
+  source: "SPORTCHMELACI" | "KLIPY" | "GIPHY";
 };
 
 function extFor(file: File) {
@@ -36,9 +37,10 @@ export function ChatComposer({ userId, peerId, onSent }: { userId: string; peerI
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [gifError, setGifError] = useState<string | null>(null);
-  const [onlineGifs, setOnlineGifs] = useState<GiphyItem[]>([]);
-  const [giphyLoading, setGiphyLoading] = useState(false);
-  const [giphyMode, setGiphyMode] = useState<"online" | "local">(isGiphyConfigured() ? "online" : "local");
+  const [klipyGifs, setKlipyGifs] = useState<KlipyItem[]>([]);
+  const [giphyGifs, setGiphyGifs] = useState<GiphyItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [provider, setProvider] = useState<"klipy" | "giphy" | "local">(isKlipyConfigured() ? "klipy" : isGiphyConfigured() ? "giphy" : "local");
   const fileRef = useRef<HTMLInputElement>(null);
   const emojiGroups = useMemo(() => [EMOJI.slice(0, 18), EMOJI.slice(18)], []);
   const localGifs = useMemo<LocalGifItem[]>(() => {
@@ -47,25 +49,31 @@ export function ChatComposer({ userId, peerId, onSent }: { userId: string; peerI
   }, [gifQuery]);
 
   useEffect(() => {
-    if (!gifOpen || giphyMode !== "online") return;
+    if (!gifOpen || provider === "local") return;
     let cancelled = false;
     const timer = window.setTimeout(async () => {
-      setGiphyLoading(true);
+      setMediaLoading(true);
       setGifError(null);
       try {
-        const data = gifQuery.trim() ? await searchGiphy(gifQuery, { limit: 24 }) : await trendingGiphy({ limit: 24 });
-        if (!cancelled) setOnlineGifs(data);
+        if (provider === "klipy") {
+          const data = gifQuery.trim() ? await searchKlipy(gifQuery, { limit: 24 }) : await trendingKlipy({ limit: 24 });
+          if (!cancelled) setKlipyGifs(data);
+        } else {
+          const data = gifQuery.trim() ? await searchGiphy(gifQuery, { limit: 24 }) : await trendingGiphy({ limit: 24 });
+          if (!cancelled) setGiphyGifs(data);
+        }
       } catch (error) {
         if (!cancelled) {
-          setGiphyMode("local");
+          const fallback = provider === "klipy" && isGiphyConfigured() ? "giphy" : "local";
+          setProvider(fallback);
           setGifError(error instanceof Error ? error.message : "Online GIF galerii se nepodařilo načíst.");
         }
       } finally {
-        if (!cancelled) setGiphyLoading(false);
+        if (!cancelled) setMediaLoading(false);
       }
     }, gifQuery.trim() ? 300 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [gifOpen, gifQuery, giphyMode]);
+  }, [gifOpen, gifQuery, provider]);
 
   const setFile = (file: File | undefined) => {
     if (!file) return;
@@ -130,16 +138,27 @@ export function ChatComposer({ userId, peerId, onSent }: { userId: string; peerI
           {gifOpen && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <div><p className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent">GIF SYSTEM</p><p className="text-xs text-muted-foreground">{giphyMode === "online" ? "Online GIPHY galerie" : "Lokální sportovní galerie"}</p></div>
-                {isGiphyConfigured() && <button type="button" onClick={() => { setGiphyMode((value) => value === "online" ? "local" : "online"); setGifError(null); }} className="rounded-lg border border-primary/20 px-2 py-1 font-mono text-[8px] uppercase tracking-widest text-muted-foreground hover:border-accent/40 hover:text-accent">{giphyMode === "online" ? "Lokální" : "Online GIPHY"}</button>}
+                <div><p className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent">GIF SYSTEM</p><p className="text-xs text-muted-foreground">{provider === "klipy" ? "Online KLIPY" : provider === "giphy" ? "Online GIPHY" : "Lokální SportChmeláci"}</p></div>
+                <div className="flex gap-1">
+                  {isKlipyConfigured() && <button type="button" onClick={() => { setProvider("klipy"); setGifError(null); }} className={`rounded-lg border px-2 py-1 font-mono text-[8px] uppercase tracking-widest ${provider === "klipy" ? "border-accent/50 text-accent" : "border-primary/20 text-muted-foreground"}`}>KLIPY</button>}
+                  {isGiphyConfigured() && <button type="button" onClick={() => { setProvider("giphy"); setGifError(null); }} className={`rounded-lg border px-2 py-1 font-mono text-[8px] uppercase tracking-widest ${provider === "giphy" ? "border-accent/50 text-accent" : "border-primary/20 text-muted-foreground"}`}>GIPHY</button>}
+                  <button type="button" onClick={() => { setProvider("local"); setGifError(null); }} className={`rounded-lg border px-2 py-1 font-mono text-[8px] uppercase tracking-widest ${provider === "local" ? "border-accent/50 text-accent" : "border-primary/20 text-muted-foreground"}`}>LOKÁLNÍ</button>
+                </div>
               </div>
-              <form onSubmit={submitGifSearch} className="flex gap-2"><input value={gifQuery} onChange={(e) => setGifQuery(e.target.value)} placeholder={giphyMode === "online" ? "Hledat na GIPHY…" : "Hledat ve SportChmeláci GIF galerii…"} className="w-full rounded-xl border border-primary/20 bg-background/60 px-3 py-2.5 text-sm outline-none focus:border-primary/50" /></form>
-              {giphyMode === "online" ? (
+              <form onSubmit={submitGifSearch} className="flex gap-2"><input value={gifQuery} onChange={(e) => setGifQuery(e.target.value)} placeholder={provider === "klipy" ? "Search KLIPY…" : provider === "giphy" ? "Hledat na GIPHY…" : "Hledat ve SportChmeláci GIF galerii…"} className="w-full rounded-xl border border-primary/20 bg-background/60 px-3 py-2.5 text-sm outline-none focus:border-primary/50" /></form>
+              {provider === "klipy" ? (
                 <>
-                  {giphyLoading && <div className="flex items-center justify-center py-8 text-accent"><Loader2 className="h-5 w-5 animate-spin" /></div>}
-                  {!giphyLoading && <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{onlineGifs.map((gif) => <button key={gif.id} type="button" onClick={() => void sendGif({ id: gif.id, title: gif.title, url: gif.images.fixedWidth.url, preview: gif.images.preview.url, source: "GIPHY" })} className="overflow-hidden rounded-xl border border-primary/10 bg-background transition hover:scale-[1.02] hover:border-accent/50"><img src={gif.images.preview.url} alt={gif.title} className="aspect-square w-full object-cover" loading="lazy" /></button>)}</div>}
-                  {!giphyLoading && !onlineGifs.length && <p className="py-5 text-center text-xs text-muted-foreground">Nic nenalezeno. Zkus jiný výraz.</p>}
-                  <div className="flex items-center justify-between gap-2"><p className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Powered by GIPHY</p><Link to="/gif-studio" className="inline-flex items-center gap-1 rounded-lg border border-accent/30 px-2 py-1.5 font-mono text-[9px] uppercase tracking-widest text-accent"><Sparkles className="h-3 w-3" /> AI GIF Studio</Link></div>
+                  {mediaLoading && <div className="flex items-center justify-center py-8 text-accent"><Loader2 className="h-5 w-5 animate-spin" /></div>}
+                  {!mediaLoading && <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{klipyGifs.map((gif) => <button key={gif.id} type="button" onClick={() => void sendGif({ id: gif.id, title: gif.title, url: gif.fixedWidth.url, preview: gif.preview.url, source: "KLIPY" })} className="overflow-hidden rounded-xl border border-primary/10 bg-background transition hover:scale-[1.02] hover:border-accent/50"><img src={gif.preview.url} alt={gif.title} className="aspect-square w-full object-cover" loading="lazy" /></button>)}</div>}
+                  {!mediaLoading && !klipyGifs.length && <p className="py-5 text-center text-xs text-muted-foreground">Nic nenalezeno. Zkus jiný výraz.</p>}
+                  <div className="flex items-center justify-between gap-2"><p className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Search KLIPY · Powered by KLIPY</p><Link to="/gif-studio" className="inline-flex items-center gap-1 rounded-lg border border-accent/30 px-2 py-1.5 font-mono text-[9px] uppercase tracking-widest text-accent"><Sparkles className="h-3 w-3" /> AI GIF Studio</Link></div>
+                </>
+              ) : provider === "giphy" ? (
+                <>
+                  {mediaLoading && <div className="flex items-center justify-center py-8 text-accent"><Loader2 className="h-5 w-5 animate-spin" /></div>}
+                  {!mediaLoading && <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{giphyGifs.map((gif) => <button key={gif.id} type="button" onClick={() => void sendGif({ id: gif.id, title: gif.title, url: gif.images.fixedWidth.url, preview: gif.images.preview.url, source: "GIPHY" })} className="overflow-hidden rounded-xl border border-primary/10 bg-background transition hover:scale-[1.02] hover:border-accent/50"><img src={gif.images.preview.url} alt={gif.title} className="aspect-square w-full object-cover" loading="lazy" /></button>)}</div>}
+                  {!mediaLoading && !giphyGifs.length && <p className="py-5 text-center text-xs text-muted-foreground">Nic nenalezeno. Zkus jiný výraz.</p>}
+                  <p className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Powered by GIPHY</p>
                 </>
               ) : (
                 <>
