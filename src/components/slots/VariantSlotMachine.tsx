@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Sparkles, Trophy, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { VariantBonusOverlay } from "@/components/slots/VariantBonusOverlay";
 import { cn } from "@/lib/utils";
 
 type VariantMeta = { columns: number; rows: number; symbols: Record<string, string>; accent: string };
+
+const MAX_AUTO_SPINS = 100;
 
 const META: Partial<Record<SlotVariantId, VariantMeta>> = {
   "neon-pints": { columns: 6, rows: 5, accent: "cyan", symbols: { pint: "🍺", bolt: "⚡", neon: "✦", ball: "⚽", star: "★", wild: "☄", k: "K", q: "Q", j: "J", ten: "10" } },
@@ -37,33 +39,76 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
   const [result, setResult] = useState<SpinResult | null>(null);
   const [message, setMessage] = useState("Připraveno");
   const [bonusReveal, setBonusReveal] = useState<SpinResult["bonus"] | null>(null);
+  const [autoCount, setAutoCount] = useState(10);
+  const [autoRunning, setAutoRunning] = useState(false);
+  const [autoRemaining, setAutoRemaining] = useState(0);
+  const autoStopRef = useRef(false);
 
   const symbols = useMemo(() => Object.entries(meta.symbols), [meta.symbols]);
   const grid = result?.grid ?? Array.from({ length: meta.columns }, (_, c) => Array.from({ length: meta.rows }, (_, r) => symbols[(c + r) % symbols.length][0]));
 
-  async function spin() {
-    if (!ready || spinning || bonusReveal) return;
-    if (bet > slotCZK) { setMessage("Nedostatek Slot CZK — použij Směnárnu."); return; }
-    setSpinning(true); setMessage("TOČÍME…"); setResult(null);
+  const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  async function spinOnce(autoMode = false) {
+    if (!ready || bonusReveal || (!autoMode && spinning)) return false;
+    if (bet > slotCZK) { setMessage("Nedostatek Slot CZK — použij Směnárnu."); return false; }
+    setSpinning(true);
+    setMessage(autoMode ? `AUTO SPIN · ${autoRemaining}/${autoCount}` : "TOČÍME…");
+    setResult(null);
     const response = await spinVariantSlot(game, bet);
     if (!response.ok || !response.result) {
       setMessage(response.error ?? "Hru se nepodařilo spustit.");
       setSpinning(false);
-      return;
+      return false;
     }
     const next = response.result as SpinResult;
     if (!next.grid || next.columns !== meta.columns || next.rows !== meta.rows || !Number.isFinite(Number(next.slot_czk))) {
       setMessage("Server vrátil neplatný výsledek hry.");
       setSpinning(false);
-      return;
+      return false;
     }
-    window.setTimeout(() => {
-      setResult(next);
-      setMessage(next.total > 0 ? `${next.feature} · VÝHRA ${next.total.toLocaleString("cs-CZ")} CZK` : next.feature);
-      setSpinning(false);
-      if (next.total > 0) toast.success(`${next.feature}: +${next.total.toLocaleString("cs-CZ")} CZK`);
-      if (next.bonus?.type && next.bonus.type !== "none") setBonusReveal(next.bonus);
-    }, 900);
+    await sleep(900);
+    setResult(next);
+    setMessage(next.total > 0 ? `${next.feature} · VÝHRA ${next.total.toLocaleString("cs-CZ")} CZK` : next.feature);
+    setSpinning(false);
+    if (next.total > 0) toast.success(`${next.feature}: +${next.total.toLocaleString("cs-CZ")} CZK`);
+    if (next.bonus?.type && next.bonus.type !== "none") {
+      setBonusReveal(next.bonus);
+      return false;
+    }
+    return true;
+  }
+
+  function spin() {
+    void spinOnce(false);
+  }
+
+  async function startAutoSpin() {
+    if (!ready || spinning || bonusReveal || autoRunning) return;
+    const count = Math.min(MAX_AUTO_SPINS, Math.max(1, autoCount));
+    autoStopRef.current = false;
+    setAutoRunning(true);
+    setAutoRemaining(count);
+    try {
+      for (let i = 0; i < count; i += 1) {
+        if (autoStopRef.current) break;
+        setAutoRemaining(count - i);
+        const ok = await spinOnce(true);
+        if (!ok || autoStopRef.current) break;
+        setAutoRemaining(count - i - 1);
+        if (i < count - 1) await sleep(150);
+      }
+    } finally {
+      setAutoRunning(false);
+      setAutoRemaining(0);
+      if (autoStopRef.current) setMessage("AUTO SPIN ZASTAVEN");
+    }
+  }
+
+  function stopAutoSpin() {
+    autoStopRef.current = true;
+    setAutoRunning(false);
+    setMessage("AUTO SPIN ZASTAVEN");
   }
 
   const accent = meta.accent === "cyan" ? "border-cyan-300/40 shadow-[0_0_45px_-22px_rgba(34,211,238,.95)]" : meta.accent === "orange" ? "border-orange-300/40 shadow-[0_0_45px_-22px_rgba(251,146,60,.95)]" : meta.accent === "gold" ? "border-yellow-300/45 shadow-[0_0_45px_-20px_rgba(250,204,21,1)]" : meta.accent === "purple" ? "border-fuchsia-300/40 shadow-[0_0_45px_-22px_rgba(217,70,239,.95)]" : "border-sky-300/40 shadow-[0_0_45px_-22px_rgba(56,189,248,.95)]";
@@ -86,12 +131,20 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
 
       <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0"><div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[.16em] text-white/45"><Sparkles className="h-3.5 w-3.5 text-hop-neon" /> {message}</div><p className="mt-1 font-mono text-[8px] uppercase tracking-[.14em] text-white/25">Serverové RNG · Play Money · Slot CZK · {meta.columns}×{meta.rows}</p></div>
-        <div className="flex items-center gap-2">
-          <select value={bet} onChange={(e) => setBet(Number(e.target.value))} disabled={spinning} className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none"><option value={5}>5 Kč</option><option value={10}>10 Kč</option><option value={25}>25 Kč</option><option value={50}>50 Kč</option><option value={100}>100 Kč</option><option value={200}>200 Kč</option><option value={500}>500 Kč</option></select>
-          <button type="button" onClick={() => void spin()} disabled={!ready || spinning} className="inline-flex items-center gap-2 rounded-xl bg-hop-gold px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-black disabled:cursor-not-allowed disabled:opacity-50">
-            {spinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            {spinning ? "Točíme" : "SPIN"}
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={bet} onChange={(e) => setBet(Number(e.target.value))} disabled={spinning || autoRunning} className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none"><option value={5}>5 Kč</option><option value={10}>10 Kč</option><option value={25}>25 Kč</option><option value={50}>50 Kč</option><option value={100}>100 Kč</option><option value={200}>200 Kč</option><option value={500}>500 Kč</option></select>
+          <select value={autoCount} onChange={(e) => setAutoCount(Math.min(MAX_AUTO_SPINS, Math.max(1, Number(e.target.value))))} disabled={spinning || autoRunning} className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" aria-label="Počet autozatočení"><option value={10}>AUTO 10</option><option value={25}>AUTO 25</option><option value={50}>AUTO 50</option><option value={100}>AUTO 100</option></select>
+          {autoRunning ? (
+            <button type="button" onClick={stopAutoSpin} className="inline-flex items-center gap-2 rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-rose-200"><Loader2 className="h-4 w-4 animate-spin" />STOP {autoRemaining}/{autoCount}</button>
+          ) : (
+            <>
+              <button type="button" onClick={() => void startAutoSpin()} disabled={!ready || spinning || !!bonusReveal} className="inline-flex items-center gap-2 rounded-xl border border-hop-gold/50 bg-hop-gold/10 px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-hop-gold disabled:cursor-not-allowed disabled:opacity-50"><Zap className="h-4 w-4" />AUTO SPIN</button>
+              <button type="button" onClick={spin} disabled={!ready || spinning || !!bonusReveal} className="inline-flex items-center gap-2 rounded-xl bg-hop-gold px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-black disabled:cursor-not-allowed disabled:opacity-50">
+                {spinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                {spinning ? "Točíme" : "SPIN"}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
