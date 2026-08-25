@@ -1,0 +1,42 @@
+name: fix-chat-hooks
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fix callback dependencies
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('src/routes/chat.tsx')
+          text = p.read_text(encoding='utf-8')
+          bad = '  }, [loadAvatarsFor, refreshMessages]);\n\n  useEffect(() => {\n'
+          good = '  }, [loadAvatarsFor]);\n\n  useEffect(() => {\n'
+          if bad not in text:
+              raise SystemExit('expected refreshMessages dependency not found')
+          text = text.replace(bad, good, 1)
+          bad_effect = '  }, [loadAvatarsFor]);\n\n  const send = async () => {'
+          good_effect = '  }, [loadAvatarsFor, refreshMessages]);\n\n  const send = async () => {'
+          if bad_effect not in text:
+              raise SystemExit('expected ChatPage effect dependency block not found')
+          text = text.replace(bad_effect, good_effect, 1)
+          p.write_text(text, encoding='utf-8')
+          print('fixed chat callback dependencies')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/routes/chat.tsx
+          git commit -m "fix(chat): correct refresh callback dependencies"
+          git push origin HEAD:main
