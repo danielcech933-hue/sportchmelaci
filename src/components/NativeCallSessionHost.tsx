@@ -92,7 +92,7 @@ function NativeVoiceCall({ callId, onClose }: { callId: string; onClose: () => v
     pc.ontrack = (event) => {
       const audio = document.createElement("audio");
       audio.autoplay = true;
-      audio.playsInline = true;
+      (audio as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
       audio.srcObject = event.streams[0];
       audio.dataset.callPeer = peerId;
       document.body.appendChild(audio);

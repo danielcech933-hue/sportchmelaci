@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { fetchKlipyMedia } from "@/lib/klipy.functions";
 
 export type KlipyMediaType = "gifs" | "stickers" | "clips";
 export type KlipyImage = { url: string; width: number; height: number };
@@ -48,8 +48,15 @@ function mapPayload(payload: any, mediaType: KlipyMediaType): KlipyItem[] {
 }
 
 async function requestViaProxy(mode: "search" | "trending", mediaType: KlipyMediaType, params: { query?: string; page?: number; limit?: number }) {
-  const { data, error } = await supabase.functions.invoke("klipy-media", { body: { mode, mediaType, query: params.query, page: Math.max(params.page ?? 1, 1), limit: Math.min(Math.max(params.limit ?? 24, 1), 50) } });
-  if (error) throw error;
+  const data = await fetchKlipyMedia({
+    data: {
+      mode,
+      mediaType,
+      query: params.query,
+      page: Math.max(params.page ?? 1, 1),
+      limit: Math.min(Math.max(params.limit ?? 24, 1), 50),
+    },
+  });
   return mapPayload(data, mediaType);
 }
 
