@@ -86,9 +86,9 @@ async function registerDeviceWithBackend(args: {
   const { error } = await supabase.rpc("register_call_device", {
     _device_id: args.deviceId,
     _platform: args.platform,
-    _push_token: args.pushToken,
-    _voip_token: args.voipToken,
-    _app_version: appVersion,
+    _push_token: args.pushToken ?? undefined,
+    _voip_token: args.voipToken ?? undefined,
+    _app_version: appVersion ?? undefined,
   });
   if (error) console.warn("[calls] device registration failed", error);
 }
