@@ -1,0 +1,193 @@
+name: one-time-epic-auto-spin-patch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Patch EPIC auto-spin
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path("src/components/slots/EpicSlotMachineCinematic.tsx")
+          text = path.read_text(encoding="utf-8")
+
+          if "MAX_AUTO_SPINS" in text:
+              print("EPIC auto-spin already present; nothing to do.")
+              raise SystemExit(0)
+
+          text = text.replace(
+              'import { useCallback, useEffect, useMemo, useState } from "react";',
+              'import { useCallback, useEffect, useMemo, useRef, useState } from "react";',
+              1,
+          )
+          text = text.replace(
+              'const PRIVILEGED_BETS = [',
+              'const MAX_AUTO_SPINS = 100;\n\nconst PRIVILEGED_BETS = [',
+              1,
+          )
+          text = text.replace(
+              '  const [shaking, setShaking] = useState(false);',
+              '  const [shaking, setShaking] = useState(false);\n  const [autoCount, setAutoCount] = useState(10);\n  const [autoRunning, setAutoRunning] = useState(false);\n  const [autoRemaining, setAutoRemaining] = useState(0);\n  const autoStopRef = useRef(false);\n  const balanceRef = useRef(slotCZK);\n  const inBonusRef = useRef(false);\n  const spinningRef = useRef(false);',
+              1,
+          )
+          text = text.replace(
+              '  useEffect(() => setBalance(slotCZK), [slotCZK]);',
+              '  useEffect(() => { setBalance(slotCZK); balanceRef.current = slotCZK; }, [slotCZK]);',
+              1,
+          )
+
+          start = text.index('  const spin = useCallback(async () => {')
+          end = text.index('\n\n  const frame =', start)
+          new_logic = r'''  const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  useEffect(() => {
+    inBonusRef.current = inBonus;
+  }, [inBonus]);
+
+  const spinOnce = useCallback(async (autoMode = false) => {
+    if (!ready || spinningRef.current) return false;
+
+    const bonusActive = inBonusRef.current;
+    const amount = bonusActive ? 0 : bet;
+    if (!bonusActive && amount > balanceRef.current) {
+      toast.error("Nedostatek Slot CZK — použij Směnárnu.");
+      return false;
+    }
+
+    spinningRef.current = true;
+    setSpinning(true);
+    setTier(null);
+    setShaking(false);
+    playTone("spin");
+
+    const { data, error } = await supabase.rpc("slot_epic_spin", { _game_id: game, _bet: amount });
+    if (error) {
+      toast.error(error.message);
+      spinningRef.current = false;
+      setSpinning(false);
+      return false;
+    }
+
+    const next = (Array.isArray(data) ? data[0] : data) as Result;
+    if (!next?.grid || next.columns !== meta.cols || next.rows !== meta.rows || !Number.isFinite(Number(next.slot_czk))) {
+      toast.error("Server vrátil neplatný výsledek hry.");
+      spinningRef.current = false;
+      setSpinning(false);
+      return false;
+    }
+
+    await sleep(760);
+    setResult(next);
+    const nextBalance = Number(next.slot_czk);
+    setBalance(nextBalance);
+    balanceRef.current = nextBalance;
+    setSpinning(false);
+    spinningRef.current = false;
+    setRevealId((value) => value + 1);
+    playTone("stop");
+
+    const nextBonus = Boolean(next.free_spins_left && next.free_spins_left > 0 && next.bonus_done === false);
+    inBonusRef.current = nextBonus;
+
+    const nextTier = getWinTier(Number(next.multiplier_of_bet ?? 0));
+    setTier(nextTier);
+    if (nextTier) {
+      playTone("win");
+      setShaking(true);
+      window.setTimeout(() => setShaking(false), 900);
+      window.setTimeout(() => setTier(null), 2900);
+    }
+
+    if (next.bonus_triggered && !next.bonus_done) {
+      playTone("bonus");
+      setBonusOpen(true);
+      window.setTimeout(() => setBonusOpen(false), 3600);
+      return false;
+    }
+
+    if (next.total > 0) toast.success(`${next.feature}: +${next.total.toLocaleString("cs-CZ")} CZK`);
+    return true;
+  }, [bet, game, inBonus, meta.cols, meta.rows, ready]);
+
+  function spin() {
+    void spinOnce(false);
+  }
+
+  async function startAutoSpin() {
+    if (!ready || spinningRef.current || autoRunning || inBonusRef.current) return;
+    const count = Math.min(MAX_AUTO_SPINS, Math.max(1, autoCount));
+    autoStopRef.current = false;
+    setAutoRunning(true);
+    setAutoRemaining(count);
+
+    try {
+      for (let i = 0; i < count; i += 1) {
+        if (autoStopRef.current) break;
+        setAutoRemaining(count - i);
+        const ok = await spinOnce(true);
+        if (!ok || autoStopRef.current || inBonusRef.current) break;
+        setAutoRemaining(count - i - 1);
+        if (i < count - 1) await sleep(140);
+      }
+    } finally {
+      setAutoRunning(false);
+      setAutoRemaining(0);
+      if (autoStopRef.current) setShaking(false);
+    }
+  }
+
+  function stopAutoSpin() {
+    autoStopRef.current = true;
+    setAutoRunning(false);
+    setAutoRemaining(0);
+  }
+'''
+          text = text[:start] + new_logic + text[end:]
+
+          old_button = '<motion.button type="button" onClick={() => void spin()} disabled={!ready || spinning} whileTap={{ scale: 0.96 }} className={`inline-flex h-12 items-center gap-2 rounded-xl px-6 text-xs font-black uppercase tracking-[.18em] text-black transition disabled:cursor-not-allowed disabled:opacity-50 ${thunder ? "bg-gradient-to-b from-amber-200 to-amber-500 shadow-[0_0_45px_-12px_rgba(255,204,68,.95)]" : "bg-gradient-to-b from-cyan-200 to-cyan-500 shadow-[0_0_45px_-12px_rgba(90,220,255,.95)]"}`}>{spinning ? <RotateCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}{spinning ? "TOČÍME" : inBonus ? "FREE SPIN" : "SPIN"}</motion.button>'
+          new_button = '''{autoRunning ? (
+              <button type="button" onClick={stopAutoSpin} className="inline-flex h-12 items-center gap-2 rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 text-[10px] font-black uppercase tracking-[.14em] text-rose-200">
+                <RotateCw className="h-4 w-4 animate-spin" />STOP {autoRemaining}/{autoCount}
+              </button>
+            ) : (
+              <>
+                <select value={autoCount} onChange={(e) => setAutoCount(Math.min(MAX_AUTO_SPINS, Math.max(1, Number(e.target.value))))} disabled={inBonus || spinning} aria-label="Počet autozatočení" className="h-12 rounded-xl border border-white/10 bg-black/55 px-3 text-[10px] font-black uppercase tracking-[.12em] text-white backdrop-blur">
+                  <option value={10}>AUTO 10</option><option value={25}>AUTO 25</option><option value={50}>AUTO 50</option><option value={100}>AUTO 100</option>
+                </select>
+                <button type="button" onClick={() => void startAutoSpin()} disabled={!ready || spinning || inBonus} className={`inline-flex h-12 items-center gap-2 rounded-xl border px-4 text-[10px] font-black uppercase tracking-[.14em] transition disabled:cursor-not-allowed disabled:opacity-40 ${thunder ? "border-amber-300/45 bg-amber-300/10 text-amber-100" : "border-cyan-300/45 bg-cyan-300/10 text-cyan-100"}`}>
+                  <Zap className="h-4 w-4" />AUTO SPIN
+                </button>
+                <motion.button type="button" onClick={() => void spin()} disabled={!ready || spinning || inBonus} whileTap={{ scale: 0.96 }} className={`inline-flex h-12 items-center gap-2 rounded-xl px-6 text-xs font-black uppercase tracking-[.18em] text-black transition disabled:cursor-not-allowed disabled:opacity-50 ${thunder ? "bg-gradient-to-b from-amber-200 to-amber-500 shadow-[0_0_45px_-12px_rgba(255,204,68,.95)]" : "bg-gradient-to-b from-cyan-200 to-cyan-500 shadow-[0_0_45px_-12px_rgba(90,220,255,.95)]"}`}>
+                  {spinning ? <RotateCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}{spinning ? "TOČÍME" : inBonus ? "FREE SPIN" : "SPIN"}
+                </motion.button>
+              </>
+            )}'''
+          if old_button not in text:
+              print("Expected EPIC SPIN button block not found", file=sys.stderr)
+              raise SystemExit(1)
+          text = text.replace(old_button, new_button, 1)
+
+          path.write_text(text, encoding="utf-8")
+          print("EPIC auto-spin patch applied")
+          PY
+
+          rm -f .github/workflows/one-time-epic-auto-spin-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/slots/EpicSlotMachineCinematic.tsx .github/workflows/one-time-epic-auto-spin-patch.yml
+          git commit -m "feat(epic-slots): add auto-spin capped at 100"
+          git push origin HEAD:main
