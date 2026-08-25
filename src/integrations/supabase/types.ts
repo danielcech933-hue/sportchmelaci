@@ -247,6 +247,48 @@ export type Database = {
         }
         Relationships: []
       }
+      call_devices: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          device_id: string
+          enabled: boolean
+          id: string
+          last_seen_at: string
+          platform: string
+          push_token: string | null
+          updated_at: string
+          user_id: string
+          voip_token: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          device_id: string
+          enabled?: boolean
+          id?: string
+          last_seen_at?: string
+          platform: string
+          push_token?: string | null
+          updated_at?: string
+          user_id: string
+          voip_token?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          device_id?: string
+          enabled?: boolean
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          push_token?: string | null
+          updated_at?: string
+          user_id?: string
+          voip_token?: string | null
+        }
+        Relationships: []
+      }
       call_participants: {
         Row: {
           call_id: string
@@ -2318,6 +2360,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      call_target_devices: {
+        Args: { _call_id: string }
+        Returns: {
+          device_id: string
+          platform: string
+          push_token: string
+          user_id: string
+          voip_token: string
+        }[]
+      }
       case_opening_open: { Args: { _case_id: string }; Returns: Json }
       case_opening_stock_inventory_summary: { Args: never; Returns: Json }
       case_opening_stock_open: { Args: { _case_id: string }; Returns: Json }
@@ -2367,6 +2419,7 @@ export type Database = {
       daily_bonus_claim: { Args: never; Returns: Json }
       daily_bonus_spin: { Args: never; Returns: Json }
       daily_bonus_status: { Args: never; Returns: Json }
+      disable_call_device: { Args: { _device_id: string }; Returns: boolean }
       fc_club_get: { Args: never; Returns: Json }
       fc_club_rename: { Args: { _name: string }; Returns: undefined }
       fc_create_challenge: {
@@ -2575,6 +2628,16 @@ export type Database = {
         Returns: undefined
       }
       poker_tick: { Args: { _tournament_id: string }; Returns: Json }
+      register_call_device: {
+        Args: {
+          _app_version?: string
+          _device_id: string
+          _platform: string
+          _push_token?: string
+          _voip_token?: string
+        }
+        Returns: string
+      }
       roulette_cancel_bets: { Args: { _round_no: number }; Returns: Json }
       roulette_place_bet: {
         Args: {
@@ -2687,6 +2750,7 @@ export type Database = {
           token: string
         }[]
       }
+      touch_call_device: { Args: { _device_id: string }; Returns: boolean }
       wallet_apply: {
         Args: {
           _delta_dollars?: number
