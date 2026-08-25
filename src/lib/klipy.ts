@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { fetchKlipyMedia } from "@/lib/klipy.functions";
 
 export type KlipyMediaType = "gifs" | "stickers" | "clips";
 export type KlipyImage = { url: string; width: number; height: number };
