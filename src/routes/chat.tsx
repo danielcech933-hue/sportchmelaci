@@ -57,20 +57,21 @@ function ChatPage() {
     });
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    supabase
+  const refreshMessages = useCallback(async () => {
+    const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
       .order("created_at", { ascending: true })
-      .limit(200)
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) { setError(error.message); return; }
-        const rows = (data ?? []) as ChatRow[];
-        setMessages(rows);
-        loadAvatarsFor(Array.from(new Set(rows.map((r) => r.user_id))));
-      });
+      .limit(200);
+    if (error) { setError(error.message); return; }
+    const rows = (data ?? []) as ChatRow[];
+    setMessages(rows);
+    void loadAvatarsFor(Array.from(new Set(rows.map((r) => r.user_id))));
+  }, [loadAvatarsFor, refreshMessages]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void refreshMessages();
 
     const channel = supabase
       .channel("public-chat")
@@ -91,10 +92,21 @@ function ChatPage() {
           setMessages((prev) => prev.filter((m) => m.id !== row.id));
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") void refreshMessages();
+      });
+
+    const poll = window.setInterval(() => void refreshMessages(), 3000);
+    const onOnline = () => void refreshMessages();
+    const onVisibility = () => { if (document.visibilityState === "visible") void refreshMessages(); };
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelled = true;
+      window.clearInterval(poll);
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisibility);
       supabase.removeChannel(channel);
     };
   }, [loadAvatarsFor]);
@@ -131,6 +143,7 @@ function ChatPage() {
     setSending(false);
     if (error) { setError(error.message); return; }
     setInput("");
+    void refreshMessages();
     inputRef.current?.focus();
   }
 

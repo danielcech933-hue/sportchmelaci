@@ -124,9 +124,13 @@ export function DmProvider({ children }: { children: ReactNode }) {
     };
 
     subscribe();
-    const iv = setInterval(load, 15000);
+    const iv = setInterval(load, 3000);
     const onFocus = () => load();
+    const onOnline = () => load();
+    const onVisibility = () => { if (document.visibilityState === "visible") void load(); };
     window.addEventListener("focus", onFocus);
+    window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisibility);
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED" && session?.access_token) supabase.realtime.setAuth(session.access_token);
     });
@@ -135,6 +139,8 @@ export function DmProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       clearInterval(iv);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisibility);
       sub.subscription.unsubscribe();
       if (ch) supabase.removeChannel(ch);
     };
