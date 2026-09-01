@@ -33,7 +33,8 @@ function isPreviewHost() {
 export function DailyBonusWheel() {
   const { user } = useAuth();
   const { claimDailyBonus, dailyBonusStatus } = useWallet();
-  const previewHost = isPreviewHost();
+  const [previewHost, setPreviewHost] = useState(false);
+  useEffect(() => { setPreviewHost(isPreviewHost()); }, []);
   const timers = useRef<number[]>([]);
 
   const [nextClaimAt, setNextClaimAt] = useState<string | null>(null);
