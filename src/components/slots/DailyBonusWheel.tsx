@@ -180,8 +180,8 @@ export function DailyBonusWheel() {
                     key={index}
                     className={`absolute h-2 w-2 rounded-full ${spinning ? "animate-ping bg-amber-400" : "bg-hop-gold/40"}`}
                     style={{
-                      top: `${50 + 47 * Math.sin(radians)}%`,
-                      left: `${50 + 47 * Math.cos(radians)}%`,
+                      top: `${(50 + 47 * Math.sin(radians)).toFixed(4)}%`,
+                      left: `${(50 + 47 * Math.cos(radians)).toFixed(4)}%`,
                       transform: "translate(-50%, -50%)",
                     }}
                   />
