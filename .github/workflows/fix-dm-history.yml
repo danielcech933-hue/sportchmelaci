@@ -1,0 +1,112 @@
+name: fix-dm-history
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Patch DM history loading
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('src/lib/dm.tsx')
+          text = p.read_text(encoding='utf-8')
+
+          old = '''  const load = useCallback(async () => {
+            if (!user) {
+              setMessages([]);
+              return;
+            }
+            const { data } = await supabase
+              .from("direct_messages")
+              .select("id,sender_id,recipient_id,content,read_at,created_at")
+              .order("created_at", { ascending: true })
+              .limit(500);
+            setMessages(((data ?? []) as Row[]).map(toDm));
+          }, [user]);'''
+
+          new = '''  const load = useCallback(async (fullHistory = false) => {
+            if (!user) {
+              setMessages([]);
+              return;
+            }
+
+            const pageSize = 500;
+            const collected: Row[] = [];
+            let offset = 0;
+
+            while (true) {
+              const { data, error } = await supabase
+                .from("direct_messages")
+                .select("id,sender_id,recipient_id,content,read_at,created_at")
+                .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+                .order("created_at", { ascending: false })
+                .range(offset, offset + pageSize - 1);
+
+              // Never wipe working chat state because of a transient read error.
+              if (error) return;
+
+              const rows = ((data ?? []) as Row[]);
+              collected.push(...rows);
+
+              if (!fullHistory || rows.length < pageSize) break;
+              offset += pageSize;
+            }
+
+            const rows = collected.reverse();
+
+            // Only clear on a confirmed empty response. Otherwise merge server state
+            // into the existing in-memory history so older messages are never dropped.
+            if (rows.length === 0) {
+              setMessages([]);
+              return;
+            }
+
+            setMessages((prev) => {
+              const merged = new Map(prev.map((m) => [m.id, m]));
+              for (const row of rows) merged.set(row.id, toDm(row));
+              return [...merged.values()].sort((a, b) =>
+                a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0,
+              );
+            });
+          }, [user]);'''
+
+          if old not in text:
+              raise SystemExit('expected DM load block not found; refusing unsafe patch')
+          text = text.replace(old, new, 1)
+
+          text = text.replace('    void load();', '    void load(true);', 1)
+          text = text.replace('    const iv = setInterval(() => void load(), 3000);', '    const iv = setInterval(() => void load(false), 3000);', 1)
+          text = text.replace('    const onFocus = () => void load();', '    const onFocus = () => void load(false);', 1)
+          text = text.replace('    const onOnline = () => void load();', '    const onOnline = () => void load(false);', 1)
+          text = text.replace('    const onVisibility = () => { if (document.visibilityState === "visible") void load(); };', '    const onVisibility = () => { if (document.visibilityState === "visible") void load(false); };', 1)
+          text = text.replace('          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") void load();', '          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") void load(false);', 1)
+          text = text.replace('    reload: load,', '    reload: () => load(true),', 1)
+
+          p.write_text(text, encoding='utf-8')
+          PY
+
+          bun install --no-frozen-lockfile
+          bun run build
+          bun run typecheck
+          bun run lint
+          bun run test
+
+          rm -f .github/workflows/fix-dm-history.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/dm.tsx .github/workflows/fix-dm-history.yml
+          git commit -m "fix(chat): preserve DM history beyond 500 messages"
+          git push origin HEAD:main
