@@ -1,0 +1,5 @@
+ALTER TABLE public.direct_messages REPLICA IDENTITY FULL;
+ALTER TABLE public.dm_group_messages REPLICA IDENTITY FULL;
+ALTER TABLE public.call_rooms REPLICA IDENTITY FULL;
+ALTER TABLE public.call_signals REPLICA IDENTITY FULL;
+ALTER TABLE public.call_participants REPLICA IDENTITY FULL;

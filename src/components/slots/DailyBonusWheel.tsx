@@ -33,7 +33,8 @@ function isPreviewHost() {
 export function DailyBonusWheel() {
   const { user } = useAuth();
   const { claimDailyBonus, dailyBonusStatus } = useWallet();
-  const previewHost = isPreviewHost();
+  const [previewHost, setPreviewHost] = useState(false);
+  useEffect(() => { setPreviewHost(isPreviewHost()); }, []);
   const timers = useRef<number[]>([]);
 
   const [nextClaimAt, setNextClaimAt] = useState<string | null>(null);
@@ -179,8 +180,8 @@ export function DailyBonusWheel() {
                     key={index}
                     className={`absolute h-2 w-2 rounded-full ${spinning ? "animate-ping bg-amber-400" : "bg-hop-gold/40"}`}
                     style={{
-                      top: `${50 + 47 * Math.sin(radians)}%`,
-                      left: `${50 + 47 * Math.cos(radians)}%`,
+                      top: `${(50 + 47 * Math.sin(radians)).toFixed(4)}%`,
+                      left: `${(50 + 47 * Math.cos(radians)).toFixed(4)}%`,
                       transform: "translate(-50%, -50%)",
                     }}
                   />

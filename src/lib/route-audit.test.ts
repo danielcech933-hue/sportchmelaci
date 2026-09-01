@@ -20,6 +20,12 @@ function routePattern(file: string): string | null {
   const leaf = parts.pop()!.replace(/\.tsx$/, "");
   if (leaf === "__root" || leaf.startsWith("[.")) return null;
   if (parts.some((part) => part.startsWith("[."))) return null;
+  // Pathless/parent layout files (e.g. slots.tsx next to slots.index.tsx) only
+  // render an <Outlet />; their concrete path comes from the index child.
+  if (readFileSync(file, "utf8").includes("<Outlet />") && !leaf.includes(".")) {
+    const hasChildren = readdirSync(join(ROUTES_DIR, ...parts)).some((entry) => entry.startsWith(`${leaf}.`));
+    if (hasChildren) return null;
+  }
 
   const segments = [...parts, ...leaf.split(".")];
   if (segments[segments.length - 1] === "index") segments.pop();

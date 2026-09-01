@@ -67,7 +67,7 @@ function ChatPage() {
     const rows = (data ?? []) as ChatRow[];
     setMessages(rows);
     void loadAvatarsFor(Array.from(new Set(rows.map((r) => r.user_id))));
-  }, [loadAvatarsFor, refreshMessages]);
+  }, [loadAvatarsFor]);
 
   useEffect(() => {
     let cancelled = false;
