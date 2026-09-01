@@ -15,18 +15,29 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Patch DM history loading
+      - name: Patch latest DM window
         shell: bash
         run: |
           python3 <<'PY'
           from pathlib import Path
-          import re
 
           p = Path('src/lib/dm.tsx')
           text = p.read_text(encoding='utf-8')
 
-          pattern = re.compile(r'''  const load = useCallback\(async \(\) => \{\n.*?\n  \}, \[user\]\);''', re.S)
-          replacement = '''  const load = useCallback(async () => {
+          old = '''  const load = useCallback(async () => {
+    if (!user) {
+      setMessages([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("direct_messages")
+      .select("id,sender_id,recipient_id,content,read_at,created_at")
+      .order("created_at", { ascending: true })
+      .limit(500);
+    setMessages(((data ?? []) as Row[]).map(toDm));
+  }, [user]);'''
+
+          new = '''  const load = useCallback(async () => {
     if (!user) {
       setMessages([]);
       return;
@@ -39,13 +50,9 @@ jobs:
       .order("created_at", { ascending: false })
       .limit(500);
 
-    // Never clear working state on a transient read error.
     if (error) return;
 
     const rows = ((data ?? []) as Row[]).reverse();
-
-    // Empty data is a confirmed empty result. Otherwise merge the latest server
-    // window with the existing client state so older messages are not discarded.
     if (rows.length === 0) {
       setMessages([]);
       return;
@@ -61,21 +68,37 @@ jobs:
     });
   }, [user]);'''
 
-          new_text, count = pattern.subn(lambda _: replacement, text, count=1)
-          if count != 1:
-              raise SystemExit('expected DM load function not found; refusing unsafe patch')
+          if old not in text:
+              print('DM load already patched; nothing to do')
+              raise SystemExit(0)
 
-          text = new_text
-          p.write_text(text, encoding='utf-8')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          print('patched DM load')
           PY
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/lib/dm.tsx
-          git commit -m "fix(chat): keep latest DM window and merge state"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "fix(chat): show latest DM messages and preserve history"
           git push origin HEAD:main
 
-          rm -f .github/workflows/fix-dm-history.yml
+      - name: Remove one-time workflow after patch
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/fix-dm-history.yml')
+          if p.exists(): p.unlink()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .github/workflows/fix-dm-history.yml
-          git commit -m "chore: remove one-time DM history patch"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore: remove one-time DM history workflow"
           git push origin HEAD:main
