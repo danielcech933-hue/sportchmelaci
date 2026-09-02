@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   localize:
     if: github.event.head_commit.message != 'Localize user interface to Czech'
@@ -122,7 +125,7 @@ jobs:
               '"New post"': '"Nový příspěvek"',
               '"Write a post"': '"Napište příspěvek"',
               '"Post"': '"Příspěvek"',
-              '"Feed"': '"Feed"',
+              '"Feed"': '"Přehled příspěvků"',
               '"Profile photos"': '"Fotky na profilu"',
               '"Match photos"': '"Fotky ze zápasů"',
               '"No data"': '"Žádná data"',
@@ -145,18 +148,17 @@ jobs:
                       p.write_text(s, encoding="utf-8")
                       touched.append(str(p))
           print(f"Updated {len(touched)} UI files")
-          for p in touched:
-              print(p)
           PY
           git diff --check
       - name: Verify
         run: |
           bun run build
           bun run typecheck
-      - name: Commit and cleanup
+      - name: Commit localization
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src
+          git diff --cached --quiet && exit 0
           git commit -m 'Localize user interface to Czech'
           git push
