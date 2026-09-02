@@ -11,7 +11,7 @@ import { Avatar } from "@/lib/avatars";
 import { NotificationsBell } from "@/lib/notifications";
 import { DmProvider, DmBell } from "@/lib/dm";
 import { SiteFooter } from "@/components/SiteFooter";
-import { FloatingNav } from "@/components/FloatingNav";
+import { FloatingNav, DesktopNav } from "@/components/FloatingNav";
 import { CommandPalette } from "@/components/CommandPalette";
 import { WinCelebrations } from "@/lib/win-toasts";
 import { WalletProvider, useWallet } from "@/lib/wallet";
@@ -138,7 +138,7 @@ function SiteHeader() {
       <div className="absolute inset-0 grid-bg opacity-[0.07] pointer-events-none" />
       <div className="relative mx-auto max-w-7xl px-2.5 py-2 sm:px-4 sm:py-2.5">
         <div className="flex min-h-9 items-center gap-2 sm:min-h-10">
-          <Link to="/" aria-label="Chmeloví Sportovci — Lobby" className="group flex min-w-0 flex-1 items-center gap-2">
+          <Link to="/" aria-label="Chmeloví Sportovci — Lobby" className="group flex min-w-0 flex-1 items-center gap-2 md:flex-none">
             <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/35 bg-primary/10 shadow-[0_0_20px_-8px_var(--color-primary)] sm:h-8 sm:w-8">
               <span aria-hidden className="sport-cycle text-sm leading-none sm:text-base"><span>⚽</span><span>🎾</span><span>🏐</span><span>🏓</span></span>
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
@@ -146,6 +146,8 @@ function SiteHeader() {
             <span className="brand-shimmer hidden truncate font-display text-xl tracking-[0.08em] neon-text sm:block md:text-2xl md:tracking-[0.18em]">CHMELOVÍ SPORTOVCI</span>
             <span className="brand-shimmer truncate font-display text-lg tracking-[0.07em] neon-text sm:hidden">CHM SPORT</span>
           </Link>
+
+          <div className="hidden min-w-0 flex-1 justify-center px-2 md:flex"><DesktopNav /></div>
 
           <div className="flex shrink-0 items-center gap-1">
             <CommandPalette />
