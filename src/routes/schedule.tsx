@@ -10,6 +10,7 @@ import { useMatchHistory } from "@/lib/odds";
 import { OddsPill } from "@/components/OddsBoard";
 import { useMatchesRealtime } from "@/lib/live";
 import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection, LiveBadge, TimeBadge, PowerMark } from "@/components/UltraArenaShell";
+import { StateBlock, SkeletonRows } from "@/components/ui-kit";
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({
@@ -89,7 +90,7 @@ function SchedulePage() {
     return [...map.entries()].sort((a, b) => (a[1][0].scheduledAt ?? 0) - (b[1][0].scheduledAt ?? 0));
   }, [filteredMatches]);
 
-  if (loading) return null;
+  if (loading) return <main className="mx-auto max-w-[1450px] px-3 py-8 sm:px-5 lg:px-7"><SkeletonRows rows={6} /></main>;
 
   return (
     <main className="relative mx-auto max-w-[1450px] px-3 pb-32 pt-4 sm:px-5 lg:px-7">
@@ -170,7 +171,7 @@ function SchedulePage() {
 
         <div className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
           <UltraSection title="UPCOMING MATCHDAY" kicker="FIXTURE BOARD" icon={<CalendarDays className="h-4 w-4 text-amber-200" />}>
-            {dayGroups.length === 0 ? <EmptyState /> : <div className="space-y-5">{dayGroups.map(([key, dayMatches]) => <div key={key}><div className="mb-2 flex items-center gap-2"><div className="h-px flex-1 bg-gradient-to-r from-amber-300/30 to-transparent" /><span className="font-display text-lg tracking-wide text-white/70">{formatDay(dayMatches[0].scheduledAt ?? now)}</span><span className="font-mono text-[8px] uppercase tracking-[.18em] text-white/20">{dayMatches.length} FIXTURE</span></div><div className="space-y-2">{dayMatches.map((m) => <FixtureCard key={m.id} match={m} history={history} isAdmin={isAdmin} editing={editing === m.id} onEdit={() => setEditing(editing === m.id ? null : m.id)} onDelete={async () => { if (!confirm("Smazat naplánovaný zápas?")) return; await removeMatch(m.id); load(); }} onSaved={() => { setEditing(null); load(); }} />)}</div></div>)}</div>}
+            {dayGroups.length === 0 ? <StateBlock state="empty" title="Žádné naplánované zápasy" hint="Změň sport, formát nebo den a zkus to znovu." /> : <div className="space-y-5">{dayGroups.map(([key, dayMatches]) => <div key={key}><div className="mb-2 flex items-center gap-2"><div className="h-px flex-1 bg-gradient-to-r from-amber-300/30 to-transparent" /><span className="font-display text-lg tracking-wide text-white/70">{formatDay(dayMatches[0].scheduledAt ?? now)}</span><span className="font-mono text-[8px] uppercase tracking-[.18em] text-white/20">{dayMatches.length} FIXTURE</span></div><div className="space-y-2">{dayMatches.map((m) => <FixtureCard key={m.id} match={m} history={history} isAdmin={isAdmin} editing={editing === m.id} onEdit={() => setEditing(editing === m.id ? null : m.id)} onDelete={async () => { if (!confirm("Smazat naplánovaný zápas?")) return; await removeMatch(m.id); load(); }} onSaved={() => { setEditing(null); load(); }} />)}</div></div>)}</div>}
           </UltraSection>
 
           <div className="space-y-4">

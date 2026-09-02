@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
 import { playerEmoji, rankEmoji } from "@/lib/emoji";
+import { StateBlock } from "@/components/ui-kit";
 import heroImg from "@/assets/scoreboard-hero.jpg";
 import goldImg from "@/assets/rank-gold.jpg";
 import silverImg from "@/assets/rank-silver.jpg";
@@ -128,7 +129,7 @@ function RankingsPage() {
         </div>
       </section>
 
-      {err && <div className="mt-3 rounded-xl border border-rose-300/20 bg-rose-300/5 p-3 text-xs text-rose-200">Ranking feed error: {err}</div>}
+      {err && <div className="mt-3"><StateBlock state="error" title="Ranking feed se nepodařilo načíst" hint={err} /></div>}
 
       <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SignalCard label="STREAK KING" value={streakLeader?.row.label ?? "—"} hint={streakLeader?.streak ? `${streakLeader.streak} match win streak` : "No current streak"} icon={<Flame className="h-4 w-4" />} />
@@ -140,7 +141,7 @@ function RankingsPage() {
       <section className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
         <div className="rounded-[26px] border border-white/8 bg-black/20 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3"><div><div className="aaa-meta">PODIUM</div><h2 className="mt-1 font-display text-2xl tracking-wider text-white">TOP 3</h2></div><div className="font-mono text-[9px] uppercase tracking-[.2em] text-white/25">{mode === "solo" ? "SOLO" : "TEAM"} · {sport === "all" ? "ALL SPORTS" : SPORTS[sport].name}</div></div>
-          {podium.length ? <div className="mt-5 grid gap-3 md:grid-cols-3">{podium.map((r, i) => <PodiumCard key={r.key} row={r} index={i} avatarPath={avatarByNick.get(r.key)} />)}</div> : <EmptyState />}
+          {podium.length ? <div className="mt-5 grid gap-3 md:grid-cols-3">{podium.map((r, i) => <PodiumCard key={r.key} row={r} index={i} avatarPath={avatarByNick.get(r.key)} />)}</div> : <StateBlock state="empty" title="Zatím žádná data" hint="Po odehrání zápasů se pořadí objeví tady." />}
         </div>
         <div className="rounded-[26px] border border-white/8 bg-black/20 p-5 sm:p-6">
           <div className="aaa-meta">SPORT LEADERS</div><h2 className="mt-1 font-display text-2xl tracking-wider text-white">ARENA KINGS</h2>

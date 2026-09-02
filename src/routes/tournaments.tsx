@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { SPORTS, type SportId } from "@/lib/matches";
 import { SportOptions } from "@/components/SportFilterBar";
 import { NICKNAMES_DATALIST_ID, NicknamesDatalist, useNicknames } from "@/lib/nicknames";
+import { StateBlock, SkeletonRows } from "@/components/ui-kit";
 import {
   createTournament,
   deleteTournament,
@@ -103,7 +104,7 @@ function TournamentsPage() {
     } finally { setBusy(false); }
   }
 
-  if (loading) return null;
+  if (loading) return <main className="mx-auto max-w-5xl px-3 py-8 sm:px-4"><SkeletonRows rows={5} /></main>;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -211,9 +212,7 @@ function TournamentsPage() {
       <section className="mt-8">
         <h2 className="mb-3 font-display text-xl tracking-wider neon-text">Přehled turnajů</h2>
         {list.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {user ? "Zatím žádné turnaje." : "Přihlas se pro zobrazení turnajů."}
-          </p>
+          <StateBlock state="empty" title={user ? "Zatím žádné turnaje" : "Přihlas se pro zobrazení turnajů"} hint="Jakmile bude turnaj založený, zobrazí se tady." />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {list.map((t) => (
