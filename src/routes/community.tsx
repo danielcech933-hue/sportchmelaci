@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { SPORTS, type Match, type SportId } from "@/lib/matches";
 import { SportOptions } from "@/components/SportFilterBar";
+import { SocialHub } from "@/components/SocialHub";
 import { splitPlayers, winnerSideOf } from "@/lib/stats";
 import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";
 
@@ -67,6 +68,8 @@ function CommunityPage() {
         </div>
       </div>
     </section>
+
+    <div className="mt-5"><SocialHub /></div>
 
     <section className="mt-5 rounded-[26px] border border-white/8 bg-black/20 p-4 sm:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
