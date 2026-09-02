@@ -1,2 +1,1 @@
-# Removed: Czech UI localization was a one-time migration and is now complete.
-# Keeping localization out of CI prevents future pushes from rewriting UI labels unexpectedly.
+# Czech UI localization migration completed. Intentionally left empty so future pushes are not rewritten by a one-time workflow.
