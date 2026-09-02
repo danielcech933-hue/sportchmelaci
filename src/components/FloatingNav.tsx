@@ -68,7 +68,7 @@ function groupIsActive(pathname: string, group: NavGroup) {
   return group.items.some((i) => matchesRoute(pathname, i));
 }
 
-const CHIP = "nav-chip group relative flex min-h-[3.1rem] min-w-[3.9rem] flex-1 shrink-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition";
+const CHIP = "nav-chip group relative flex min-h-[3.2rem] min-w-[3.9rem] flex-1 shrink-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition duration-200";
 
 export function DesktopNav() {
   const { user, isAdmin, hasRole, loading } = useAuth();
@@ -91,7 +91,7 @@ export function DesktopNav() {
   const visible = NAV_ITEMS.filter((e) => entryIsVisible(e, user, roleSet));
 
   const linkCls = (active: boolean) =>
-    `inline-flex min-h-9 items-center gap-1.5 rounded-[var(--aaa-radius-sm)] px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] transition ${active ? "bg-primary/12 text-primary" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"}`;
+    `group relative inline-flex min-h-9 items-center gap-1.5 rounded-[var(--aaa-radius-sm)] px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] transition ${active ? "bg-primary/12 text-primary shadow-[0_0_24px_-18px_var(--color-primary)]" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"}`;
 
   return (
     <nav ref={ref} aria-label="Hlavní navigace (desktop)" className="relative hidden min-w-0 items-center gap-0.5 md:flex">
@@ -106,9 +106,10 @@ export function DesktopNav() {
                 <Icon className="h-3.5 w-3.5" />
                 <span>{entry.label}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                {(active || isOpen) && <span aria-hidden className="absolute inset-x-2 -bottom-1 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent" />}
               </button>
               {isOpen && (
-                <div role="menu" aria-label={entry.label} className="aaa-surface absolute left-0 top-[calc(100%+.4rem)] z-50 w-56 p-1.5 backdrop-blur-xl">
+                <div role="menu" aria-label={entry.label} className="aaa-surface absolute left-0 top-[calc(100%+.55rem)] z-50 w-56 rounded-2xl p-1.5 shadow-[0_24px_70px_-34px_rgba(0,0,0,.95)] backdrop-blur-xl">
                   {entry.items.filter((i) => itemIsVisible(i, user, roleSet)).map((item) => {
                     const ItemIcon = item.icon;
                     const itemActive = matchesRoute(pathname, item);
@@ -116,6 +117,7 @@ export function DesktopNav() {
                       <Link key={item.to} to={item.to} role="menuitem" onClick={() => setOpen(null)} className={`flex min-h-10 items-center gap-2.5 rounded-[var(--aaa-radius-sm)] px-2.5 py-2 text-xs font-semibold transition ${itemActive ? "bg-primary/12 text-primary" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"}`}>
                         <ItemIcon className="h-4 w-4 shrink-0" />
                         <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                        {itemActive && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_9px] shadow-primary" />}
                       </Link>
                     );
                   })}
@@ -130,6 +132,7 @@ export function DesktopNav() {
           <Link key={entry.to} to={entry.to} aria-current={active ? "page" : undefined} className={linkCls(active)}>
             <Icon className="h-3.5 w-3.5" />
             <span>{entry.label}</span>
+            {active && <span aria-hidden className="absolute inset-x-2 -bottom-1 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent" />}
           </Link>
         );
       })}
@@ -157,18 +160,19 @@ export function FloatingNav() {
 
       {moreOpen && (
         <>
-          <button type="button" aria-label="Zavřít nabídku" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[9998] bg-background/70 backdrop-blur-sm md:hidden" />
-          <div role="menu" aria-label="Více sekcí" className="pointer-events-none fixed inset-x-0 bottom-[5.6rem] z-[10000] flex justify-center px-3 md:hidden">
-            <div className="pointer-events-auto aaa-surface aaa-hairline-top max-h-[60vh] w-full max-w-md overflow-y-auto p-2 backdrop-blur-xl">
-              <p className="aaa-meta px-2 pb-2 pt-1">Více sekcí</p>
+          <button type="button" aria-label="Zavřít nabídku" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[9998] bg-background/75 backdrop-blur-sm md:hidden" />
+          <div role="menu" aria-label="Více sekcí" className="pointer-events-none fixed inset-x-0 bottom-[5.8rem] z-[10000] flex justify-center px-3 md:hidden">
+            <div className="pointer-events-auto aaa-surface aaa-hairline-top max-h-[60vh] w-full max-w-md overflow-y-auto rounded-[24px] p-2 shadow-[0_30px_90px_-40px_rgba(0,0,0,.95)] backdrop-blur-xl">
+              <div className="flex items-center justify-between px-2 pb-2 pt-1"><p className="aaa-meta">DALŠÍ SEKCE</p><button type="button" onClick={() => setMoreOpen(false)} className="rounded-lg px-2 py-1 text-[10px] text-muted-foreground hover:bg-white/[.04] hover:text-foreground">Zavřít</button></div>
               <div className="grid grid-cols-2 gap-1.5">
                 {moreItems.map((item) => {
                   const ItemIcon = item.icon;
                   const itemActive = matchesRoute(pathname, item);
                   return (
-                    <Link key={item.to + item.label} to={item.to} onClick={() => setMoreOpen(false)} role="menuitem" className={`flex min-h-12 items-center gap-2.5 rounded-[var(--aaa-radius-sm)] border px-3 py-2 text-xs font-semibold transition ${itemActive ? "border-primary/45 bg-primary/12 text-primary" : "border-border/50 bg-surface/50 text-muted-foreground hover:border-primary/35 hover:text-foreground"}`}>
+                    <Link key={item.to + item.label} to={item.to} onClick={() => setMoreOpen(false)} role="menuitem" className={`flex min-h-12 items-center gap-2.5 rounded-[var(--aaa-radius-sm)] border px-3 py-2 text-xs font-semibold transition ${itemActive ? "border-primary/45 bg-primary/12 text-primary shadow-[0_0_22px_-18px_var(--color-primary)]" : "border-border/50 bg-surface/50 text-muted-foreground hover:border-primary/35 hover:bg-primary/5 hover:text-foreground"}`}>
                       <ItemIcon className="h-4 w-4 shrink-0" />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {itemActive && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />}
                     </Link>
                   );
                 })}
@@ -179,21 +183,23 @@ export function FloatingNav() {
       )}
 
       <nav aria-label="Hlavní navigace" className="pointer-events-none fixed inset-x-0 bottom-3 z-[9999] flex justify-center px-2 pb-[env(safe-area-inset-bottom)] md:hidden">
-        <div className="nav-dock pointer-events-auto relative isolate flex w-full max-w-[30rem] items-stretch gap-1 rounded-[1.35rem] px-1.5 py-1.5">
+        <div className="nav-dock pointer-events-auto relative isolate flex w-full max-w-[30rem] items-stretch gap-1 rounded-[1.35rem] border border-white/10 bg-black/65 px-1.5 py-1.5 shadow-[0_20px_65px_-30px_rgba(0,0,0,.95)] backdrop-blur-2xl">
           <span aria-hidden className="pointer-events-none absolute inset-x-8 -top-px h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent opacity-80" />
           {primary.map((entry) => {
             const active = matchesRoute(pathname, entry);
             const Icon = entry.icon;
             return (
-              <Link key={entry.to} to={entry.to} activeOptions={entry.exact ? { exact: true } : undefined} aria-current={active ? "page" : undefined} onClick={() => setMoreOpen(false)} className={`${CHIP} ${active ? "nav-chip-active text-primary" : "text-muted-foreground"}`}>
-                <Icon className={`h-[1.15rem] w-[1.15rem] ${active ? "scale-110" : ""}`} />
-                <span className="whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">{entry.label}</span>
+              <Link key={entry.to} to={entry.to} activeOptions={entry.exact ? { exact: true } : undefined} aria-current={active ? "page" : undefined} onClick={() => setMoreOpen(false)} className={`${CHIP} ${active ? "nav-chip-active text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                {active && <span aria-hidden className="absolute inset-1 rounded-[.8rem] bg-primary/[.055] shadow-[0_0_32px_-18px_var(--color-primary)]" />}
+                <Icon className={`relative z-[1] h-[1.15rem] w-[1.15rem] transition-transform ${active ? "scale-110" : ""}`} />
+                <span className="relative z-[1] whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">{entry.label}</span>
               </Link>
             );
           })}
-          <button type="button" onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} aria-haspopup="menu" className={`${CHIP} ${moreActive || moreOpen ? "nav-chip-active text-primary" : "text-muted-foreground"}`}>
-            <MoreHorizontal className="h-[1.15rem] w-[1.15rem]" />
-            <span className="flex items-center gap-0.5 whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">Více<ChevronUp className={`h-2.5 w-2.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} /></span>
+          <button type="button" onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} aria-haspopup="menu" className={`${CHIP} ${moreActive || moreOpen ? "nav-chip-active text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+            {(moreActive || moreOpen) && <span aria-hidden className="absolute inset-1 rounded-[.8rem] bg-primary/[.055] shadow-[0_0_32px_-18px_var(--color-primary)]" />}
+            <MoreHorizontal className="relative z-[1] h-[1.15rem] w-[1.15rem]" />
+            <span className="relative z-[1] flex items-center gap-0.5 whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">Více<ChevronUp className={`h-2.5 w-2.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} /></span>
           </button>
         </div>
       </nav>
