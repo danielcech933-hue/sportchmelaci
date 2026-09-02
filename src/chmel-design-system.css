@@ -5,15 +5,14 @@
 .chm-app-shell {
   --chm-bg: #080b10;
   --chm-bg-2: #0d1219;
-  --chm-panel: rgba(16, 22, 30, .82);
-  --chm-panel-2: rgba(21, 28, 37, .9);
+  --chm-panel: rgba(16,22,30,.82);
+  --chm-panel-2: rgba(21,28,37,.9);
   --chm-gold: #e1b84d;
   --chm-gold-hi: #f5d978;
   --chm-cyan: #25d8ea;
   --chm-green: #39d98a;
   --chm-red: #ff5c69;
   --chm-line: rgba(255,255,255,.085);
-  --chm-line-strong: rgba(225,184,77,.28);
   --chm-ease: cubic-bezier(.22,1,.36,1);
   background:
     radial-gradient(900px 520px at 8% -8%, rgba(225,184,77,.09), transparent 58%),
@@ -22,9 +21,7 @@
     linear-gradient(180deg, var(--chm-bg), #070a0f 70%, #05070a);
 }
 
-.chm-app-shell main {
-  position: relative;
-}
+.chm-app-shell main { position: relative; }
 
 /* Header / chrome */
 .chm-app-shell .chm-site-header {
@@ -42,49 +39,27 @@
   pointer-events: none;
 }
 
-/* Layout rhythm */
-.chm-app-shell main > section,
-.chm-app-shell main > div {
-  --chm-section-gap: 1.1rem;
-}
-.chm-app-shell main > section + section,
-.chm-app-shell main > div + section {
-  scroll-margin-top: 6rem;
-}
-
-/* Cards: quieter, richer, more editorial */
+/* Shared surface hierarchy */
 .chm-app-shell .aaa-card,
 .chm-app-shell .aaa-surface,
 .chm-app-shell .panel {
   border-color: var(--chm-line) !important;
-  background:
-    linear-gradient(145deg, rgba(22,29,39,.9), rgba(10,14,20,.95)) !important;
-  box-shadow:
-    0 22px 70px -52px rgba(0,0,0,.98),
-    inset 0 1px 0 rgba(255,255,255,.045) !important;
+  background: linear-gradient(145deg, rgba(22,29,39,.9), rgba(10,14,20,.95)) !important;
+  box-shadow: 0 22px 70px -52px rgba(0,0,0,.98), inset 0 1px 0 rgba(255,255,255,.045) !important;
   backdrop-filter: blur(18px) saturate(125%);
 }
 .chm-app-shell .aaa-card:hover {
   border-color: rgba(225,184,77,.26) !important;
-  box-shadow:
-    0 32px 90px -58px rgba(0,0,0,1),
-    0 0 0 1px rgba(225,184,77,.04) inset,
-    inset 0 1px 0 rgba(255,255,255,.055) !important;
+  box-shadow: 0 32px 90px -58px rgba(0,0,0,1), 0 0 0 1px rgba(225,184,77,.04) inset, inset 0 1px 0 rgba(255,255,255,.055) !important;
 }
-
-/* Surface hierarchy */
 .chm-app-shell .aaa-metal {
-  background:
-    radial-gradient(circle at 85% 10%, rgba(225,184,77,.14), transparent 34%),
-    linear-gradient(145deg, rgba(28,29,33,.96), rgba(11,14,19,.96)) !important;
+  background: radial-gradient(circle at 85% 10%, rgba(225,184,77,.14), transparent 34%), linear-gradient(145deg, rgba(28,29,33,.96), rgba(11,14,19,.96)) !important;
 }
 
-/* Hero blocks */
+/* Cinematic hero hierarchy */
 .chm-app-shell .hero-surface {
   border: 1px solid rgba(225,184,77,.24);
-  box-shadow:
-    0 40px 120px -72px rgba(225,184,77,.36),
-    0 20px 70px -42px rgba(0,0,0,.98);
+  box-shadow: 0 40px 120px -72px rgba(225,184,77,.36), 0 20px 70px -42px rgba(0,0,0,.98);
 }
 .chm-app-shell .hero-surface::after {
   content: "";
@@ -95,41 +70,23 @@
   border: 1px solid rgba(255,255,255,.035);
 }
 
-/* Headings */
+/* Typography hierarchy */
 .chm-app-shell h1,
 .chm-app-shell h2,
-.chm-app-shell h3 {
-  text-wrap: balance;
-}
-.chm-app-shell h1 {
-  text-shadow: 0 14px 42px rgba(0,0,0,.46);
-}
-.chm-app-shell h2 {
-  text-shadow: 0 10px 30px rgba(0,0,0,.38);
-}
-.chm-app-shell .aaa-meta {
-  color: rgba(213,220,230,.62) !important;
-  letter-spacing: .24em;
-}
+.chm-app-shell h3 { text-wrap: balance; }
+.chm-app-shell h1 { text-shadow: 0 14px 42px rgba(0,0,0,.46); }
+.chm-app-shell h2 { text-shadow: 0 10px 30px rgba(0,0,0,.38); }
+.chm-app-shell .aaa-meta { color: rgba(213,220,230,.62) !important; letter-spacing: .24em; }
+.chm-app-shell .gold-text { background: linear-gradient(180deg, var(--chm-gold-hi), var(--chm-gold) 58%, #a87a20); -webkit-background-clip: text; background-clip: text; }
 
-/* Gold / live semantic system */
-.chm-app-shell .gold-text {
-  background: linear-gradient(180deg, var(--chm-gold-hi), var(--chm-gold) 58%, #a87a20);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-.chm-app-shell [data-live="true"],
-.chm-app-shell .live {
-  --chm-live-color: var(--chm-cyan);
-}
+/* Semantic status language */
+.chm-app-shell [data-live="true"], .chm-app-shell .live { --chm-live-color: var(--chm-cyan); }
 .chm-app-shell [data-live="true"]::after,
 .chm-app-shell .live::after {
-  box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--chm-live-color) 42%, transparent),
-    0 0 30px -16px color-mix(in oklab, var(--chm-live-color) 88%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--chm-live-color) 42%, transparent), 0 0 30px -16px color-mix(in oklab, var(--chm-live-color) 88%, transparent);
 }
 
-/* Buttons */
+/* Controls */
 .chm-app-shell .aaa-cta {
   min-height: 2.7rem;
   border: 1px solid rgba(255,236,159,.3);
@@ -142,12 +99,6 @@
   background: rgba(20,26,34,.68);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
 }
-.chm-app-shell button:not(:disabled),
-.chm-app-shell a {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Chips / badges */
 .chm-app-shell .aaa-chip {
   min-height: 1.6rem;
   border-color: rgba(255,255,255,.10);
@@ -155,7 +106,6 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
 
-/* Inputs / selects */
 .chm-app-shell input,
 .chm-app-shell textarea,
 .chm-app-shell select {
@@ -165,9 +115,7 @@
   border-radius: .8rem;
 }
 .chm-app-shell input::placeholder,
-.chm-app-shell textarea::placeholder {
-  color: rgba(205,214,225,.37);
-}
+.chm-app-shell textarea::placeholder { color: rgba(205,214,225,.37); }
 .chm-app-shell input:focus,
 .chm-app-shell textarea:focus,
 .chm-app-shell select:focus {
@@ -176,140 +124,68 @@
   outline: none;
 }
 
-/* Tables / leaderboard density */
-.chm-app-shell table {
-  border-collapse: separate;
-  border-spacing: 0 .42rem;
-}
-.chm-app-shell thead th {
-  padding-bottom: .5rem;
-  color: rgba(210,218,229,.48);
-  font-size: .58rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: .18em;
-}
-.chm-app-shell tbody tr {
-  overflow: hidden;
-}
-.chm-app-shell tbody td {
-  border-top: 1px solid rgba(255,255,255,.055);
-  border-bottom: 1px solid rgba(255,255,255,.055);
-  background: rgba(15,21,28,.72);
-}
-.chm-app-shell tbody td:first-child {
-  border-left: 1px solid rgba(255,255,255,.055);
-  border-top-left-radius: .8rem;
-  border-bottom-left-radius: .8rem;
-}
-.chm-app-shell tbody td:last-child {
-  border-right: 1px solid rgba(255,255,255,.055);
-  border-top-right-radius: .8rem;
-  border-bottom-right-radius: .8rem;
-}
-
 /* Match tickets */
 .chm-app-shell .match-card,
 .chm-app-shell .match-row {
   border: 1px solid rgba(255,255,255,.075);
   border-radius: 1rem;
-  background:
-    linear-gradient(145deg, rgba(20,27,36,.94), rgba(9,14,20,.96));
+  background: linear-gradient(145deg, rgba(20,27,36,.94), rgba(9,14,20,.96));
 }
 .chm-app-shell .match-card::before,
-.chm-app-shell .match-row::before {
-  width: 2px;
-  opacity: .82;
-}
+.chm-app-shell .match-row::before { width: 2px; opacity: .82; }
 
-/* Social feed cards */
+/* Tables / leaderboard density */
+.chm-app-shell table { border-collapse: separate; border-spacing: 0 .42rem; }
+.chm-app-shell thead th { padding-bottom: .5rem; color: rgba(210,218,229,.48); font-size: .58rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .18em; }
+.chm-app-shell tbody td { border-top: 1px solid rgba(255,255,255,.055); border-bottom: 1px solid rgba(255,255,255,.055); background: rgba(15,21,28,.72); }
+.chm-app-shell tbody td:first-child { border-left: 1px solid rgba(255,255,255,.055); border-top-left-radius: .8rem; border-bottom-left-radius: .8rem; }
+.chm-app-shell tbody td:last-child { border-right: 1px solid rgba(255,255,255,.055); border-top-right-radius: .8rem; border-bottom-right-radius: .8rem; }
+
+/* Social layers — photos look like content, not widgets */
 .chm-app-shell [class*="feed" i] img,
-.chm-app-shell [class*="post" i] img {
-  border-radius: 1rem;
-}
-.chm-app-shell [class*="story" i] {
-  transition: transform 180ms var(--chm-ease), filter 180ms ease;
-}
-.chm-app-shell [class*="story" i]:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.06);
-}
-
-/* Avatars become identity objects rather than decorative blobs. */
+.chm-app-shell [class*="post" i] img { border-radius: 1rem; }
+.chm-app-shell [class*="story" i] { transition: transform 180ms var(--chm-ease), filter 180ms ease; }
+.chm-app-shell [class*="story" i]:hover { transform: translateY(-2px); filter: brightness(1.06); }
 .chm-app-shell img.rounded-full,
-.chm-app-shell [class*="rounded-full"] img {
-  box-shadow: 0 0 0 1px rgba(255,255,255,.09), 0 14px 30px -22px rgba(0,0,0,.95);
-}
+.chm-app-shell [class*="rounded-full"] img { box-shadow: 0 0 0 1px rgba(255,255,255,.09), 0 14px 30px -22px rgba(0,0,0,.95); }
 
 /* Navigation */
 .chm-app-shell .nav-dock {
   border: 1px solid rgba(225,184,77,.18);
-  background:
-    linear-gradient(180deg, rgba(17,23,30,.94), rgba(8,12,17,.96));
-  box-shadow:
-    0 24px 70px -42px rgba(0,0,0,1),
-    inset 0 1px 0 rgba(255,255,255,.05);
+  background: linear-gradient(180deg, rgba(17,23,30,.94), rgba(8,12,17,.96));
+  box-shadow: 0 24px 70px -42px rgba(0,0,0,1), inset 0 1px 0 rgba(255,255,255,.05);
   backdrop-filter: blur(22px) saturate(135%);
 }
-.chm-app-shell .nav-chip-active {
-  background: linear-gradient(180deg, rgba(225,184,77,.15), rgba(225,184,77,.06));
-  box-shadow: inset 0 0 0 1px rgba(225,184,77,.13), 0 8px 24px -18px rgba(225,184,77,.7);
-}
+.chm-app-shell .nav-chip-active { background: linear-gradient(180deg, rgba(225,184,77,.15), rgba(225,184,77,.06)); box-shadow: inset 0 0 0 1px rgba(225,184,77,.13), 0 8px 24px -18px rgba(225,184,77,.7); }
 .chm-app-shell nav[aria-label="Hlavní navigace (desktop)"] a,
-.chm-app-shell nav[aria-label="Hlavní navigace (desktop)"] button {
-  min-height: 2.35rem;
-  border: 1px solid transparent;
-}
+.chm-app-shell nav[aria-label="Hlavní navigace (desktop)"] button { min-height: 2.35rem; border: 1px solid transparent; }
 .chm-app-shell nav[aria-label="Hlavní navigace (desktop)"] a[aria-current="page"],
-.chm-app-shell nav[aria-label="Hlavní navigace (desktop)"] button[aria-expanded="true"] {
-  border-color: rgba(225,184,77,.14);
-  background: rgba(225,184,77,.07);
-}
+.chm-app-shell nav[aria-label="Hlavní navigace (desktop)"] button[aria-expanded="true"] { border-color: rgba(225,184,77,.14); background: rgba(225,184,77,.07); }
 
 /* Footer */
-.chm-app-shell footer {
-  border-top-color: rgba(255,255,255,.06) !important;
-  background: linear-gradient(180deg, rgba(7,10,14,.46), rgba(5,7,10,.88));
-}
+.chm-app-shell footer { border-top-color: rgba(255,255,255,.06) !important; background: linear-gradient(180deg, rgba(7,10,14,.46), rgba(5,7,10,.88)); }
 
 /* Focus / accessibility */
-.chm-app-shell :where(a,button,[role="button"],input,select,textarea):focus-visible {
-  outline: 2px solid var(--chm-gold);
-  outline-offset: 3px;
-}
+.chm-app-shell :where(a,button,[role="button"],input,select,textarea):focus-visible { outline: 2px solid var(--chm-gold); outline-offset: 3px; }
 
-/* Desktop density */
 @media (min-width: 1024px) {
-  .chm-app-shell main > section {
-    margin-block: 1rem;
-  }
-  .chm-app-shell main > section:first-child {
-    margin-top: .4rem;
-  }
+  .chm-app-shell main > section { margin-block: 1rem; }
+  .chm-app-shell main > section:first-child { margin-top: .4rem; }
 }
 
-/* Mobile: native-app feel, no accidental horizontal density */
 @media (max-width: 640px) {
-  .chm-app-shell main {
-    padding-inline: .7rem;
-  }
+  .chm-app-shell main { padding-inline: .7rem; }
   .chm-app-shell .aaa-card,
   .chm-app-shell .aaa-surface,
-  .chm-app-shell .panel {
-    border-radius: 1rem;
-  }
+  .chm-app-shell .panel { border-radius: 1rem; }
   .chm-app-shell h1 { line-height: .9; }
   .chm-app-shell h2 { line-height: .96; }
   .chm-app-shell .chm-site-header::after { inset-inline: 8%; }
 }
 
-/* Reduced motion: preserve hierarchy without motion noise. */
 @media (prefers-reduced-motion: reduce) {
   .chm-app-shell .aaa-card,
   .chm-app-shell .aaa-card:hover,
   .chm-app-shell [class*="story" i],
-  .chm-app-shell [class*="story" i]:hover {
-    transition: none !important;
-    transform: none !important;
-  }
+  .chm-app-shell [class*="story" i]:hover { transition: none !important; transform: none !important; }
 }
