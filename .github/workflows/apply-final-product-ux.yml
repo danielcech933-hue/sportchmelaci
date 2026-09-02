@@ -24,6 +24,7 @@ jobs:
                   if optional: return
                   raise SystemExit(f'MISSING {path}: {old[:120]!r}')
               p.write_text(s.replace(old,new,1))
+
           exact('src/routes/index.tsx', ', Gamepad2', '', optional=True)
           exact('src/routes/index.tsx', 'const { userDollars, slotCZK } = useWallet();', 'const { userDollars } = useWallet();', optional=True)
           exact('src/routes/index.tsx', 'import { SportActionModal } from "@/components/SportActionModal";\n', 'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n', optional=True)
@@ -34,6 +35,7 @@ jobs:
               marker='<section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">'; i=s.find(marker)
               if i>=0:
                   j=s.find('</section>',i)+len('</section>'); p.write_text(s[:j]+'\n\n      <section className="mt-5"><SocialHub compact /></section>'+s[j:])
+
           exact('src/components/ProfileView.tsx','import { ArcadeProfile } from "@/components/ArcadeProfile";\n','',optional=True)
           exact('src/components/ProfileView.tsx',', Gamepad2','',optional=True)
           exact('src/components/ProfileView.tsx','  const { openChat } = useDm(); const { userDollars, slotCZK } = useWallet();','  const { openChat } = useDm(); const { userDollars } = useWallet();',optional=True)
@@ -42,14 +44,30 @@ jobs:
           exact('src/components/ProfileView.tsx','    <section className="mt-5 flex justify-center"><div className="relative inline-flex rounded-full border border-primary/25 bg-background/65 p-1"><span aria-hidden className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/10 ${mode === "arcade" ? "translate-x-full" : "translate-x-0"}`} />{(["real", "arcade"] as const).map((m) => <button key={m} onClick={() => setMode(m)} className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${mode === m ? "text-primary" : "text-muted-foreground"}`}>{m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}{m === "real" ? "Sport" : "Arcade"}</button>)}</div></section>\n','',optional=True)
           exact('src/components/ProfileView.tsx','    {mode === "arcade" && targetId ? <ArcadeProfile userId={targetId} isSelf={isSelf} /> : <>','    <>',optional=True)
           exact('src/components/ProfileView.tsx','    </>}\n  </main>;','    </>\n  </main>;',optional=True)
+
           exact('src/components/SocialHub.tsx','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\n','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\nimport { Link } from "@tanstack/react-router";\n',optional=True)
           exact('src/components/SocialHub.tsx','      const storyQuery = await db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false })\n        .limit(36);','      let storyQuery = db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false });\n      if (profileUserId) storyQuery = storyQuery.eq("user_id", profileUserId);\n      const storyResult = await storyQuery.limit(36);',optional=True)
           exact('src/components/SocialHub.tsx','      if (storyQuery.error) throw storyQuery.error;','      if (storyResult.error) throw storyResult.error;',optional=True)
           exact('src/components/SocialHub.tsx','      setStories((storyQuery.data ?? []) as SocialStory[]);','      setStories((storyResult.data ?? []) as SocialStory[]);',optional=True)
           exact('src/components/SocialHub.tsx','    {!profileUserId && <StoriesStrip groups={storyGroups} meGroup={meStoryGroup} user={Boolean(user)} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />}\n','    <StoriesStrip groups={storyGroups} meGroup={profileUserId ? undefined : meStoryGroup} user={Boolean(user) && !profileUserId} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />\n',optional=True)
           exact('src/components/SocialHub.tsx','<div className="truncate text-sm font-bold text-white">{post.author_nickname}</div>','<Link to="/profile/$id" params={{ id: post.user_id }} className="truncate text-sm font-bold text-white hover:text-amber-200">{post.author_nickname}</Link>',optional=True)
-          for path,route in {'src/routes/games.$game.tsx':'/games/$game','src/routes/games.case-opening.tsx':'/games/case-opening','src/routes/arcade.tsx':'/arcade','src/routes/slots.tsx':'/slots','src/routes/slots.index.tsx':'/slots/','src/routes/slots.chmelovci-cup.tsx':'/slots/chmelovci-cup','src/routes/ultimate-team.tsx':'/ultimate-team'}.items():
+
+          # Preserve /slots as an ignored parent layout; only its index route is redirected/hidden.
+          Path('src/routes/slots.tsx').write_text('import { createFileRoute, Outlet } from "@tanstack/react-router";\n\nexport const Route = createFileRoute("/slots")({ component: () => <Outlet /> });\n')
+
+          # Hard-hide direct game surfaces while retaining backend code elsewhere.
+          redirects={
+            'src/routes/games.$game.tsx':'/games/$game',
+            'src/routes/games.case-opening.tsx':'/games/case-opening',
+            'src/routes/arcade.tsx':'/arcade',
+            'src/routes/slots.index.tsx':'/slots/',
+            'src/routes/slots.chmelovci-cup.tsx':'/slots/chmelovci-cup',
+            'src/routes/ultimate-team.tsx':'/ultimate-team',
+          }
+          for path,route in redirects.items():
               Path(path).write_text(f'import {{ createFileRoute, Navigate }} from "@tanstack/react-router";\n\nexport const Route = createFileRoute("{route}")({{ component: () => <Navigate to="/" replace />, }});\n')
+
+          # /slots child is hidden, parent remains a layout for route integrity.
           Path('.github/workflows/apply-final-product-ux.yml').unlink(missing_ok=True)
           Path('.github/workflows/final-social-profile-ux.yml').unlink(missing_ok=True)
           PY
