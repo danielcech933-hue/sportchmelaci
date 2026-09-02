@@ -1,0 +1,40 @@
+name: Full poster layout
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - name: Patch hero layout
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/routes/index.tsx')
+          s = p.read_text()
+          s = s.replace('''          <div className="relative aspect-[4/3] min-h-[430px] sm:aspect-[16/10] lg:aspect-[2/1]">\n            <img src={matchdayHero} alt="Zápas století — SportChmeláci" width={1400} height={1800} className="absolute inset-0 h-full w-full object-cover object-center" />\n            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,12,.10)_0%,rgba(3,7,12,.22)_38%,rgba(3,7,12,.95)_100%)]" />\n            <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(255,208,75,.22),transparent_28%),linear-gradient(90deg,rgba(3,7,12,.58)_0%,transparent_58%)]" />''','''          <div className="relative flex min-h-[620px] items-center justify-center overflow-hidden bg-black/85 sm:min-h-[760px] lg:min-h-[820px]">\n            <img src={matchdayHero} alt="Zápas století — SportChmeláci" width={1400} height={1800} className="h-auto max-h-[820px] w-auto max-w-full object-contain object-center sm:max-h-[900px]" />''')
+          old='''            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 lg:p-9">\n              <div className="aaa-meta text-amber-200/75">SPORTCHMELÁCI PRESENTS</div>\n              <h1 className="mt-2 max-w-3xl font-display text-5xl leading-[.82] tracking-[.06em] text-white sm:text-7xl lg:text-8xl">ZÁPAS<br /><span className="gold-text">STOLETÍ</span></h1>\n              <p className="mt-4 max-w-2xl text-sm font-semibold uppercase tracking-[.15em] text-white/70 sm:text-base">Daniel Čech · The Main Event · Clay Court · 2026</p>\n              <div className="mt-5 flex flex-wrap gap-2">\n                <Link to="/live-arena" className="aaa-cta inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><Activity className="h-4 w-4" /> Sledovat Matchday</Link>\n                <Link to="/schedule" className="aaa-ghost inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><CalendarClock className="h-4 w-4" /> Program</Link>\n              </div>\n            </div>\n'''
+          s = s.replace(old, '')
+          p.write_text(s)
+          PY
+      - name: Verify
+        run: |
+          grep -q 'object-contain object-center' src/routes/index.tsx
+          grep -q 'min-h-\[620px\]' src/routes/index.tsx
+          bun run build
+          bun run typecheck
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/index.tsx .github/workflows/hero-full-poster.yml
+          git commit -m 'Show full matchday poster without cropping'
+          git rm .github/workflows/hero-full-poster.yml
+          git commit -m 'Remove one-shot full poster workflow'
+          git push
