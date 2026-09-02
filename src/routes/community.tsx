@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, Flame, Gamepad2, Medal, Radio, Search, Shield, Sparkles, Trophy, Users, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
-import { SPORTS, SPORT_LIST, type Match, type SportId } from "@/lib/matches";
+import { SPORTS, type Match, type SportId } from "@/lib/matches";
+import { SportOptions } from "@/components/SportFilterBar";
 import { splitPlayers, winnerSideOf } from "@/lib/stats";
 import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";
 
@@ -70,7 +71,7 @@ function CommunityPage() {
     <section className="mt-5 rounded-[26px] border border-white/8 bg-black/20 p-4 sm:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div><div className="aaa-meta text-amber-200/70">PLAYER EXPLORER</div><h3 className="mt-1 font-display text-3xl tracking-[.12em] text-white">COMMUNITY ROSTER</h3></div>
-        <div className="flex flex-wrap gap-2"><div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3"><Search className="h-4 w-4 text-white/25" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Hledat hráče…" className="w-44 bg-transparent py-2.5 text-sm text-white outline-none placeholder:text-white/20" /></div><select value={sport} onChange={(e) => setSport(e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-xs uppercase tracking-[.12em] text-white/60 outline-none"><option value="all">Všechny sporty</option>{SPORT_LIST.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}</select></div>
+        <div className="flex flex-wrap gap-2"><div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3"><Search className="h-4 w-4 text-white/25" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Hledat hráče…" className="w-44 bg-transparent py-2.5 text-sm text-white outline-none placeholder:text-white/20" /></div><select value={sport} onChange={(e) => setSport(e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-xs uppercase tracking-[.12em] text-white/60 outline-none"><SportOptions allLabel="Všechny sporty" /></select></div>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{activePlayers.map((p, i) => <PlayerCard key={p.key} player={p} rank={i + 1} />)}{activePlayers.length === 0 && <Empty text="Žádný hráč neodpovídá filtru." />}</div>
     </section>

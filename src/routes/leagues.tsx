@@ -3,6 +3,7 @@ import { CalendarDays, Crown, Flame, Medal, ShieldCheck, Sparkles, Trophy, Users
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { SPORT_LIST, SPORTS, type Match } from "@/lib/matches";
+import { SportFilterBar } from "@/components/SportFilterBar";
 
 export const Route = createFileRoute("/leagues")({
   head: () => ({ meta: [{ title: "Chmel League — SportChmeláci" }, { name: "description", content: "Ultra S+ sezóna, tabulka, matchday, form engine a playoff radar." }] }),
@@ -58,7 +59,7 @@ function LeaguesPage() {
       </div>
     </section>
 
-    <section className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/20 p-3"><div className="flex flex-wrap gap-1.5">{(["overview","table","matchday","form","playoffs"] as Tab[]).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-[.18em] transition ${tab === t ? "bg-amber-300 text-black shadow-[0_0_25px_-12px_rgba(250,204,21,.9)]" : "text-white/35 hover:bg-white/[.03] hover:text-white"}`}>{t === "overview" ? "OVERVIEW" : t === "table" ? "TABLE" : t === "matchday" ? "MATCHDAY" : t === "form" ? "FORM" : "PLAYOFFS"}</button>)}</div><div className="flex flex-wrap gap-1.5">{[{id:"all",name:"Vše"},...SPORT_LIST].map((s) => <button key={s.id} onClick={() => setSport(s.id)} className={`rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-[.16em] ${sport === s.id ? "border-cyan-300/35 bg-cyan-300/10 text-cyan-200" : "border-white/8 text-white/25 hover:text-white/60"}`}>{s.name}</button>)}</div></section>
+    <section className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/20 p-3"><div className="flex flex-wrap gap-1.5">{(["overview","table","matchday","form","playoffs"] as Tab[]).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-[.18em] transition ${tab === t ? "bg-amber-300 text-black shadow-[0_0_25px_-12px_rgba(250,204,21,.9)]" : "text-white/35 hover:bg-white/[.03] hover:text-white"}`}>{t === "overview" ? "OVERVIEW" : t === "table" ? "TABLE" : t === "matchday" ? "MATCHDAY" : t === "form" ? "FORM" : "PLAYOFFS"}</button>)}</div><SportFilterBar value={sport as never} onChange={(v) => setSport(v)} /></section>
 
     {tab === "overview" && <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
       <div className="rounded-[24px] border border-white/8 bg-black/20 p-5"><Section title="CHAMPIONSHIP TABLE" icon={<Trophy className="h-4 w-4" />}><div className="mt-4 space-y-2">{rows.slice(0, 8).map((r, i) => <TableRow key={r.key} rank={i+1} row={r} />)}{rows.length===0&&<Empty text="No standings yet."/>}</div></Section></div>

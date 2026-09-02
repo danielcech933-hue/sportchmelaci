@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Activity, ArrowRight, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Gamepad2, Plus, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";
-import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
+import { CLASSIC_SPORTS, ESPORT_SPORTS, SPORT_LIST, SPORTS, type SportConfig, type Match, type SportId } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useWallet } from "@/lib/wallet";
@@ -126,13 +126,36 @@ function Lobby() {
 
       <section className="mt-5 aaa-card p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3"><div><div className="aaa-meta">SPORT MATRIX</div><h2 className="mt-1 font-display text-3xl tracking-[.12em]">SPORT HUB</h2></div><Link to="/sport-center" className="aaa-ghost inline-flex items-center gap-1 px-3 py-2 text-[9px] font-black uppercase tracking-[.16em]">Full Hub <ArrowRight className="h-3.5 w-3.5" /></Link></div>
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{SPORT_LIST.slice(0, 12).map((sport) => <button key={sport.id} type="button" onClick={() => setSelectedSport(sport.id)} className="group rounded-2xl border border-white/8 bg-black/20 p-3 text-left transition hover:-translate-y-1 hover:border-amber-300/35"><div className="flex items-center justify-between"><span className="text-2xl group-hover:scale-110 transition">{sport.emoji}</span><span className="aaa-meta">{sport.esport ? "ESPORT" : "SPORT"}</span></div><div className="mt-3 font-display text-base tracking-[.07em] text-white">{sport.name}</div><div className="mt-1 font-mono text-[8px] uppercase tracking-[.14em] text-white/25">1V1 · 2V2</div></button>)}</div>
+        <div className="mt-4 space-y-4">
+          <SportGroup label="Klasické sporty" sports={CLASSIC_SPORTS} onPick={setSelectedSport} />
+          <SportGroup label="Esporty" sports={ESPORT_SPORTS} onPick={setSelectedSport} />
+        </div>
       </section>
 
       <footer className="mt-5 grid gap-2 rounded-2xl border border-white/8 bg-black/20 p-4 sm:grid-cols-4"><FooterItem title="LIVE SYNC" text="Fixtures obnovovány průběžně" icon={<Activity className="h-4 w-4" />} /><FooterItem title="SERVER AUTH" text="Důležité herní akce validuje server" icon={<ShieldCheck className="h-4 w-4" />} /><FooterItem title="2V2 READY" text="Týmové zápasy jsou první třída" icon={<Users className="h-4 w-4" />} /><FooterItem title="AAA UI" text="Mac · Windows · iPhone · Android" icon={<Sparkles className="h-4 w-4" />} /></footer>
 
       {selectedSport && <SportActionModal sport={selectedSport} onClose={() => setSelectedSport(null)} />}
     </main>
+  );
+}
+
+function SportGroup({ label, sports, onPick }: { label: string; sports: SportConfig[]; onPick: (id: SportId) => void }) {
+  return (
+    <div>
+      <div className="aaa-meta mb-2">{label} · {sports.length}</div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        {sports.map((sport) => (
+          <button key={sport.id} type="button" onClick={() => onPick(sport.id)} className="group min-h-24 rounded-[var(--aaa-radius-sm)] border border-border/50 bg-surface/40 p-3 text-left transition hover:-translate-y-1 hover:border-primary/40">
+            <div className="flex items-center justify-between">
+              <span aria-hidden className="text-2xl transition group-hover:scale-110">{sport.emoji}</span>
+              <span className={`aaa-meta ${sport.esport ? "text-accent/80" : ""}`}>{sport.esport ? "ESPORT" : "SPORT"}</span>
+            </div>
+            <div className="mt-3 truncate font-display text-base tracking-[.07em] text-foreground">{sport.name}</div>
+            <div className="aaa-meta mt-1">1V1 · 2V2</div>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
