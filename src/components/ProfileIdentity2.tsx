@@ -148,7 +148,7 @@ export function ProfileIdentity2({ userId }: { userId: string }) {
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Mini label="SOLO" value={`${stats.solo.wins}-${stats.solo.losses}`} />
             <Mini label="2V2" value={`${stats.team.wins}-${stats.team.losses}`} />
-            <Mini label="SPORTS" value={sports.length} />
+            <Mini label="SPORTY" value={sports.length} />
             <Mini label="TEAMS" value={myTeams.length} />
             <Mini label="BETS" value={betStats.settled} />
             <Mini label="BET NET" value={isSelf ? `${betStats.net >= 0 ? "+" : ""}${betStats.net.toFixed(0)} $` : "—"} />

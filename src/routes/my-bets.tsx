@@ -122,7 +122,7 @@ function MyBetsPage() {
                 <Signal label="OPEN" value={String(openBets.length)} />
                 <Signal label="LARGEST STAKE" value={`$${largest.toLocaleString("en-US")}`} />
                 <Signal label="WIN RATE" value={`${winRate}%`} />
-                <Signal label="SYNC" value={lastSync ? "LIVE" : "—"} />
+                <Signal label="SYNCHRONIZOVAT" value={lastSync ? "LIVE" : "—"} />
               </div>
             </div>
           </section>

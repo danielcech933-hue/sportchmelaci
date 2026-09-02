@@ -8,20 +8,20 @@ export type NavItem = { to: string; label: string; icon: ComponentType<{ classNa
 type NavGroup = { label: string; icon: ComponentType<{ className?: string }>; items: NavItem[] };
 type NavEntry = NavItem | NavGroup;
 
-const RESULTS_ITEMS: NavItem[] = [{ to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" }, { to: "/bets", label: "Sázky", icon: Coins }, { to: "/history", label: "Historie", icon: HistoryIcon }];
+const RESULTS_ITEMS: NavItem[] = [{ to: "/rankings", label: "Žebříček", icon: Trophy, fx: "trophy" }, { to: "/bets", label: "Sázky", icon: Coins }, { to: "/history", label: "Historie", icon: HistoryIcon }];
 const SPORT_ITEMS: NavItem[] = [{ to: "/schedule", label: "Plán", icon: CalendarDays }, { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/teams", label: "Týmy", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin }];
-const COMMUNITY_ITEMS: NavItem[] = [{ to: "/community", label: "Hráči", icon: Users }, { to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
+const COMMUNITY_ITEMS: NavItem[] = [{ to: "/community", label: "Hráči", icon: Users }, { to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Správa", icon: ShieldCheck, admin: true }];
 
 export const NAV_ITEMS: NavEntry[] = [
-  { to: "/", label: "Lobby", icon: Home, exact: true },
-  { to: "/activity", label: "Live Pulse", icon: Activity },
-  { label: "Sport", icon: Trophy, items: SPORT_ITEMS },
+  { to: "/", label: "Domů", icon: Home, exact: true },
+  { to: "/activity", label: "Živé dění", icon: Activity },
+  { label: "Sporty", icon: Trophy, items: SPORT_ITEMS },
   { label: "Výsledky", icon: BarChart3, items: RESULTS_ITEMS },
   { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS },
 ];
 
 const MOBILE_PRIMARY: NavItem[] = [
-  { to: "/", label: "Lobby", icon: Home, exact: true },
+  { to: "/", label: "Domů", icon: Home, exact: true },
   { to: "/schedule", label: "Zápasy", icon: CalendarDays },
   { to: "/bets", label: "Sázky", icon: Coins },
   { to: "/chat", label: "Chat", icon: MessagesSquare },
@@ -32,15 +32,15 @@ const MOBILE_MORE: NavGroup = {
   label: "Více",
   icon: MoreHorizontal,
   items: [
-    { to: "/activity", label: "Live Pulse", icon: Activity },
-    { to: "/rankings", label: "Scoreboard", icon: Trophy },
+    { to: "/activity", label: "Živé dění", icon: Activity },
+    { to: "/rankings", label: "Žebříček", icon: Trophy },
     { to: "/tournaments", label: "Turnaje", icon: Trophy },
     { to: "/teams", label: "Týmy", icon: Users },
     { to: "/venues", label: "Sportoviště", icon: MapPin },
     { to: "/community", label: "Hráči", icon: Users },
     { to: "/history", label: "Historie", icon: HistoryIcon },
     { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
-    { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
+    { to: "/admin", label: "Správa", icon: ShieldCheck, admin: true },
   ],
 };
 

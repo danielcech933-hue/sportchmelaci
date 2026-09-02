@@ -141,7 +141,7 @@ export function PlayerLocator({ userId, isSelf, nickname }: Props) {
     return row.stale ? "stale" : "online";
   }, [enabled, isSelf, row]);
 
-  const title = isSelf ? "PLAYER LOCATOR" : `${nickname ?? "PLAYER"} // LOCATOR`;
+  const title = isSelf ? "PLAYER LOCATOR" : `${nickname ?? "HRÁČ"} // LOCATOR`;
 
   return (
     <section className="mt-6 overflow-hidden rounded-[1.75rem] border border-accent/20 bg-background/55 shadow-[0_25px_70px_-45px_var(--color-accent)] backdrop-blur-xl">

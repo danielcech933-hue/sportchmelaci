@@ -114,7 +114,7 @@ function SchedulePage() {
           <UltraMetric label="UPCOMING" value={String(upcoming.length)} hint="naplánovaných duelů" icon={<CalendarDays className="h-4 w-4 text-amber-200" />} />
           <UltraMetric label="LIVE SIGNAL" value={String(liveCount)} hint="otevřených sportovních momentů" icon={<Radio className="h-4 w-4 text-emerald-300" />} />
           <UltraMetric label="2V2 READY" value={String(teamCount)} hint="týmových zápasů" icon={<Users className="h-4 w-4 text-cyan-200" />} />
-          <UltraMetric label="SPORTS" value={String(SPORT_LIST.length)} hint="dostupných disciplín" icon={<Trophy className="h-4 w-4 text-violet-200" />} />
+          <UltraMetric label="SPORTY" value={String(SPORT_LIST.length)} hint="dostupných disciplín" icon={<Trophy className="h-4 w-4 text-violet-200" />} />
         </div>
 
         {nextMatch && (

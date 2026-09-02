@@ -141,7 +141,7 @@ export function VariantSlotMachine({ game, playerName }: { game: SlotVariantId; 
               <button type="button" onClick={() => void startAutoSpin()} disabled={!ready || spinning || !!bonusReveal} className="inline-flex items-center gap-2 rounded-xl border border-hop-gold/50 bg-hop-gold/10 px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-hop-gold disabled:cursor-not-allowed disabled:opacity-50"><Zap className="h-4 w-4" />AUTO SPIN</button>
               <button type="button" onClick={spin} disabled={!ready || spinning || !!bonusReveal} className="inline-flex items-center gap-2 rounded-xl bg-hop-gold px-4 py-2.5 text-xs font-black uppercase tracking-[.14em] text-black disabled:cursor-not-allowed disabled:opacity-50">
                 {spinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                {spinning ? "Točíme" : "SPIN"}
+                {spinning ? "Točíme" : "OTÁČENÍ"}
               </button>
             </>
           )}

@@ -23,7 +23,7 @@ const CATEGORIES = [
 
 function TrophyRoomPage() {
   const { nickname, user } = useAuth();
-  const displayName = nickname ?? (user ? "PLAYER" : "GUEST");
+  const displayName = nickname ?? (user ? "HRÁČ" : "GUEST");
 
   return (
     <main className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[#030507] text-white">

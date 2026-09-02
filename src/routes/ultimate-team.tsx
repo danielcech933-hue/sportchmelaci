@@ -48,12 +48,12 @@ type Tab = "club" | "squad" | "match" | "spin" | "collection" | "catalog";
 type TabDef = { key: Tab; label: string; icon: typeof Shield; eyebrow: string };
 
 const TABS: TabDef[] = [
-  { key: "club", label: "Klub", icon: Shield, eyebrow: "CLUB HQ" },
-  { key: "squad", label: "Sestava", icon: Users, eyebrow: "SQUAD" },
-  { key: "match", label: "FUT Match", icon: Trophy, eyebrow: "MATCH" },
-  { key: "spin", label: "Card Spin", icon: Sparkles, eyebrow: "SPIN" },
-  { key: "collection", label: "Sbírka", icon: Layers, eyebrow: "COLLECTION" },
-  { key: "catalog", label: "Katalog", icon: Database, eyebrow: "CATALOG" },
+  { key: "club", label: "Klub", icon: Shield, eyebrow: "CENTRUM KLUBU" },
+  { key: "squad", label: "Sestava", icon: Users, eyebrow: "SESTAVA" },
+  { key: "match", label: "FUT zápas", icon: Trophy, eyebrow: "ZÁPAS" },
+  { key: "spin", label: "Otáčení karty", icon: Sparkles, eyebrow: "OTÁČENÍ" },
+  { key: "collection", label: "Sbírka", icon: Layers, eyebrow: "SBÍRKA" },
+  { key: "catalog", label: "Katalog", icon: Database, eyebrow: "KATALOG" },
 ];
 
 function UltimateTeamPage() {
@@ -135,7 +135,7 @@ function UltimateTeamPage() {
             <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div><p className="font-mono text-[8px] font-black uppercase tracking-[0.3em] text-white/35">AKTUÁLNÍ SEKCE</p><div className="mt-1 flex items-center gap-2"><CurrentIcon className="h-4 w-4 text-primary" /><span className="font-display text-xl uppercase tracking-[0.09em] text-white">{currentTab.label}</span><span className="rounded-md border border-white/8 bg-white/[0.03] px-2 py-1 font-mono text-[7px] font-black uppercase tracking-[0.16em] text-white/35">{currentTab.eyebrow}</span></div></div>
-                <button type="button" onClick={() => void reload()} disabled={refreshing} title="Synchronizovat klub se serverem" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.18em] text-white/50 transition hover:border-primary/30 hover:text-primary disabled:opacity-50"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />{refreshing ? "Synchronizuji" : "Sync"}</button>
+                <button type="button" onClick={() => void reload()} disabled={refreshing} title="Synchronizovat klub se serverem" className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[0.18em] text-white/50 transition hover:border-primary/30 hover:text-primary disabled:opacity-50"><RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />{refreshing ? "Synchronizuji" : "Synchronizovat"}</button>
               </div>
             </div>
             <div className="rounded-2xl border border-primary/15 bg-primary/[0.035] p-4">
@@ -160,7 +160,7 @@ function UltimateTeamPage() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.section key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="mt-5">
           {error && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-400/20 bg-red-400/[0.06] px-4 py-3 text-xs text-red-200"><span>{error}</span><button type="button" onClick={() => void reload()} className="font-mono text-[9px] font-black uppercase tracking-[0.16em] underline underline-offset-4">Zkusit znovu</button></div>}
-          {tab === "club" && <div className="space-y-4"><FutProgressionPanel /><div className="grid gap-3 sm:grid-cols-3"><StatCard icon={<Layers />} label="Karty ve sbírce" value={cards.length} hint="Vlastněné položky" /><StatCard icon={<Trophy />} label="Nejlepší rating" value={bestRating || "—"} hint="Top OVR karty" /><StatCard icon={<Sparkles />} label="Luck meter" value={club?.luckMeter ?? 0} hint="Spin bonus" /></div><section className="rounded-[28px] border border-white/8 bg-[#070b11] p-4 sm:p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[8px] font-black uppercase tracking-[0.28em] text-primary/65">CURATED XI</p><h2 className="mt-1 font-display text-2xl uppercase tracking-[0.08em] text-white">Nejlepší karty</h2></div><button type="button" onClick={() => setTab("collection")} className="inline-flex items-center gap-1 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-primary hover:text-white">Otevřít sbírku <ArrowUpRight className="h-3.5 w-3.5" /></button></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{topCards.length === 0 ? <EmptyCard onGo={() => setTab("spin")} /> : topCards.map((owned) => <FeaturedCard key={owned.id} card={owned.card} onOpen={() => setTab("collection")} />)}</div></section></div>}
+          {tab === "club" && <div className="space-y-4"><FutProgressionPanel /><div className="grid gap-3 sm:grid-cols-3"><StatCard icon={<Layers />} label="Karty ve sbírce" value={cards.length} hint="Vlastněné položky" /><StatCard icon={<Trophy />} label="Nejlepší rating" value={bestRating || "—"} hint="Top OVR karty" /><StatCard icon={<Sparkles />} label="Měřič štěstí" value={club?.luckMeter ?? 0} hint="Spin bonus" /></div><section className="rounded-[28px] border border-white/8 bg-[#070b11] p-4 sm:p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[8px] font-black uppercase tracking-[0.28em] text-primary/65">CURATED XI</p><h2 className="mt-1 font-display text-2xl uppercase tracking-[0.08em] text-white">Nejlepší karty</h2></div><button type="button" onClick={() => setTab("collection")} className="inline-flex items-center gap-1 font-mono text-[9px] font-black uppercase tracking-[0.16em] text-primary hover:text-white">Otevřít sbírku <ArrowUpRight className="h-3.5 w-3.5" /></button></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{topCards.length === 0 ? <EmptyCard onGo={() => setTab("spin")} /> : topCards.map((owned) => <FeaturedCard key={owned.id} card={owned.card} onOpen={() => setTab("collection")} />)}</div></section></div>}
           {tab === "squad" && <div className="space-y-4"><FutSquadReadiness /><SquadBuilder cards={cards} /></div>}
           {tab === "match" && <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"><FutMatchPanel /><FutMatchHistory /></div>}
           {tab === "spin" && club && <CardSpinPanel club={club} onClubChange={(patch) => setClub((current) => (current ? { ...current, ...patch } : current))} onCardWon={() => void reload()} />}

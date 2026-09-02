@@ -5,15 +5,15 @@ import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, C
 import { useAuth } from "@/lib/auth";
 
 const ITEMS = [
-  { to: "/", label: "Lobby", group: "Navigace", icon: House, keywords: "domů home dashboard" },
-  { to: "/activity", label: "Live Pulse", group: "Live", icon: Radio, keywords: "live pulse aktivita stream" },
+  { to: "/", label: "Domů", group: "Navigace", icon: House, keywords: "domů home dashboard" },
+  { to: "/activity", label: "Živé dění", group: "ŽIVĚ", icon: Radio, keywords: "live pulse aktivita stream" },
   { to: "/schedule", label: "Plán zápasů", group: "Sport", icon: CalendarDays, keywords: "schedule fixtures match planner zápasy" },
   { to: "/sport-center", label: "Sport Hub", group: "Sport", icon: Gamepad2, keywords: "sport centrum sporty" },
-  { to: "/rankings", label: "Scoreboard", group: "Competitive", icon: BarChart3, keywords: "elo ranking žebříček výsledky" },
+  { to: "/rankings", label: "Žebříček", group: "Competitive", icon: BarChart3, keywords: "elo ranking žebříček výsledky" },
   { to: "/records", label: "Records / Hall of Fame", group: "Competitive", icon: Trophy, keywords: "rekordy hall fame" },
   { to: "/leagues", label: "Chmel League", group: "Competitive", icon: Trophy, keywords: "liga playoff sezona" },
   { to: "/teams", label: "Team HQ", group: "Community", icon: Users, keywords: "týmy roster 2v2" },
-  { to: "/community", label: "Community", group: "Community", icon: Users, keywords: "hráči komunita" },
+  { to: "/community", label: "Komunita", group: "Community", icon: Users, keywords: "hráči komunita" },
   { to: "/profile", label: "Profil", group: "Identity", icon: ShieldCheck, keywords: "player identity profil" },
   { to: "/trophy-room", label: "Trophy Room", group: "Identity", icon: Trophy, keywords: "odznaky achievementy prestiž" },
   { to: "/my-bets", label: "My Bets / Ticket Center", group: "Betting", icon: Zap, keywords: "sázky tikety payout" },

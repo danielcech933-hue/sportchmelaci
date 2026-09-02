@@ -133,9 +133,9 @@ function RankingsPage() {
 
       <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SignalCard label="STREAK KING" value={streakLeader?.row.label ?? "—"} hint={streakLeader?.streak ? `${streakLeader.streak} match win streak` : "No current streak"} icon={<Flame className="h-4 w-4" />} />
-        <SignalCard label="FORM LEADER" value={formLeader?.label ?? "—"} hint={formLeader ? `${Math.round(winRate(formLeader) * 100)}% win rate` : "Waiting"} icon={<Sparkles className="h-4 w-4" />} />
+        <SignalCard label="FORM LEADER" value={formLeader?.label ?? "—"} hint={formLeader ? `${Math.round(winRate(formLeader) * 100)}% win rate` : "Čeká se"} icon={<Sparkles className="h-4 w-4" />} />
         <SignalCard label="TEAM SIGNAL" value={globalStats.twoVtwo ? `${globalStats.twoVtwo}` : "READY"} hint={globalStats.twoVtwo ? "2v2 matches" : "No team matches yet"} icon={<Shield className="h-4 w-4" />} />
-        <SignalCard label="RANKING STATUS" value={loading ? "SYNC" : "LIVE"} hint="updates every 5 seconds" icon={<Radio className="h-4 w-4" />} />
+        <SignalCard label="RANKING STATUS" value={loading ? "SYNCHRONIZOVAT" : "LIVE"} hint="updates every 5 seconds" icon={<Radio className="h-4 w-4" />} />
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_.8fr]">
