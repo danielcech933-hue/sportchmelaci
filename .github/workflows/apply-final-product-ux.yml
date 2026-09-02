@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v4
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2
       - run: bun install --no-frozen-lockfile
@@ -19,7 +19,6 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           def exact(path, old, new, optional=False):
               p=Path(path); s=p.read_text()
@@ -31,7 +30,6 @@ jobs:
               p.write_text(s.replace(old,new,1))
               print('PATCH', path)
 
-          # Homepage: remove legacy casino/slot presentation and surface the real social hub.
           exact('src/routes/index.tsx', ', Gamepad2', '', optional=True)
           exact('src/routes/index.tsx', 'const { userDollars, slotCZK } = useWallet();', 'const { userDollars } = useWallet();', optional=True)
           exact('src/routes/index.tsx', 'import { SportActionModal } from "@/components/SportActionModal";\n', 'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n', optional=True)
@@ -46,12 +44,7 @@ jobs:
                   s=s[:end]+'\n\n      <section className="mt-5"><SocialHub compact /></section>'+s[end:]
                   p.write_text(s)
 
-          # Profile page: one identity view, then clear section anchors for results/photos/social/security.
-          exact('src/routes/profile.index.tsx','        <ProfileView />\n','',optional=True)
-          exact('src/routes/profile.index.tsx','        {userId ? <ProfileView userId={userId} /> : null}','        <section id="overview" className="scroll-mt-24"><ProfileView userId={userId} /></section>',optional=True)
-          # The current file already contains the profile section rail; do not duplicate it.
-
-          # ProfileView: remove only the obsolete arcade switch/wallet block with exact snippets.
+          # ProfileView cleanup.
           exact('src/components/ProfileView.tsx','import { ArcadeProfile } from "@/components/ArcadeProfile";\n','',optional=True)
           exact('src/components/ProfileView.tsx',', Gamepad2','',optional=True)
           exact('src/components/ProfileView.tsx','  const { openChat } = useDm(); const { userDollars, slotCZK } = useWallet();','  const { openChat } = useDm(); const { userDollars } = useWallet();',optional=True)
@@ -61,7 +54,7 @@ jobs:
           exact('src/components/ProfileView.tsx','    {mode === "arcade" && targetId ? <ArcadeProfile userId={targetId} isSelf={isSelf} /> : <>','    <>',optional=True)
           exact('src/components/ProfileView.tsx','    </>}\n  </main>;','    </>\n  </main>;',optional=True)
 
-          # SocialHub: stories are visible on profile too, while profile mode remains read-only.
+          # SocialHub cleanup.
           exact('src/components/SocialHub.tsx','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\n','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\nimport { Link } from "@tanstack/react-router";\n',optional=True)
           exact('src/components/SocialHub.tsx','      const storyQuery = await db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false })\n        .limit(36);','      let storyQuery = db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false });\n      if (profileUserId) storyQuery = storyQuery.eq("user_id", profileUserId);\n      const storyResult = await storyQuery.limit(36);',optional=True)
           exact('src/components/SocialHub.tsx','      if (storyQuery.error) throw storyQuery.error;','      if (storyResult.error) throw storyResult.error;',optional=True)
@@ -69,7 +62,7 @@ jobs:
           exact('src/components/SocialHub.tsx','    {!profileUserId && <StoriesStrip groups={storyGroups} meGroup={meStoryGroup} user={Boolean(user)} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />}\n','    <StoriesStrip groups={storyGroups} meGroup={profileUserId ? undefined : meStoryGroup} user={Boolean(user) && !profileUserId} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />\n',optional=True)
           exact('src/components/SocialHub.tsx','<div className="truncate text-sm font-bold text-white">{post.author_nickname}</div>','<Link to="/profile/$id" params={{ id: post.user_id }} className="truncate text-sm font-bold text-white hover:text-amber-200">{post.author_nickname}</Link>',optional=True)
 
-          # Direct game surfaces redirect to the clean sport lobby; backend/game code remains untouched.
+          # Hide direct game/arcade/slot routes without deleting their backend logic.
           redirects={
             'src/routes/games.$game.tsx':'/games/$game',
             'src/routes/games.case-opening.tsx':'/games/case-opening',
@@ -82,7 +75,7 @@ jobs:
           for path,route in redirects.items():
               Path(path).write_text(f'import {{ createFileRoute, Navigate }} from "@tanstack/react-router";\n\nexport const Route = createFileRoute("{route}")({{\n  component: () => <Navigate to="/" replace />,\n}});\n')
 
-          # Remove stale one-shot workflows to keep the repository clean.
+          # Remove obsolete one-shot workflow files after applying the changes.
           for wf in ['.github/workflows/apply-final-product-ux.yml','.github/workflows/final-social-profile-ux.yml']:
               Path(wf).unlink(missing_ok=True)
           PY
@@ -95,7 +88,7 @@ jobs:
           bun run lint
           bun run test
 
-      - name: Commit final UX and cleanup
+      - name: Commit final UX
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
