@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { Activity, Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, Beer, Layers, Dices, Spade, PackageOpen, ChevronUp, ChevronDown, BarChart3, MoreHorizontal } from "lucide-react";
+import { Activity, Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, ChevronUp, ChevronDown, BarChart3, MoreHorizontal } from "lucide-react";
 import { useAuth, type AppRole } from "@/lib/auth";
 import { IncomingCallPrompt } from "@/components/IncomingCallPrompt";
 
@@ -10,7 +10,6 @@ type NavEntry = NavItem | NavGroup;
 
 const RESULTS_ITEMS: NavItem[] = [{ to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" }, { to: "/bets", label: "Sázky", icon: Coins }, { to: "/history", label: "Historie", icon: HistoryIcon }];
 const SPORT_ITEMS: NavItem[] = [{ to: "/schedule", label: "Plán", icon: CalendarDays }, { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/teams", label: "Týmy", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin }];
-const GAME_ITEMS: NavItem[] = [{ to: "/games/poker", label: "Poker", icon: Spade }, { to: "/games/roulette", label: "Ruleta", icon: Dices }, { to: "/games/ultimate", label: "Ultimate", icon: Layers }, { to: "/slots", label: "Sloty", icon: Beer }, { to: "/games/roll", label: "Roll", icon: Dices, authOnly: true, boroBlocked: true }, { to: "/games/case-opening", label: "Case Opening", icon: PackageOpen, privilegedOnly: true, boroBlocked: true }];
 const COMMUNITY_ITEMS: NavItem[] = [{ to: "/community", label: "Hráči", icon: Users }, { to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
 
 export const NAV_ITEMS: NavEntry[] = [
@@ -18,11 +17,9 @@ export const NAV_ITEMS: NavEntry[] = [
   { to: "/activity", label: "Live Pulse", icon: Activity },
   { label: "Sport", icon: Trophy, items: SPORT_ITEMS },
   { label: "Výsledky", icon: BarChart3, items: RESULTS_ITEMS },
-  { label: "Hry", icon: Dices, items: GAME_ITEMS },
   { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS },
 ];
 
-/** Mobile keeps only the five one-hand destinations; the rest lives in "Více". */
 const MOBILE_PRIMARY: NavItem[] = [
   { to: "/", label: "Lobby", icon: Home, exact: true },
   { to: "/schedule", label: "Zápasy", icon: CalendarDays },
@@ -42,7 +39,6 @@ const MOBILE_MORE: NavGroup = {
     { to: "/venues", label: "Sportoviště", icon: MapPin },
     { to: "/community", label: "Hráči", icon: Users },
     { to: "/history", label: "Historie", icon: HistoryIcon },
-    ...GAME_ITEMS,
     { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
     { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
   ],
@@ -74,7 +70,6 @@ function groupIsActive(pathname: string, group: NavGroup) {
 
 const CHIP = "nav-chip group relative flex min-h-[3.1rem] min-w-[3.9rem] flex-1 shrink-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition";
 
-/** Desktop primary navigation (top bar). Mobile uses the bottom dock below. */
 export function DesktopNav() {
   const { user, isAdmin, hasRole, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -198,10 +193,7 @@ export function FloatingNav() {
           })}
           <button type="button" onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} aria-haspopup="menu" className={`${CHIP} ${moreActive || moreOpen ? "nav-chip-active text-primary" : "text-muted-foreground"}`}>
             <MoreHorizontal className="h-[1.15rem] w-[1.15rem]" />
-            <span className="flex items-center gap-0.5 whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">
-              Více
-              <ChevronUp className={`h-2.5 w-2.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
-            </span>
+            <span className="flex items-center gap-0.5 whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">Více<ChevronUp className={`h-2.5 w-2.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} /></span>
           </button>
         </div>
       </nav>
