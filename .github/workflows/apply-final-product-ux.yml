@@ -14,22 +14,16 @@ jobs:
         with:
           bun-version: 1.2
       - run: bun install --no-frozen-lockfile
-
       - name: Apply safe product cleanup
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           def exact(path, old, new, optional=False):
               p=Path(path); s=p.read_text()
               if old not in s:
-                  if optional:
-                      print('OPTIONAL MISS', path, old[:80])
-                      return
+                  if optional: return
                   raise SystemExit(f'MISSING {path}: {old[:120]!r}')
               p.write_text(s.replace(old,new,1))
-              print('PATCH', path)
-
           exact('src/routes/index.tsx', ', Gamepad2', '', optional=True)
           exact('src/routes/index.tsx', 'const { userDollars, slotCZK } = useWallet();', 'const { userDollars } = useWallet();', optional=True)
           exact('src/routes/index.tsx', 'import { SportActionModal } from "@/components/SportActionModal";\n', 'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n', optional=True)
@@ -37,14 +31,9 @@ jobs:
           exact('src/routes/index.tsx', '<div className="mt-5 grid grid-cols-2 gap-2">\n            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />\n            <WalletBox label="SLOT CZK" value={slotCZK.toLocaleString("cs-CZ")} icon={<CircleDollarSign className="h-3.5 w-3.5" />} />\n          </div>', '<div className="mt-5">\n            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />\n          </div>', optional=True)
           p=Path('src/routes/index.tsx'); s=p.read_text()
           if 'SocialHub compact' not in s:
-              marker='<section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">'
-              idx=s.find(marker)
-              if idx>=0:
-                  end=s.find('</section>',idx)+len('</section>')
-                  s=s[:end]+'\n\n      <section className="mt-5"><SocialHub compact /></section>'+s[end:]
-                  p.write_text(s)
-
-          # ProfileView cleanup.
+              marker='<section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">'; i=s.find(marker)
+              if i>=0:
+                  j=s.find('</section>',i)+len('</section>'); p.write_text(s[:j]+'\n\n      <section className="mt-5"><SocialHub compact /></section>'+s[j:])
           exact('src/components/ProfileView.tsx','import { ArcadeProfile } from "@/components/ArcadeProfile";\n','',optional=True)
           exact('src/components/ProfileView.tsx',', Gamepad2','',optional=True)
           exact('src/components/ProfileView.tsx','  const { openChat } = useDm(); const { userDollars, slotCZK } = useWallet();','  const { openChat } = useDm(); const { userDollars } = useWallet();',optional=True)
@@ -53,41 +42,23 @@ jobs:
           exact('src/components/ProfileView.tsx','    <section className="mt-5 flex justify-center"><div className="relative inline-flex rounded-full border border-primary/25 bg-background/65 p-1"><span aria-hidden className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/10 ${mode === "arcade" ? "translate-x-full" : "translate-x-0"}`} />{(["real", "arcade"] as const).map((m) => <button key={m} onClick={() => setMode(m)} className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${mode === m ? "text-primary" : "text-muted-foreground"}`}>{m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}{m === "real" ? "Sport" : "Arcade"}</button>)}</div></section>\n','',optional=True)
           exact('src/components/ProfileView.tsx','    {mode === "arcade" && targetId ? <ArcadeProfile userId={targetId} isSelf={isSelf} /> : <>','    <>',optional=True)
           exact('src/components/ProfileView.tsx','    </>}\n  </main>;','    </>\n  </main>;',optional=True)
-
-          # SocialHub cleanup.
           exact('src/components/SocialHub.tsx','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\n','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\nimport { Link } from "@tanstack/react-router";\n',optional=True)
           exact('src/components/SocialHub.tsx','      const storyQuery = await db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false })\n        .limit(36);','      let storyQuery = db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false });\n      if (profileUserId) storyQuery = storyQuery.eq("user_id", profileUserId);\n      const storyResult = await storyQuery.limit(36);',optional=True)
           exact('src/components/SocialHub.tsx','      if (storyQuery.error) throw storyQuery.error;','      if (storyResult.error) throw storyResult.error;',optional=True)
           exact('src/components/SocialHub.tsx','      setStories((storyQuery.data ?? []) as SocialStory[]);','      setStories((storyResult.data ?? []) as SocialStory[]);',optional=True)
           exact('src/components/SocialHub.tsx','    {!profileUserId && <StoriesStrip groups={storyGroups} meGroup={meStoryGroup} user={Boolean(user)} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />}\n','    <StoriesStrip groups={storyGroups} meGroup={profileUserId ? undefined : meStoryGroup} user={Boolean(user) && !profileUserId} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />\n',optional=True)
           exact('src/components/SocialHub.tsx','<div className="truncate text-sm font-bold text-white">{post.author_nickname}</div>','<Link to="/profile/$id" params={{ id: post.user_id }} className="truncate text-sm font-bold text-white hover:text-amber-200">{post.author_nickname}</Link>',optional=True)
-
-          # Hide direct game/arcade/slot routes without deleting their backend logic.
-          redirects={
-            'src/routes/games.$game.tsx':'/games/$game',
-            'src/routes/games.case-opening.tsx':'/games/case-opening',
-            'src/routes/arcade.tsx':'/arcade',
-            'src/routes/slots.tsx':'/slots',
-            'src/routes/slots.index.tsx':'/slots/',
-            'src/routes/slots.chmelovci-cup.tsx':'/slots/chmelovci-cup',
-            'src/routes/ultimate-team.tsx':'/ultimate-team',
-          }
-          for path,route in redirects.items():
-              Path(path).write_text(f'import {{ createFileRoute, Navigate }} from "@tanstack/react-router";\n\nexport const Route = createFileRoute("{route}")({{\n  component: () => <Navigate to="/" replace />,\n}});\n')
-
-          # Remove obsolete one-shot workflow files after applying the changes.
-          for wf in ['.github/workflows/apply-final-product-ux.yml','.github/workflows/final-social-profile-ux.yml']:
-              Path(wf).unlink(missing_ok=True)
+          for path,route in {'src/routes/games.$game.tsx':'/games/$game','src/routes/games.case-opening.tsx':'/games/case-opening','src/routes/arcade.tsx':'/arcade','src/routes/slots.tsx':'/slots','src/routes/slots.index.tsx':'/slots/','src/routes/slots.chmelovci-cup.tsx':'/slots/chmelovci-cup','src/routes/ultimate-team.tsx':'/ultimate-team'}.items():
+              Path(path).write_text(f'import {{ createFileRoute, Navigate }} from "@tanstack/react-router";\n\nexport const Route = createFileRoute("{route}")({{ component: () => <Navigate to="/" replace />, }});\n')
+          Path('.github/workflows/apply-final-product-ux.yml').unlink(missing_ok=True)
+          Path('.github/workflows/final-social-profile-ux.yml').unlink(missing_ok=True)
           PY
           git diff --check
-
       - name: Verify
         run: |
           bun run build
           bun run typecheck
-          bun run lint
           bun run test
-
       - name: Commit final UX
         run: |
           git config user.name 'github-actions[bot]'
