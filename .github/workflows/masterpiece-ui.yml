@@ -18,6 +18,7 @@ jobs:
         with:
           bun-version: 1.2
       - run: bun install --no-frozen-lockfile
+
       - name: Refactor homepage presentation
         run: |
           python3 - <<'PY'
@@ -25,58 +26,87 @@ jobs:
           p = Path('src/routes/index.tsx')
           s = p.read_text(encoding='utf-8')
 
-          # Imports and page-level class.
-          s = s.replace('import { SportActionModal } from "@/components/SportActionModal";\n', 'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n')
+          if 'import { SocialHub } from "@/components/SocialHub";' not in s:
+              anchor = 'import { SportActionModal } from "@/components/SportActionModal";\n'
+              s = s.replace(anchor, anchor + 'import { SocialHub } from "@/components/SocialHub";\n', 1)
+
           s = s.replace('className="relative z-10 mx-auto max-w-[1500px]', 'className="chm-home relative z-10 mx-auto max-w-[1540px]', 1)
 
-          # Remove fake/personalised event copy and keep the hero brand-led.
-          s = s.replace('ZÁPAS<br /><span className="gold-text">STOLETÍ</span>', 'DNES<br /><span className="gold-text">SE HRAJE</span>', 1)
-          s = s.replace('Daniel Čech · The Main Event · Clay Court · 2026', 'HLAVNÍ SPORTOVNÍ DĚNÍ · ZÁPASY · KOMUNITA · TURNAJE', 1)
-          s = s.replace('SPORTCHMELÁCI PRESENTS', 'CHMELOVÍ SPORTOVCI', 1)
-          s = s.replace('FEATURED</span>', 'HLAVNÍ EVENT</span>', 1)
-          s = s.replace('MATCHDAY 01', 'DNES', 1)
-          s = s.replace('ZÁPAS DNEŠKA', 'UDÁLOST DNE', 1)
-          s = s.replace('Sledovat Matchday', 'Otevřít živé dění', 1)
-          s = s.replace('Program</Link>', 'Program</Link>', 1)
-
-          # Remove decorative fake social actions from hero; keep the main content clean.
-          start = s.find('          <div className="flex items-center justify-between gap-4 border-t border-white/8 bg-black/25 px-4 py-3 sm:px-6">')
-          if start != -1:
-              end = s.find('          </div>\n          <div className="px-4 pb-4 pt-1 sm:px-6 sm:pb-5">', start)
-              if end == -1:
-                  raise SystemExit('hero social toolbar boundary not found')
-              replacement = '''          <div className="border-t border-white/8 bg-black/20 px-4 py-3 sm:px-6">\n            <div className="flex items-center justify-between gap-3">\n              <div className="min-w-0">\n                <div className="font-display text-sm tracking-[.08em] text-white">SPORTOVNÍ CENTRUM CHMELOVÝCH SPORTOVCŮ</div>\n                <div className="aaa-meta mt-1">ŽIVÉ ZÁPASY · VÝSLEDKY · SPORTY · KOMUNITA</div>\n              </div>\n              <Link to="/community" className="hidden shrink-0 font-mono text-[8px] font-black uppercase tracking-[.18em] text-cyan-200/70 transition hover:text-cyan-100 sm:block">Komunita →</Link>\n            </div>\n          </div>\n'''
-              s = s[:start] + replacement + s[end + len('          </div>\n'):]
-
-          # Localize the remaining dashboard copy on home.
+          # Make the hero generic, branded and product-focused.
           replacements = {
-              'PERSONAL SIGNAL':'TVŮJ PŘEHLED', 'GUEST':'HOST', 'ACTIVE PLAYER':'AKTIVNÍ HRÁČ', 'PUBLIC LOBBY':'VEŘEJNÁ LOBBY',
-              'SPORT DOLLARS':'SPORTOVNÍ DOLARY', 'SLOT CZK':'HERNÍ KREDIT', 'LIVE NOW':'ŽIVĚ', 'NEXT MATCHES':'DALŠÍ ZÁPASY',
-              'SPORT HUB':'SPORTY', 'COMMUNITY':'KOMUNITA', 'MATCH CONTROL':'ZÁPASY', 'LIVE & NEXT':'ŽIVĚ A DALŠÍ',
-              'PLAYER ROUTES':'RYCHLÉ AKCE', 'QUICK ACTIONS':'RYCHLÉ AKCE', 'HOME':'DOMA', 'AWAY':'HOSTÉ',
-              'LIVE MATCH':'ŽIVÝ ZÁPAS', 'FEATURED MATCH':'HLAVNÍ ZÁPAS', '2V2 TEAM MATCH':'TÝMOVÝ ZÁPAS 2V2',
-              '1V1 MATCH':'ZÁPAS 1V1', 'COMPETITIVE PULSE':'SOUTĚŽNÍ VLNA', 'BUILD YOUR NEXT RUN':'VYBER SI DALŠÍ VÝZVU',
-              'Scoreboard':'Žebříček', 'Community':'Komunita', 'SPORT MATRIX':'SPORTOVNÍ PŘEHLED', 'Full Hub':'Celý sportovní přehled',
-              'SPORT':'SPORT', 'ESPORT':'ESPORT', '1V1 · 2V2':'1V1 · 2V2', 'Team HQ':'Týmové centrum', 'Trophy Room':'Síň trofejí',
-              'Casino':'Hry', 'Betting Desk':'Sázkový přehled', 'Markets · odds · risk':'Kurzy · trhy · přehled',
-              'Achievements · prestige':'Úspěchy · prestiž', 'Slots · roulette · play money':'Hry · bonusy · zábava', 'Roster · 2v2 · squads':'Soupiska · 2v2 · týmy',
-              'LIVE SYNC':'ŽIVÁ DATA', 'SERVER AUTH':'SERVEROVÉ OVLÁDÁNÍ', '2V2 READY':'2V2 PŘIPRAVENO', 'AAA UI':'PRÉMIOVÉ UI',
-              'Fixtures obnovovány průběžně':'Zápasy se průběžně aktualizují', 'Důležité herní akce validuje server':'Důležité akce ověřuje server',
-              'Týmové zápasy jsou první třída':'Týmové zápasy jsou plně podporované', 'Mac · Windows · iPhone · Android':'Počítač · iPhone · Android',
+              'SPORTCHMELÁCI PRESENTS':'CHMELOVÍ SPORTOVCI',
+              'ZÁPAS<br /><span className="gold-text">STOLETÍ</span>':'DNES<br /><span className="gold-text">SE HRAJE</span>',
+              'Daniel Čech · The Main Event · Clay Court · 2026':'HLAVNÍ SPORTOVNÍ DĚNÍ · ZÁPASY · KOMUNITA · TURNAJE',
+              'ZÁPAS DNEŠKA':'UDÁLOST DNE',
+              'FEATURED':'HLAVNÍ EVENT',
+              'MATCHDAY 01':'DNES',
+              'Sledovat Matchday':'Otevřít živé dění',
+              'PERSONAL SIGNAL':'TVŮJ PŘEHLED',
+              'GUEST':'HOST',
+              'ACTIVE PLAYER':'AKTIVNÍ HRÁČ',
+              'PUBLIC LOBBY':'VEŘEJNÁ LOBBY',
+              'SPORT DOLLARS':'SPORTOVNÍ DOLARY',
+              'SLOT CZK':'HERNÍ KREDIT',
+              'LIVE NOW':'ŽIVĚ',
+              'NEXT MATCHES':'DALŠÍ ZÁPASY',
+              'SPORT HUB':'SPORTY',
+              'COMMUNITY':'KOMUNITA',
+              'MATCH CONTROL':'ZÁPASY',
+              'LIVE & NEXT':'ŽIVĚ A DALŠÍ',
+              'PLAYER ROUTES':'RYCHLÉ AKCE',
+              'QUICK ACTIONS':'RYCHLÉ AKCE',
+              'HOME':'DOMA',
+              'AWAY':'HOSTÉ',
+              'LIVE MATCH':'ŽIVÝ ZÁPAS',
+              'FEATURED MATCH':'HLAVNÍ ZÁPAS',
+              '2V2 TEAM MATCH':'TÝMOVÝ ZÁPAS 2V2',
+              '1V1 MATCH':'ZÁPAS 1V1',
+              'COMPETITIVE PULSE':'SOUTĚŽNÍ VLNA',
+              'BUILD YOUR NEXT RUN':'VYBER SI DALŠÍ VÝZVU',
+              'Scoreboard':'Žebříček',
+              'Community':'Komunita',
+              'SPORT MATRIX':'SPORTOVNÍ PŘEHLED',
+              'Full Hub':'Celý sportovní přehled',
+              'Team HQ':'Týmové centrum',
+              'Trophy Room':'Síň trofejí',
+              'Casino':'Hry',
+              'Betting Desk':'Sázkový přehled',
+              'Markets · odds · risk':'Kurzy · trhy · přehled',
+              'Achievements · prestige':'Úspěchy · prestiž',
+              'Slots · roulette · play money':'Hry · bonusy · zábava',
+              'Roster · 2v2 · squads':'Soupiska · 2v2 · týmy',
+              'LIVE SYNC':'ŽIVÁ DATA',
+              'SERVER AUTH':'SERVEROVÉ OVLÁDÁNÍ',
+              '2V2 READY':'2V2 PŘIPRAVENO',
+              'AAA UI':'PRÉMIOVÉ UI',
+              'Fixtures obnovovány průběžně':'Zápasy se průběžně aktualizují',
+              'Důležité herní akce validuje server':'Důležité akce ověřuje server',
+              'Týmové zápasy jsou první třída':'Týmové zápasy jsou plně podporované',
+              'Mac · Windows · iPhone · Android':'Počítač · iPhone · Android',
           }
           for a,b in replacements.items():
               s = s.replace(a,b)
 
-          # Insert real community/social layer before sport matrix.
-          anchor = '      <section className="mt-5 aaa-card p-4 sm:p-5">'
-          social = '''      <section className="chm-home-social mt-6">\n        <div className="mb-3 flex items-end justify-between gap-3">\n          <div>\n            <div className="aaa-meta text-cyan-200/70">KOMUNITA</div>\n            <h2 className="mt-1 font-display text-3xl tracking-[.11em] text-white">PŘÍBĚHY & FEED</h2>\n          </div>\n          <Link to="/community" className="aaa-ghost shrink-0 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em]">Otevřít komunitu <ArrowRight className="h-3.5 w-3.5" /></Link>\n        </div>\n        <SocialHub compact />\n      </section>\n\n'''
-          if 'className="chm-home-social mt-6"' not in s:
-              if anchor not in s:
-                  raise SystemExit('sport matrix anchor not found')
-              s = s.replace(anchor, social + anchor, 1)
+          # Replace the disconnected fake hero toolbar with a useful brand strip.
+          start = s.find('          <div className="flex items-center justify-between gap-4 border-t border-white/8 bg-black/25 px-4 py-3 sm:px-6">')
+          if start != -1:
+              end = s.find('          </div>\n          <div className="px-4 pb-4 pt-1 sm:px-6 sm:pb-5">', start)
+              if end == -1:
+                  raise SystemExit('Hero toolbar boundary not found')
+              replacement = '''          <div className="border-t border-white/8 bg-black/20 px-4 py-3 sm:px-6">\n            <div className="flex items-center justify-between gap-3">\n              <div className="min-w-0">\n                <div className="font-display text-sm tracking-[.08em] text-white">SPORTOVNÍ CENTRUM CHMELOVÝCH SPORTOVCŮ</div>\n                <div className="aaa-meta mt-1">ŽIVÉ ZÁPASY · VÝSLEDKY · SPORTY · KOMUNITA</div>\n              </div>\n              <Link to="/community" className="hidden shrink-0 font-mono text-[8px] font-black uppercase tracking-[.18em] text-cyan-200/70 transition hover:text-cyan-100 sm:block">Komunita →</Link>\n            </div>\n          </div>\n'''
+              s = s[:start] + replacement + s[end + len('          </div>\n'):]
+
+          # Keep the social rail exactly once.
+          if '<SocialHub compact />' not in s:
+              marker = '      <section className="mt-5 aaa-card p-4 sm:p-5">'
+              social = '''      <section className="chm-home-social mt-6">\n        <div className="mb-3 flex items-end justify-between gap-3">\n          <div>\n            <div className="aaa-meta text-cyan-200/70">KOMUNITA</div>\n            <h2 className="mt-1 font-display text-3xl tracking-[.11em] text-white">PŘÍBĚHY & FEED</h2>\n          </div>\n          <Link to="/community" className="aaa-ghost shrink-0 px-3 py-2 text-[8px] font-black uppercase tracking-[.16em]">Otevřít komunitu <ArrowRight className="h-3.5 w-3.5" /></Link>\n        </div>\n        <SocialHub compact />\n      </section>\n\n'''
+              if marker not in s:
+                  raise SystemExit('Sport matrix marker not found')
+              s = s.replace(marker, social + marker, 1)
 
           p.write_text(s, encoding='utf-8')
           PY
+          git diff --check
 
       - name: Add masterpiece visual layer
         run: |
@@ -101,10 +131,10 @@ jobs:
 .chm-app-shell .chm-home .aaa-cta{box-shadow:0 24px 70px -38px rgba(225,184,77,.72),inset 0 1px 0 rgba(255,255,255,.22)}
 .chm-app-shell .chm-home .aaa-card:hover{transform:translateY(-2px)}
 .chm-app-shell .chm-home>section:nth-of-type(2) .aaa-card{border-radius:18px!important;background:linear-gradient(180deg,rgba(20,27,36,.74),rgba(9,13,18,.9))!important}
-.chm-app-shell .chm-home>section:last-child{padding-bottom:1rem}
 @media (max-width:1024px){.chm-app-shell .chm-home>section:first-child{grid-template-columns:1fr}.chm-app-shell .chm-home>section:first-child>aside{min-height:auto}.chm-app-shell .chm-home>section:first-child>article>div:first-child{min-height:500px}.chm-app-shell .chm-home .chm-home-social .mx-auto{max-width:none}}
 @media (max-width:640px){.chm-app-shell .chm-home{padding-top:.4rem!important}.chm-app-shell .chm-home>section{margin-top:.75rem}.chm-app-shell .chm-home>section:first-child>article>div:first-child{min-height:430px}.chm-app-shell .chm-home h1{font-size:clamp(3.4rem,18vw,5.8rem)!important}.chm-app-shell .chm-home .chm-home-social::before{margin-inline:4%}.chm-app-shell .chm-home .aaa-card:hover{transform:none}}
 CSS
+          git diff --check
 
       - name: Verify
         run: |
@@ -118,6 +148,7 @@ CSS
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/routes/index.tsx src/chmel-design-system.css .github/workflows/masterpiece-ui.yml
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m 'feat(ui): transform homepage into premium sports masterpiece'
           git rm .github/workflows/masterpiece-ui.yml
           git commit -m 'chore: remove one-shot masterpiece workflow'
