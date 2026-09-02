@@ -5,6 +5,7 @@ import { UserRound, Radio, WalletCards } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import visualCss from "../visual-polish.css?url";
+import chmDesignCss from "../chmel-design-system.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Avatar } from "@/lib/avatars";
@@ -72,6 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: visualCss },
+      { rel: "stylesheet", href: chmDesignCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
@@ -87,7 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  return <html lang="cs"><head><HeadContent /></head><body>{children}<Scripts /></body></html>;
+  return <html lang="cs"><head><HeadContent /></head><body className="chm-app-shell">{children}<Scripts /></body></html>;
 }
 
 function PageTransition() {
@@ -134,7 +136,7 @@ function SiteHeader() {
       : null;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-primary/20 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
+    <header className="chm-site-header sticky top-0 z-40 border-b border-primary/20 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
       <div className="absolute inset-0 grid-bg opacity-[0.07] pointer-events-none" />
       <div className="relative mx-auto max-w-7xl px-2.5 py-2 sm:px-4 sm:py-2.5">
         <div className="flex min-h-9 items-center gap-2 sm:min-h-10">
