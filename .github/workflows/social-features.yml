@@ -1,0 +1,67 @@
+name: Social features
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - name: Patch social UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/routes/index.tsx')
+          s = p.read_text()
+          if 'import { SocialHub } from "@/components/SocialHub";' not in s:
+              s = s.replace('import { SportActionModal } from "@/components/SportActionModal";\n', 'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n')
+          anchor = '      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">'
+          insert = '      <section className="mt-5"><SocialHub compact /></section>\n\n'
+          if '<SocialHub compact />' not in s:
+              s = s.replace(anchor, insert + anchor, 1)
+          p.write_text(s)
+
+          for path in ['src/routes/profile.index.tsx', 'src/routes/profile.$id.tsx']:
+              p = Path(path); s = p.read_text()
+              if 'ProfileMediaGallery' not in s:
+                  s = s.replace('import { useAuth } from "@/lib/auth";\n', 'import { useAuth } from "@/lib/auth";\nimport { ProfileMediaGallery } from "@/components/ProfileMediaGallery";\n')
+              if path.endswith('profile.index.tsx'):
+                  needle = '        {userId ? <ProfileAchievements userId={userId} /> : null}\n'
+                  repl = needle + '        {userId ? <ProfileMediaGallery userId={userId} /> : null}\n'
+              else:
+                  needle = '        <ProfileAchievements userId={id} />\n'
+                  repl = needle + '        <ProfileMediaGallery userId={id} />\n'
+              if 'ProfileMediaGallery userId=' not in s:
+                  s = s.replace(needle, repl, 1)
+              p.write_text(s)
+
+          p = Path('src/routes/community.tsx'); s = p.read_text()
+          if 'import { SocialHub } from "@/components/SocialHub";' not in s:
+              s = s.replace('import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";\n', 'import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";\nimport { SocialHub } from "@/components/SocialHub";\n')
+          anchor = '    <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_.9fr]">'
+          if '<SocialHub />' not in s:
+              s = s.replace(anchor, '    <div className="mt-5"><SocialHub /></div>\n\n' + anchor, 1)
+          p.write_text(s)
+          PY
+      - name: Verify
+        run: |
+          grep -q 'SocialHub' src/routes/index.tsx
+          grep -q 'ProfileMediaGallery' src/routes/profile.index.tsx
+          grep -q 'ProfileMediaGallery' src/routes/profile.$id.tsx
+          grep -q 'SocialHub' src/routes/community.tsx
+          bun run build
+          bun run typecheck
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/index.tsx src/routes/community.tsx src/routes/profile.index.tsx src/routes/profile.$id.tsx .github/workflows/social-features.yml
+          git commit -m 'Add social stories feed and profile moments'
+          git rm .github/workflows/social-features.yml
+          git commit -m 'Remove one-shot social features workflow'
+          git push
