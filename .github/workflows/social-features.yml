@@ -12,6 +12,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2
+      - name: Install dependencies
+        run: bun install --no-frozen-lockfile
       - name: Patch social UI
         run: |
           python - <<'PY'
@@ -30,9 +32,11 @@ jobs:
           s = p.read_text()
           if 'import { SocialHub } from "@/components/SocialHub";' not in s:
               s = s.replace('import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";\n', 'import { UltraArenaShell, UltraLinkButton, UltraMetric, UltraSection } from "@/components/UltraArenaShell";\nimport { SocialHub } from "@/components/SocialHub";\n')
-          anchor = '    <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_.9fr]">'
           if '<SocialHub />' not in s:
-              s = s.replace(anchor, '    <div className="mt-5"><SocialHub /></div>\n\n' + anchor, 1)
+              lines = s.splitlines()
+              insert_at = next((i for i, line in enumerate(lines) if '<UltraArenaShell' in line), len(lines))
+              lines.insert(insert_at, '    <div className="mt-5"><SocialHub /></div>')
+              s = '\n'.join(lines) + ('\n' if s.endswith('\n') else '')
           p.write_text(s)
           PY
       - name: Verify
