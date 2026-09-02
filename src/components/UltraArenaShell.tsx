@@ -24,15 +24,20 @@ export function UltraArenaShell({
   }[accent];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#02050a] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#02050a] text-white selection:bg-amber-300/20 selection:text-amber-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(255,200,80,.11),transparent_28%),radial-gradient(circle_at_82%_14%,rgba(34,211,238,.07),transparent_25%),linear-gradient(180deg,#030711_0%,#02050a_48%,#010307_100%)]" />
       <div className="pointer-events-none fixed inset-0 opacity-[0.075] [background-image:linear-gradient(rgba(255,255,255,.09)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.09)_1px,transparent_1px)] [background-size:44px_44px]" />
       <div className="pointer-events-none fixed left-1/2 top-20 h-72 w-[70vw] -translate-x-1/2 rounded-full bg-amber-300/[.035] blur-[110px]" />
+      <div className="pointer-events-none fixed bottom-[-180px] left-[-120px] h-[420px] w-[420px] rounded-full border border-cyan-300/[.035] bg-cyan-300/[.015] blur-3xl" />
+      <div className="pointer-events-none fixed right-[-160px] top-[38%] h-[430px] w-[430px] rounded-full border border-amber-300/[.025] bg-amber-300/[.018] blur-3xl" />
 
-      <div className="relative mx-auto max-w-[1500px] px-3 pb-20 pt-4 sm:px-5 sm:pt-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1500px] px-3 pb-24 pt-4 sm:px-5 sm:pt-6 lg:px-8">
         <section className={cn("relative overflow-hidden rounded-[32px] border bg-black/45 p-4 backdrop-blur-2xl sm:p-7 lg:p-8", accentClass)}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_20%,rgba(255,255,255,.08),transparent_18%),radial-gradient(circle_at_76%_14%,rgba(255,204,68,.08),transparent_23%),linear-gradient(115deg,transparent_20%,rgba(255,255,255,.025)_48%,transparent_75%)]" />
+          <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           <div className="pointer-events-none absolute -right-20 top-0 h-56 w-56 rounded-full border border-white/[.04] bg-white/[.015] blur-sm" />
+          <div className="pointer-events-none absolute right-[18%] top-1/2 hidden h-px w-32 bg-gradient-to-r from-transparent via-amber-200/20 to-transparent lg:block" />
+
           <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 font-mono text-[8px] font-black uppercase tracking-[0.30em] text-white/45 sm:text-[9px]">
@@ -42,7 +47,10 @@ export function UltraArenaShell({
                 <span className="h-px w-5 bg-white/15" />
                 <span className="truncate">{eyebrow}</span>
               </div>
-              <h1 className="mt-3 max-w-5xl font-display text-4xl font-black leading-[.92] tracking-[0.055em] text-white drop-shadow-[0_0_25px_rgba(255,255,255,.05)] sm:text-6xl lg:text-7xl xl:text-[5rem]">{title}</h1>
+              <div className="mt-5 flex items-end gap-3">
+                <span className="mb-1 hidden h-10 w-1 rounded-full bg-amber-300 shadow-[0_0_24px_rgba(245,190,60,.6)] sm:block" />
+                <h1 className="max-w-5xl font-display text-4xl font-black leading-[.92] tracking-[0.055em] text-white drop-shadow-[0_0_25px_rgba(255,255,255,.05)] sm:text-6xl lg:text-7xl xl:text-[5rem]">{title}</h1>
+              </div>
               {subtitle ? <p className="mt-4 max-w-3xl text-[13px] leading-6 text-white/48 sm:text-sm sm:leading-7 lg:text-[15px]">{subtitle}</p> : null}
             </div>
             {actions ? <div className="relative flex flex-wrap gap-2 lg:max-w-md lg:justify-end">{actions}</div> : null}
@@ -57,15 +65,17 @@ export function UltraArenaShell({
         </section>
         {children}
       </div>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-px bg-gradient-to-r from-transparent via-amber-200/15 to-transparent" />
     </main>
   );
 }
 
 function Signal({ label, value, icon, tone = "cyan" }: { label: string; value: string; icon: ReactNode; tone?: "cyan" | "emerald" | "amber" }) {
   return (
-    <div className="group rounded-2xl border border-white/10 bg-white/[.025] px-3 py-2.5 backdrop-blur-xl transition hover:border-white/15 hover:bg-white/[.04]">
-      <div className="flex items-center gap-2 font-mono text-[7px] uppercase tracking-[.18em] text-white/35 sm:text-[8px]">{icon}{label}</div>
-      <div className={cn("mt-1 font-mono text-[10px] font-black tracking-[.12em] sm:text-xs", tone === "amber" ? "text-amber-200" : tone === "emerald" ? "text-emerald-300" : "text-cyan-200")}>{value}</div>
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[.025] px-3 py-2.5 backdrop-blur-xl transition hover:border-white/15 hover:bg-white/[.04]">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_20%,rgba(255,255,255,.03)_48%,transparent_76%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="relative flex items-center gap-2 font-mono text-[7px] uppercase tracking-[.18em] text-white/35 sm:text-[8px]">{icon}{label}</div>
+      <div className={cn("relative mt-1 font-mono text-[10px] font-black tracking-[.12em] sm:text-xs", tone === "amber" ? "text-amber-200" : tone === "emerald" ? "text-emerald-300" : "text-cyan-200")}>{value}</div>
     </div>
   );
 }
@@ -75,6 +85,7 @@ export function UltraSection({ title, kicker, icon, action, children, className 
     <section className={cn("relative mt-6 overflow-hidden rounded-[27px] border border-white/10 bg-black/30 p-3.5 backdrop-blur-2xl sm:p-5", className)}>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/55 to-transparent" />
       <div className="absolute inset-x-8 top-0 h-16 bg-[radial-gradient(ellipse_at_top,rgba(245,190,60,.07),transparent_65%)] blur-2xl" />
+      <div className="absolute -right-16 top-3 h-24 w-24 rounded-full bg-cyan-300/[.025] blur-2xl" />
       <div className="relative mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 font-mono text-[8px] uppercase tracking-[.30em] text-amber-200/60">{icon}{kicker ?? "PŘEHLED"}</div>
@@ -90,10 +101,11 @@ export function UltraSection({ title, kicker, icon, action, children, className 
 export function UltraMetric({ label, value, hint, icon }: { label: string; value: string; hint?: string; icon?: ReactNode }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[.055] to-black/30 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-amber-300/25 hover:shadow-[0_18px_45px_-32px_rgba(245,190,60,.65)]">
-      <div className="flex items-center justify-between gap-2"><span className="font-mono text-[8px] uppercase tracking-[.22em] text-white/35">{label}</span>{icon}</div>
-      <div className="mt-2 font-display text-2xl font-black tracking-wider text-amber-100 sm:text-[1.7rem]">{value}</div>
-      {hint ? <div className="mt-1 text-[10px] leading-4 text-white/35">{hint}</div> : null}
-      <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-amber-200/10 blur-2xl transition group-hover:bg-amber-200/20" />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-amber-200/[.055] blur-2xl transition group-hover:bg-amber-200/[.10]" />
+      <div className="relative flex items-center justify-between gap-2"><span className="font-mono text-[8px] uppercase tracking-[.22em] text-white/35">{label}</span>{icon}</div>
+      <div className="relative mt-2 break-words font-display text-2xl font-black tracking-wider text-amber-100 sm:text-[1.7rem]">{value}</div>
+      {hint ? <div className="relative mt-1 text-[10px] leading-4 text-white/35">{hint}</div> : null}
+      <div className="pointer-events-none absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
     </div>
   );
 }
