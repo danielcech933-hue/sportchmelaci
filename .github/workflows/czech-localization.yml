@@ -1,0 +1,162 @@
+name: Czech UI localization
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  localize:
+    if: github.event.head_commit.message != 'Localize user interface to Czech'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+      - name: Localize visible UI text
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'label: "Scoreboard"': 'label: "Žebříček"',
+              'label: "Live Pulse"': 'label: "Živé dění"',
+              'label: "Lobby"': 'label: "Domů"',
+              'label: "Sport"': 'label: "Sporty"',
+              'label: "Community"': 'label: "Komunita"',
+              'label: "Players"': 'label: "Hráči"',
+              'label: "Profile"': 'label: "Profil"',
+              'label: "Matches"': 'label: "Zápasy"',
+              'label: "Messages"': 'label: "Zprávy"',
+              'label: "Betting"': 'label: "Sázky"',
+              'label: "Tournaments"': 'label: "Turnaje"',
+              'label: "Results"': 'label: "Výsledky"',
+              'label: "Games"': 'label: "Hry"',
+              '"PLAYER // PROFILE"': '"HRÁČ // PROFIL"',
+              '"PLAYER"': '"HRÁČ"',
+              '"Performance"': '"Výkon"',
+              '"Activity"': '"Aktivita"',
+              '"SPORTS"': '"SPORTY"',
+              '"SPORTOVNÍ STATISTIKY"': '"SPORTOVNÍ STATISTIKY"',
+              '"SOCIAL FEED"': '"KOMUNITNÍ FEED"',
+              '"CO SE DĚJE NA CHMELOVCÍCH"': '"CO SE DĚJE V KOMUNITĚ"',
+              '"PLAYER PROFILE"': '"PROFIL HRÁČE"',
+              '"CURRENT SECTION"': '"AKTUÁLNÍ SEKCE"',
+              '"TEAM POWER"': '"SÍLA TÝMU"',
+              '"CURATED XI"': '"DOPORUČENÁ SESTAVA"',
+              '"CLUB HQ"': '"CENTRUM KLUBU"',
+              '"SERVER SAVED"': '"ULOŽENO NA SERVERU"',
+              '"BEST OVR"': '"NEJVYŠŠÍ HODNOCENÍ"',
+              '"SYNC"': '"SYNCHRONIZOVAT"',
+              '"Cards in collection"': '"Karty ve sbírce"',
+              '"Best rating"': '"Nejlepší hodnocení"',
+              '"Luck meter"': '"Měřič štěstí"',
+              '"Collection power"': '"Síla sbírky"',
+              '"Open collection"': '"Otevřít sbírku"',
+              '"FUT Match"': '"FUT zápas"',
+              '"Card Spin"': '"Otáčení karty"',
+              '"COLLECTION"': '"SBÍRKA"',
+              '"CATALOG"': '"KATALOG"',
+              '"SQUAD"': '"SESTAVA"',
+              '"MATCH"': '"ZÁPAS"',
+              '"SPIN"': '"OTÁČENÍ"',
+              '"CLUB"': '"KLUB"',
+              '"Zápasy · výkon · betting activity"': '"Zápasy · výkon · aktivita sázek"',
+              '"Social feed"': '"Komunitní feed"',
+              '"Add post"': '"Přidat příspěvek"',
+              '"Add story"': '"Přidat příběh"',
+              '"Story"': '"Příběh"',
+              '"Stories"': '"Příběhy"',
+              '"Comments"': '"Komentáře"',
+              '"Comment"': '"Komentář"',
+              '"Like"': '"To se mi líbí"',
+              '"Likes"': '"To se mi líbí"',
+              '"Share"': '"Sdílet"',
+              '"Delete"': '"Smazat"',
+              '"Cancel"': '"Zrušit"',
+              '"Save"': '"Uložit"',
+              '"Edit"': '"Upravit"',
+              '"Close"': '"Zavřít"',
+              '"Open"': '"Otevřít"',
+              '"Back"': '"Zpět"',
+              '"Next"': '"Další"',
+              '"Previous"': '"Předchozí"',
+              '"Search"': '"Hledat"',
+              '"Settings"': '"Nastavení"',
+              '"Account"': '"Účet"',
+              '"Security"': '"Bezpečnost"',
+              '"Privacy"': '"Soukromí"',
+              '"Loading…"': '"Načítám…"',
+              '"Loading..."': '"Načítám…"',
+              '"Error"': '"Chyba"',
+              '"Success"': '"Hotovo"',
+              '"Retry"': '"Zkusit znovu"',
+              '"Try again"': '"Zkusit znovu"',
+              '"View all"': '"Zobrazit vše"',
+              '"See all"': '"Zobrazit vše"',
+              '"Learn more"': '"Zjistit více"',
+              '"Live"': '"ŽIVĚ"',
+              '"Upcoming"': '"Nadcházející"',
+              '"Finished"': '"Ukončené"',
+              '"Waiting"': '"Čeká se"',
+              '"Active"': '"Aktivní"',
+              '"Inactive"': '"Neaktivní"',
+              '"Online"': '"Online"',
+              '"Offline"': '"Offline"',
+              '"Public"': '"Veřejné"',
+              '"Private"': '"Soukromé"',
+              '"Admin"': '"Správa"',
+              '"Sync"': '"Synchronizovat"',
+              '"More sections"': '"Další sekce"',
+              '"More"': '"Více"',
+              '"Home"': '"Domů"',
+              '"Schedule"': '"Plán"',
+              '"History"': '"Historie"',
+              '"Teams"': '"Týmy"',
+              '"Venues"': '"Sportoviště"',
+              '"Support"': '"Podpora"',
+              '"Private message"': '"Soukromá zpráva"',
+              '"Challenge to a match"': '"Vyzvat na zápas"',
+              '"Mention in Lobby"': '"Zmínit v lobby"',
+              '"New post"': '"Nový příspěvek"',
+              '"Write a post"': '"Napište příspěvek"',
+              '"Post"': '"Příspěvek"',
+              '"Feed"': '"Feed"',
+              '"Profile photos"': '"Fotky na profilu"',
+              '"Match photos"': '"Fotky ze zápasů"',
+              '"No data"': '"Žádná data"',
+              '"No results"': '"Žádné výsledky"',
+              '"No matches"': '"Žádné zápasy"',
+              '"No players"': '"Žádní hráči"',
+              '"No tournaments"': '"Žádné turnaje"',
+              '"No messages"': '"Žádné zprávy"',
+          }
+
+          roots = [Path("src/routes"), Path("src/components")]
+          touched = []
+          for root in roots:
+              for p in root.rglob("*.tsx"):
+                  s = p.read_text(encoding="utf-8")
+                  old = s
+                  for a,b in replacements.items():
+                      s = s.replace(a,b)
+                  if s != old:
+                      p.write_text(s, encoding="utf-8")
+                      touched.append(str(p))
+          print(f"Updated {len(touched)} UI files")
+          for p in touched:
+              print(p)
+          PY
+          git diff --check
+      - name: Verify
+        run: |
+          bun run build
+          bun run typecheck
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src
+          git commit -m 'Localize user interface to Czech'
+          git push
