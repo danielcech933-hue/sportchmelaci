@@ -1,0 +1,54 @@
+name: Hide games UI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+      - name: Remove remaining game surfaces
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # Homepage: remove casino quick action and Slot CZK wallet presentation.
+          p = Path('src/routes/index.tsx')
+          s = p.read_text()
+          s = s.replace(', Gamepad2', '')
+          s = s.replace('const { userDollars, slotCZK } = useWallet();', 'const { userDollars } = useWallet();')
+          s = re.sub(r'\s*<WalletBox label="SLOT CZK"[\s\S]*?/>', '', s, count=1)
+          s = re.sub(r'\n\s*<RouteCard to="/slots" title="Casino"[\s\S]*?\n', '\n', s, count=1)
+          p.write_text(s)
+
+          # Arcade: remove the slot tab and slot content, leaving packs/squad/online only.
+          p = Path('src/routes/arcade.tsx')
+          s = p.read_text()
+          s = s.replace(', Beer', '')
+          s = s.replace(', SlotMachine', '')
+          s = re.sub(r'\n\s*\{ key: "slot", label: "Slot Chmelovci Cup", icon: Beer \},', '', s)
+          s = re.sub(r'\n\s*\{tab === "slot" && \([\s\S]*?\n\s*\)\}', '', s, count=1)
+          p.write_text(s)
+          PY
+      - name: Verify
+        run: |
+          bun run build
+          bun run typecheck
+      - name: Commit and cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/index.tsx src/routes/arcade.tsx .github/workflows/hide-games-ui.yml
+          git commit -m 'Hide casino and minigames from app UI'
+          git rm .github/workflows/hide-games-ui.yml
+          git commit -m 'Remove one-shot games UI workflow'
+          git push
