@@ -1,0 +1,100 @@
+name: Matchday hero
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - name: Patch homepage matchday feed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/routes/index.tsx')
+          s = p.read_text()
+          old_import = 'import { Activity, ArrowRight, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Gamepad2, Plus, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";'
+          new_import = 'import { Activity, ArrowRight, Bookmark, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Gamepad2, Heart, MessageCircle, Plus, Share2, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";'
+          if old_import in s:
+              s = s.replace(old_import, new_import)
+          s = s.replace('import heroImg from "@/assets/lobby-hero.jpg";', 'import matchdayHero from "@/assets/matchday-hero.jpg";')
+          start = s.index('      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,.6fr)]">')
+          end = s.index('      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">', start)
+          replacement = '''      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,.6fr)]">
+        <article className="aaa-card overflow-hidden">
+          <div className="relative aspect-[4/3] min-h-[430px] sm:aspect-[16/10] lg:aspect-[2/1]">
+            <img src={matchdayHero} alt="Zápas století — SportChmeláci" width={1400} height={1800} className="absolute inset-0 h-full w-full object-cover object-center" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,12,.12)_0%,rgba(3,7,12,.18)_34%,rgba(3,7,12,.92)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(255,208,75,.22),transparent_28%),linear-gradient(90deg,rgba(3,7,12,.5)_0%,transparent_55%)]" />
+            <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-2 sm:left-6 sm:right-6 sm:top-6">
+              <div className="flex flex-wrap gap-2">
+                <span className="aaa-chip border-amber-300/45 bg-black/30 text-amber-100"><Flame className="h-3 w-3" /> ZÁPAS DNEŠKA</span>
+                <span className="aaa-chip border-white/15 bg-black/30 text-white/70">FEATURED</span>
+              </div>
+              <span className="hidden rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 font-mono text-[8px] font-black tracking-[.18em] text-emerald-200 sm:inline-flex">MATCHDAY 01</span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 lg:p-9">
+              <div className="aaa-meta text-amber-200/75">SPORTCHMELÁCI PRESENTS</div>
+              <h1 className="mt-2 max-w-3xl font-display text-5xl leading-[.82] tracking-[.06em] text-white sm:text-7xl lg:text-8xl">ZÁPAS<br /><span className="gold-text">STOLETÍ</span></h1>
+              <p className="mt-4 max-w-2xl text-sm font-semibold uppercase tracking-[.15em] text-white/70 sm:text-base">Daniel Čech · The Main Event · Clay Court · 2026</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to="/live-arena" className="aaa-cta inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><Activity className="h-4 w-4" /> Sledovat Matchday</Link>
+                <Link to="/schedule" className="aaa-ghost inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><CalendarClock className="h-4 w-4" /> Program</Link>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-t border-white/8 bg-black/25 px-4 py-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-amber-300/30 bg-amber-300/10 font-display text-sm text-amber-100">SC</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold text-white">SportChmeláci</div>
+                <div className="aaa-meta mt-0.5">HLAVNÍ PŘÍSPĚVEK · DNES</div>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1 text-white/45">
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="To se mi líbí"><Heart className="h-4 w-4" /></button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="Komentáře"><MessageCircle className="h-4 w-4" /></button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="Sdílet"><Share2 className="h-4 w-4" /></button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="Uložit"><Bookmark className="h-4 w-4" /></button>
+            </div>
+          </div>
+          <div className="px-4 pb-4 pt-1 sm:px-6 sm:pb-5">
+            <p className="text-sm leading-6 text-white/65"><strong className="text-white">ZÁPAS STOLETÍ.</strong> Jeden kurt, jeden event, jeden výsledek. Tohle je dnešní hlavní dění na SportChmelácích.</p>
+          </div>
+        </article>
+
+        <aside className="aaa-card aaa-metal p-5 sm:p-6">
+          <div className="flex items-center justify-between"><span className="aaa-meta">PERSONAL SIGNAL</span><Crown className="h-5 w-5 text-amber-200" /></div>
+          <div className="mt-5 flex items-center gap-3"><div className="grid h-14 w-14 place-items-center rounded-2xl border border-amber-300/30 bg-amber-300/10 text-xl text-amber-200"><Crown className="h-6 w-6" /></div><div><div className="font-display text-2xl tracking-[.12em] text-white">{nickname ?? "GUEST"}</div><div className="aaa-meta mt-1">{user ? "ACTIVE PLAYER" : "PUBLIC LOBBY"}</div></div></div>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />
+            <WalletBox label="SLOT CZK" value={slotCZK.toLocaleString("cs-CZ")} icon={<CircleDollarSign className="h-3.5 w-3.5" />} />
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2"><Mini label="LIVE" value={live.length} /><Mini label="NEXT" value={upcoming.length} /><Mini label="SPORTY" value={sportsActive} /></div>
+          <Link to={user ? "/profile" : "/auth"} className="aaa-ghost mt-4 flex w-full items-center justify-between px-3 py-2.5 text-[9px] font-black uppercase tracking-[.18em]">Osobní dashboard <ChevronRight className="h-4 w-4" /></Link>
+        </aside>
+      </section>\n\n'''
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s)
+          PY
+      - name: Verify build
+        run: |
+          test -f src/assets/matchday-hero.jpg
+          grep -q 'matchdayHero' src/routes/index.tsx
+          grep -q 'ZÁPAS.*STOLETÍ' src/routes/index.tsx
+          bun run build
+          bun run typecheck
+      - name: Commit and remove workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/index.tsx .github/workflows/matchday-hero.yml
+          git commit -m 'Make matchday poster the homepage hero feed'
+          git rm .github/workflows/matchday-hero.yml
+          git commit -m 'Remove one-shot matchday hero workflow'
+          git push
