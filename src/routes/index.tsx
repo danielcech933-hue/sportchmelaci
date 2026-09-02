@@ -1,21 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Activity, ArrowRight, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Gamepad2, Plus, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";
-import { CLASSIC_SPORTS, ESPORT_SPORTS, SPORT_LIST, SPORTS, type SportConfig, type Match, type SportId } from "@/lib/matches";
+import { Activity, ArrowRight, Bookmark, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Gamepad2, Heart, MessageCircle, Plus, Share2, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";
+import { CLASSIC_SPORTS, ESPORT_SPORTS, SPORTS, type SportConfig, type Match, type SportId } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
 import { useWallet } from "@/lib/wallet";
 import { SportBadge } from "@/components/SportBadge";
 import { SportActionModal } from "@/components/SportActionModal";
-import heroImg from "@/assets/lobby-hero.jpg";
+import matchdayHero from "@/assets/matchday-hero.jpg";
 
 type FeedFilter = "all" | "upcoming" | "recent";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SportChmeláci — Command Lobby" },
-      { name: "description", content: "Centrální command lobby pro živé zápasy, sportovní hub, týmy, sázky a komunitu SportChmeláci." },
+      { title: "SportChmeláci — Matchday" },
+      { name: "description", content: "SportChmeláci: dnešní hlavní event, živé zápasy, sportovní hub, týmy, sázky a komunita." },
     ],
   }),
   component: Lobby,
@@ -55,26 +55,47 @@ function Lobby() {
   return (
     <main className="relative z-10 mx-auto max-w-[1500px] px-3 pb-32 pt-4 sm:px-5 sm:pt-6 lg:px-7">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,.6fr)]">
-        <div className="hero-surface aaa-card relative min-h-[430px] overflow-hidden p-5 sm:p-8 lg:p-10">
-          <img src={heroImg} alt="" width={1600} height={720} className="absolute inset-0 h-full w-full object-cover opacity-65" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,7,12,.97)_0%,rgba(3,7,12,.82)_42%,rgba(3,7,12,.2)_100%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_28%,rgba(255,204,68,.2),transparent_30%)]" />
-          <div className="relative flex min-h-[390px] flex-col justify-between">
-            <div className="max-w-3xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="aaa-chip"><Activity className="h-3 w-3" /> COMMAND LOBBY</span>
-                <span className="aaa-chip text-emerald-200"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(77,255,166,.9)]" /> LIVE SYNC</span>
+        <article className="aaa-card overflow-hidden">
+          <div className="relative aspect-[4/3] min-h-[430px] sm:aspect-[16/10] lg:aspect-[2/1]">
+            <img src={matchdayHero} alt="Zápas století — SportChmeláci" width={1400} height={1800} className="absolute inset-0 h-full w-full object-cover object-center" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,12,.10)_0%,rgba(3,7,12,.22)_38%,rgba(3,7,12,.95)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_24%,rgba(255,208,75,.22),transparent_28%),linear-gradient(90deg,rgba(3,7,12,.58)_0%,transparent_58%)]" />
+            <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-2 sm:left-6 sm:right-6 sm:top-6">
+              <div className="flex flex-wrap gap-2">
+                <span className="aaa-chip border-amber-300/45 bg-black/35 text-amber-100"><Flame className="h-3 w-3" /> ZÁPAS DNEŠKA</span>
+                <span className="aaa-chip border-white/15 bg-black/35 text-white/75">FEATURED</span>
               </div>
-              <h1 className="mt-6 font-display text-5xl leading-[.86] tracking-[.08em] text-white sm:text-7xl lg:text-8xl">TAKŽE VY GAYOVÉ<br /><span className="gold-text">NOHEJBAL SE RUŠÍ</span></h1>
-              <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/58 sm:text-base">{nickname ? <>Vítej zpět, <strong className="text-white">{nickname}</strong>. Všechno důležité máš na jednom místě.</> : "Jedna obrazovka pro live zápasy, plán, týmy, sázky, sporty a komunitní akci."}</p>
+              <span className="hidden rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 font-mono text-[8px] font-black tracking-[.18em] text-emerald-200 sm:inline-flex">MATCHDAY 01</span>
             </div>
-            <div className="grid gap-2 sm:flex sm:flex-wrap">
-              {user ? <Link to="/schedule" className="aaa-cta inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><Plus className="h-4 w-4" /> Naplánovat zápas</Link> : <Link to="/auth" className="aaa-cta inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]">Přihlásit se <ArrowRight className="h-4 w-4" /></Link>}
-              <Link to="/live-arena" className="aaa-ghost inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><Activity className="h-4 w-4" /> Live Arena</Link>
-              <Link to="/rankings" className="aaa-ghost inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><Trophy className="h-4 w-4" /> Scoreboard</Link>
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 lg:p-9">
+              <div className="aaa-meta text-amber-200/75">SPORTCHMELÁCI PRESENTS</div>
+              <h1 className="mt-2 max-w-3xl font-display text-5xl leading-[.82] tracking-[.06em] text-white sm:text-7xl lg:text-8xl">ZÁPAS<br /><span className="gold-text">STOLETÍ</span></h1>
+              <p className="mt-4 max-w-2xl text-sm font-semibold uppercase tracking-[.15em] text-white/70 sm:text-base">Daniel Čech · The Main Event · Clay Court · 2026</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to="/live-arena" className="aaa-cta inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><Activity className="h-4 w-4" /> Sledovat Matchday</Link>
+                <Link to="/schedule" className="aaa-ghost inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.16em]"><CalendarClock className="h-4 w-4" /> Program</Link>
+              </div>
             </div>
           </div>
-        </div>
+          <div className="flex items-center justify-between gap-4 border-t border-white/8 bg-black/25 px-4 py-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-amber-300/30 bg-amber-300/10 font-display text-sm text-amber-100">SC</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold text-white">SportChmeláci</div>
+                <div className="aaa-meta mt-0.5">HLAVNÍ PŘÍSPĚVEK · DNES</div>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1 text-white/45">
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="To se mi líbí"><Heart className="h-4 w-4" /></button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="Komentáře"><MessageCircle className="h-4 w-4" /></button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="Sdílet"><Share2 className="h-4 w-4" /></button>
+              <button type="button" className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/5 hover:text-white" aria-label="Uložit"><Bookmark className="h-4 w-4" /></button>
+            </div>
+          </div>
+          <div className="px-4 pb-4 pt-1 sm:px-6 sm:pb-5">
+            <p className="text-sm leading-6 text-white/65"><strong className="text-white">ZÁPAS STOLETÍ.</strong> Jeden kurt, jeden event, jeden výsledek. Tohle je dnešní hlavní dění na SportChmelácích.</p>
+          </div>
+        </article>
 
         <aside className="aaa-card aaa-metal p-5 sm:p-6">
           <div className="flex items-center justify-between"><span className="aaa-meta">PERSONAL SIGNAL</span><Crown className="h-5 w-5 text-amber-200" /></div>
