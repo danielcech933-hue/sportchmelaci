@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ComponentType } from "react";
-import { Activity, Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, Beer, Layers, Dices, Spade, PackageOpen, ChevronUp, BarChart3 } from "lucide-react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
+import { Activity, Home, CalendarDays, Users, Trophy, History as HistoryIcon, UserRound, ShieldCheck, Coins, MessagesSquare, HeartHandshake, MapPin, Beer, Layers, Dices, Spade, PackageOpen, ChevronUp, ChevronDown, BarChart3, MoreHorizontal } from "lucide-react";
 import { useAuth, type AppRole } from "@/lib/auth";
 import { IncomingCallPrompt } from "@/components/IncomingCallPrompt";
 
@@ -11,8 +11,42 @@ type NavEntry = NavItem | NavGroup;
 const RESULTS_ITEMS: NavItem[] = [{ to: "/rankings", label: "Scoreboard", icon: Trophy, fx: "trophy" }, { to: "/bets", label: "Sázky", icon: Coins }, { to: "/history", label: "Historie", icon: HistoryIcon }];
 const SPORT_ITEMS: NavItem[] = [{ to: "/schedule", label: "Plán", icon: CalendarDays }, { to: "/tournaments", label: "Turnaje", icon: Trophy }, { to: "/teams", label: "Týmy", icon: Users }, { to: "/venues", label: "Sportoviště", icon: MapPin }];
 const GAME_ITEMS: NavItem[] = [{ to: "/games/poker", label: "Poker", icon: Spade }, { to: "/games/roulette", label: "Ruleta", icon: Dices }, { to: "/games/ultimate", label: "Ultimate", icon: Layers }, { to: "/slots", label: "Sloty", icon: Beer }, { to: "/games/roll", label: "Roll", icon: Dices, authOnly: true, boroBlocked: true }, { to: "/games/case-opening", label: "Case Opening", icon: PackageOpen, privilegedOnly: true, boroBlocked: true }];
-const COMMUNITY_ITEMS: NavItem[] = [{ to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
-export const NAV_ITEMS: NavEntry[] = [{ to: "/", label: "Lobby", icon: Home, exact: true }, { to: "/activity", label: "Live Pulse", icon: Activity }, { label: "Sport", icon: Trophy, items: SPORT_ITEMS }, { label: "Výsledky", icon: BarChart3, items: RESULTS_ITEMS }, { label: "Hry", icon: Dices, items: GAME_ITEMS }, { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS }];
+const COMMUNITY_ITEMS: NavItem[] = [{ to: "/community", label: "Hráči", icon: Users }, { to: "/chat", label: "Chat", icon: MessagesSquare }, { to: "/support", label: "Podpoř nás", icon: HeartHandshake }, { to: "/profile", label: "Profil", icon: UserRound, authOnly: true }, { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true }];
+
+export const NAV_ITEMS: NavEntry[] = [
+  { to: "/", label: "Lobby", icon: Home, exact: true },
+  { to: "/activity", label: "Live Pulse", icon: Activity },
+  { label: "Sport", icon: Trophy, items: SPORT_ITEMS },
+  { label: "Výsledky", icon: BarChart3, items: RESULTS_ITEMS },
+  { label: "Hry", icon: Dices, items: GAME_ITEMS },
+  { label: "Komunita", icon: Users, items: COMMUNITY_ITEMS },
+];
+
+/** Mobile keeps only the five one-hand destinations; the rest lives in "Více". */
+const MOBILE_PRIMARY: NavItem[] = [
+  { to: "/", label: "Lobby", icon: Home, exact: true },
+  { to: "/schedule", label: "Zápasy", icon: CalendarDays },
+  { to: "/bets", label: "Sázky", icon: Coins },
+  { to: "/chat", label: "Chat", icon: MessagesSquare },
+  { to: "/profile", label: "Profil", icon: UserRound, authOnly: true },
+];
+
+const MOBILE_MORE: NavGroup = {
+  label: "Více",
+  icon: MoreHorizontal,
+  items: [
+    { to: "/activity", label: "Live Pulse", icon: Activity },
+    { to: "/rankings", label: "Scoreboard", icon: Trophy },
+    { to: "/tournaments", label: "Turnaje", icon: Trophy },
+    { to: "/teams", label: "Týmy", icon: Users },
+    { to: "/venues", label: "Sportoviště", icon: MapPin },
+    { to: "/community", label: "Hráči", icon: Users },
+    { to: "/history", label: "Historie", icon: HistoryIcon },
+    ...GAME_ITEMS,
+    { to: "/support", label: "Podpoř nás", icon: HeartHandshake },
+    { to: "/admin", label: "Admin", icon: ShieldCheck, admin: true },
+  ],
+};
 
 export function matchesRoute(pathname: string, item: NavItem) {
   if (item.exact) return pathname === item.to;
@@ -38,39 +72,106 @@ function groupIsActive(pathname: string, group: NavGroup) {
   return group.items.some((i) => matchesRoute(pathname, i));
 }
 
-const CHIP = "nav-chip group relative flex min-w-[3.6rem] shrink-0 touch-manipulation flex-col items-center gap-1 rounded-xl px-2.5 py-2 transition sm:min-w-[4.1rem]";
+const CHIP = "nav-chip group relative flex min-h-[3.1rem] min-w-[3.9rem] flex-1 shrink-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition";
+
+/** Desktop primary navigation (top bar). Mobile uses the bottom dock below. */
+export function DesktopNav() {
+  const { user, isAdmin, hasRole, loading } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [open, setOpen] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => { setOpen(null); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(null); };
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("mousedown", onDown); window.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  if (loading) return null;
+  const roleSet = { isAdmin, hasRole };
+  const visible = NAV_ITEMS.filter((e) => entryIsVisible(e, user, roleSet));
+
+  const linkCls = (active: boolean) =>
+    `inline-flex min-h-9 items-center gap-1.5 rounded-[var(--aaa-radius-sm)] px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] transition ${active ? "bg-primary/12 text-primary" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"}`;
+
+  return (
+    <nav ref={ref} aria-label="Hlavní navigace (desktop)" className="relative hidden min-w-0 items-center gap-0.5 md:flex">
+      {visible.map((entry) => {
+        if ("items" in entry) {
+          const Icon = entry.icon;
+          const active = groupIsActive(pathname, entry);
+          const isOpen = open === entry.label;
+          return (
+            <div key={entry.label} className="relative">
+              <button type="button" aria-expanded={isOpen} aria-haspopup="menu" onClick={() => setOpen((c) => (c === entry.label ? null : entry.label))} className={linkCls(active || isOpen)}>
+                <Icon className="h-3.5 w-3.5" />
+                <span>{entry.label}</span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isOpen && (
+                <div role="menu" aria-label={entry.label} className="aaa-surface absolute left-0 top-[calc(100%+.4rem)] z-50 w-56 p-1.5 backdrop-blur-xl">
+                  {entry.items.filter((i) => itemIsVisible(i, user, roleSet)).map((item) => {
+                    const ItemIcon = item.icon;
+                    const itemActive = matchesRoute(pathname, item);
+                    return (
+                      <Link key={item.to} to={item.to} role="menuitem" onClick={() => setOpen(null)} className={`flex min-h-10 items-center gap-2.5 rounded-[var(--aaa-radius-sm)] px-2.5 py-2 text-xs font-semibold transition ${itemActive ? "bg-primary/12 text-primary" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"}`}>
+                        <ItemIcon className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+        const Icon = entry.icon;
+        const active = matchesRoute(pathname, entry);
+        return (
+          <Link key={entry.to} to={entry.to} aria-current={active ? "page" : undefined} className={linkCls(active)}>
+            <Icon className="h-3.5 w-3.5" />
+            <span>{entry.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function FloatingNav() {
   const { user, isAdmin, hasRole, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  useEffect(() => {
-    setOpenGroup(null);
-  }, [pathname]);
+  useEffect(() => { setMoreOpen(false); }, [pathname]);
 
   if (loading) return null;
 
   const roleSet = { isAdmin, hasRole };
-  const visible = NAV_ITEMS.filter((e) => entryIsVisible(e, user, roleSet));
-  const activeGroup = visible.find((e) => "items" in e && e.label === openGroup) as NavGroup | undefined;
+  const primary = MOBILE_PRIMARY.filter((i) => itemIsVisible(i, user, roleSet));
+  const moreItems = MOBILE_MORE.items.filter((i) => itemIsVisible(i, user, roleSet));
+  const moreActive = moreItems.some((i) => matchesRoute(pathname, i));
 
   return (
     <>
       {user && <IncomingCallPrompt />}
 
-      {activeGroup && (
+      {moreOpen && (
         <>
-          <button type="button" aria-label="Zavřít nabídku" onClick={() => setOpenGroup(null)} className="fixed inset-0 z-[9998] bg-background/70 backdrop-blur-sm" />
-          <div role="menu" aria-label={activeGroup.label} className="pointer-events-none fixed inset-x-0 bottom-[5.4rem] z-[10000] flex justify-center px-3 sm:bottom-[6rem]">
-            <div className="pointer-events-auto aaa-surface aaa-hairline-top w-full max-w-md p-2 backdrop-blur-xl">
-              <p className="aaa-meta px-2 pb-2 pt-1">{activeGroup.label}</p>
+          <button type="button" aria-label="Zavřít nabídku" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-[9998] bg-background/70 backdrop-blur-sm md:hidden" />
+          <div role="menu" aria-label="Více sekcí" className="pointer-events-none fixed inset-x-0 bottom-[5.6rem] z-[10000] flex justify-center px-3 md:hidden">
+            <div className="pointer-events-auto aaa-surface aaa-hairline-top max-h-[60vh] w-full max-w-md overflow-y-auto p-2 backdrop-blur-xl">
+              <p className="aaa-meta px-2 pb-2 pt-1">Více sekcí</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {activeGroup.items.filter((item) => itemIsVisible(item, user, roleSet)).map((item) => {
+                {moreItems.map((item) => {
                   const ItemIcon = item.icon;
                   const itemActive = matchesRoute(pathname, item);
                   return (
-                    <Link key={item.to} to={item.to} onClick={() => setOpenGroup(null)} role="menuitem" className={`flex min-h-12 items-center gap-2.5 rounded-[var(--aaa-radius-sm)] border px-3 py-2 text-xs font-semibold transition ${itemActive ? "border-primary/45 bg-primary/12 text-primary" : "border-border/50 bg-surface/50 text-muted-foreground hover:-translate-y-0.5 hover:border-primary/35 hover:text-foreground"}`}>
+                    <Link key={item.to + item.label} to={item.to} onClick={() => setMoreOpen(false)} role="menuitem" className={`flex min-h-12 items-center gap-2.5 rounded-[var(--aaa-radius-sm)] border px-3 py-2 text-xs font-semibold transition ${itemActive ? "border-primary/45 bg-primary/12 text-primary" : "border-border/50 bg-surface/50 text-muted-foreground hover:border-primary/35 hover:text-foreground"}`}>
                       <ItemIcon className="h-4 w-4 shrink-0" />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     </Link>
@@ -82,40 +183,26 @@ export function FloatingNav() {
         </>
       )}
 
-      <nav aria-label="Hlavní navigace" className="pointer-events-none fixed inset-x-0 bottom-3 z-[9999] flex justify-center px-2 pb-[env(safe-area-inset-bottom)] sm:bottom-5">
-        <div className="nav-dock pointer-events-auto relative isolate flex max-w-[min(78rem,97vw)] items-center gap-1 overflow-x-auto rounded-[1.35rem] px-1.5 py-1.5 sm:gap-1.5 sm:px-2 md:overflow-visible">
+      <nav aria-label="Hlavní navigace" className="pointer-events-none fixed inset-x-0 bottom-3 z-[9999] flex justify-center px-2 pb-[env(safe-area-inset-bottom)] md:hidden">
+        <div className="nav-dock pointer-events-auto relative isolate flex w-full max-w-[30rem] items-stretch gap-1 rounded-[1.35rem] px-1.5 py-1.5">
           <span aria-hidden className="pointer-events-none absolute inset-x-8 -top-px h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent opacity-80" />
-          {visible.map((entry) => {
-            if ("items" in entry) {
-              const Icon = entry.icon;
-              const active = groupIsActive(pathname, entry);
-              const open = openGroup === entry.label;
-              return (
-                <button key={entry.label} type="button" onClick={() => setOpenGroup((c) => (c === entry.label ? null : entry.label))} aria-expanded={open} aria-haspopup="menu" title={entry.label} className={`${CHIP} ${active || open ? "nav-chip-active text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  <span className="relative inline-flex h-4 items-center justify-center">
-                    <Icon className={`h-4 w-4 ${active || open ? "scale-110" : ""}`} />
-                    {(active || open) && <span className="absolute -bottom-1.5 h-0.5 w-3 rounded-full bg-primary" />}
-                  </span>
-                  <span className="flex items-center gap-0.5 whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.14em] sm:text-[9px]">
-                    {entry.label}
-                    <ChevronUp className={`h-2.5 w-2.5 transition-transform ${open ? "rotate-180" : ""}`} />
-                  </span>
-                </button>
-              );
-            }
-
+          {primary.map((entry) => {
             const active = matchesRoute(pathname, entry);
             const Icon = entry.icon;
             return (
-              <Link key={entry.to} to={entry.to} activeOptions={entry.exact ? { exact: true } : undefined} aria-current={active ? "page" : undefined} title={entry.label} onClick={() => setOpenGroup(null)} className={`${CHIP} ${active ? "nav-chip-active text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                <span className="relative inline-flex h-4 items-center justify-center">
-                  <Icon className={`h-4 w-4 ${active ? "scale-110" : ""}`} />
-                  {active && <span className="absolute -bottom-1.5 h-0.5 w-3 rounded-full bg-primary" />}
-                </span>
-                <span className="whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.14em] sm:text-[9px]">{entry.label}</span>
+              <Link key={entry.to} to={entry.to} activeOptions={entry.exact ? { exact: true } : undefined} aria-current={active ? "page" : undefined} onClick={() => setMoreOpen(false)} className={`${CHIP} ${active ? "nav-chip-active text-primary" : "text-muted-foreground"}`}>
+                <Icon className={`h-[1.15rem] w-[1.15rem] ${active ? "scale-110" : ""}`} />
+                <span className="whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">{entry.label}</span>
               </Link>
             );
           })}
+          <button type="button" onClick={() => setMoreOpen((v) => !v)} aria-expanded={moreOpen} aria-haspopup="menu" className={`${CHIP} ${moreActive || moreOpen ? "nav-chip-active text-primary" : "text-muted-foreground"}`}>
+            <MoreHorizontal className="h-[1.15rem] w-[1.15rem]" />
+            <span className="flex items-center gap-0.5 whitespace-nowrap font-mono text-[8px] font-semibold uppercase tracking-[0.12em]">
+              Více
+              <ChevronUp className={`h-2.5 w-2.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
+            </span>
+          </button>
         </div>
       </nav>
     </>
