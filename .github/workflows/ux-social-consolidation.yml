@@ -1,0 +1,95 @@
+name: UX social consolidation
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'Apply UX social consolidation'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+
+      - name: Apply focused UX cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def write(path, content):
+              Path(path).write_text(content)
+              print('WROTE', path)
+
+          # Hide direct game routes from normal UI by returning to the sports lobby.
+          write('src/routes/games.$game.tsx', '''import { createFileRoute, Navigate } from "@tanstack/react-router";\n\nexport const Route = createFileRoute("/games/$game")({\n  component: () => <Navigate to="/" replace />,\n});\n''')
+          write('src/routes/games.case-opening.tsx', '''import { createFileRoute, Navigate } from "@tanstack/react-router";\n\nexport const Route = createFileRoute("/games/case-opening")({\n  component: () => <Navigate to="/" replace />,\n});\n''')
+          write('src/routes/arcade.tsx', '''import { createFileRoute, Navigate } from "@tanstack/react-router";\n\nexport const Route = createFileRoute("/arcade")({\n  component: () => <Navigate to="/" replace />,\n});\n''')
+          write('src/routes/slots.tsx', '''import { createFileRoute, Navigate } from "@tanstack/react-router";\n\nexport const Route = createFileRoute("/slots")({\n  component: () => <Navigate to="/" replace />,\n});\n''')
+
+          # Homepage: remove the old Casino quick action only; preserve betting.
+          p = Path('src/routes/index.tsx')
+          s = p.read_text()
+          s = re.sub(r'\n\s*<RouteCard to="/slots" title="Casino"[^\n]*/>', '', s, count=1)
+          s = s.replace(', Gamepad2', '')
+          p.write_text(s)
+
+          # Profile route: one primary profile view, then achievements/photos/social/security.
+          p = Path('src/routes/profile.index.tsx')
+          s = p.read_text()
+          s = s.replace('import { ProfileIdentity2 } from "@/components/ProfileIdentity2";\n', '')
+          s = s.replace('        {userId ? <ProfileIdentity2 userId={userId} /> : null}\n', '')
+          s = s.replace('        {userId ? <ProfileAchievements userId={userId} /> : null}', '        {userId ? <section id="achievements" className="scroll-mt-24"><ProfileAchievements userId={userId} /></section> : null}')
+          s = s.replace('        {userId ? <ProfileMediaGallery userId={userId} /> : null}', '        {userId ? <section id="photos" className="scroll-mt-24"><ProfileMediaGallery userId={userId} /></section> : null}')
+          s = s.replace('        {userId ? <div className="mt-5"><SocialHub profileUserId={userId} /></div> : null}', '        {userId ? <section id="social" className="mt-5 scroll-mt-24"><SocialHub profileUserId={userId} /></section> : null}')
+          s = s.replace('        <AccountSecurity />', '        <section id="security" className="mt-5 scroll-mt-24"><AccountSecurity /></section>')
+          anchor = '        {userId ? <section id="social"'
+          if 'aria-label="Profilové sekce"' not in s:
+              nav = '        <nav aria-label="Profilové sekce" className="sticky top-[4rem] z-20 mb-4 flex max-w-full gap-1.5 overflow-x-auto rounded-2xl border border-white/8 bg-background/85 p-1.5 backdrop-blur-xl [scrollbar-width:none]">{[["#overview","Přehled"],["#achievements","Výsledky"],["#photos","Fotky"],["#social","Aktivita"],["#security","Bezpečnost"]].map(([href,label]) => <a key={href} href={href} className="shrink-0 rounded-xl px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[.16em] text-muted-foreground transition hover:bg-primary/10 hover:text-primary">{label}</a>)}</nav>\n'
+              s = s.replace('      <div className="mx-auto max-w-6xl px-3 sm:px-4">\n', '      <div className="mx-auto max-w-6xl px-3 sm:px-4">\n' + nav, 1)
+          p.write_text(s)
+
+          # ProfileView: remove arcade branch and Slot CZK presentation; keep sport/betting data.
+          p = Path('src/components/ProfileView.tsx')
+          s = p.read_text()
+          s = s.replace('import { ArcadeProfile } from "@/components/ArcadeProfile";\n', '')
+          s = s.replace(', Gamepad2', '')
+          s = s.replace('  const [mode, setMode] = useState<"real" | "arcade">("real");\n', '')
+          s = s.replace('const { userDollars, slotCZK } = useWallet();', 'const { userDollars } = useWallet();')
+          s = re.sub(r'\n\s*\{isSelf && <section className="mt-4 grid grid-cols-2 gap-3 sm:max-w-xl">[\s\S]*?</section>\}', '', s, count=1)
+          s = re.sub(r'\n\s*<section className="mt-5 flex justify-center">[\s\S]*?</section>', '', s, count=1)
+          s = re.sub(r'\{mode === "arcade" && targetId \? <ArcadeProfile userId=\{targetId\} isSelf=\{isSelf\} /> : <>', '<>', s, count=1)
+          s = re.sub(r'\n\s*<WalletTile label="SLOT CZK"[^\n]*/>', '', s, count=1)
+          s = s.replace('    </>}\n  </main>;', '    </>\n  </main>;')
+          p.write_text(s)
+
+          # SocialHub: make stories part of profile context and make post authors clickable.
+          p = Path('src/components/SocialHub.tsx')
+          s = p.read_text()
+          if 'import { Link } from "@tanstack/react-router";' not in s:
+              s = s.replace('import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\n', 'import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\nimport { Link } from "@tanstack/react-router";\n')
+          marker = '      let postQuery = db\n'
+          insert = '      if (profileUserId) storyQuery.eq("user_id", profileUserId);\n\n'
+          if insert not in s:
+              s = s.replace(marker, insert + marker, 1)
+          s = s.replace('{!profileUserId && <StoriesStrip groups={storyGroups} meGroup={meStoryGroup} user={Boolean(user)} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />}\n', '<StoriesStrip groups={storyGroups} meGroup={profileUserId ? undefined : meStoryGroup} user={Boolean(user) && !profileUserId} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />\n', 1)
+          s = s.replace('<div className="truncate text-sm font-bold text-white">{post.author_nickname}</div>', '<Link to="/profile/$id" params={{ id: post.user_id }} className="truncate text-sm font-bold text-white hover:text-amber-200">{post.author_nickname}</Link>')
+          p.write_text(s)
+          PY
+
+      - name: Verify
+        run: |
+          bun run build
+          bun run typecheck
+
+      - name: Commit changes and remove this workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src .github/workflows/ux-social-consolidation.yml
+          git commit -m 'Apply UX social consolidation'
+          git push
