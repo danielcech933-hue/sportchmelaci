@@ -1,5 +1,5 @@
 export type SportId =
-  | "tennis" | "volleyball" | "nohejball" | "football" | "padel" | "foosball" | "pingpong" | "basketball" | "darts" | "beerpong" | "beerrace" | "eafc" | "nhl" | "nba2k" | "rocketleague" | "f1" | "topspin";
+  | "tennis" | "volleyball" | "nohejball" | "football" | "padel" | "foosball" | "pingpong" | "basketball" | "darts" | "beerpong" | "beerrace" | "bowling" | "eafc" | "nhl" | "nba2k" | "rocketleague" | "f1" | "topspin";
 export type MarketKind = "goals" | "hockey" | "points" | "sets" | "race";
 export type MatchFormat = "1v1" | "2v2";
 export interface SportConfig { id:SportId; name:string; emoji:string; hasSets:boolean; setLabel:string; quickPoints:number[]; defaultTeams:[string,string]; esport?:boolean; market:MarketKind; }
@@ -15,6 +15,7 @@ export const SPORTS:Record<SportId,SportConfig>={
  darts:{id:"darts",name:"Šipky",emoji:"🎯",hasSets:true,setLabel:"Leg",quickPoints:[1,25,50],defaultTeams:["Player 1","Player 2"],market:"sets"},
  beerpong:{id:"beerpong",name:"Beer Pong",emoji:"🍺",hasSets:false,setLabel:"Cup",quickPoints:[1],defaultTeams:["Team A","Team B"],market:"points"},
  beerrace:{id:"beerrace",name:"Kdo vypije víc piv",emoji:"🍻",hasSets:false,setLabel:"Beer",quickPoints:[1],defaultTeams:["Drinker 1","Drinker 2"],market:"race"},
+ bowling:{id:"bowling",name:"Bowling",emoji:"🎳",hasSets:false,setLabel:"Frame",quickPoints:[1],defaultTeams:["Player 1","Player 2"],market:"points"},
  eafc:{id:"eafc",name:"EA Sports FC",emoji:"🎮",hasSets:false,setLabel:"Half",quickPoints:[1],defaultTeams:["Hráč 1","Hráč 2"],esport:true,market:"goals"},
  nhl:{id:"nhl",name:"NHL",emoji:"🏒",hasSets:false,setLabel:"Třetina",quickPoints:[1],defaultTeams:["Hráč 1","Hráč 2"],esport:true,market:"hockey"},
  nba2k:{id:"nba2k",name:"NBA 2K",emoji:"🏀",hasSets:false,setLabel:"Q",quickPoints:[1,2,3],defaultTeams:["Hráč 1","Hráč 2"],esport:true,market:"points"},
