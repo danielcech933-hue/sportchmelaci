@@ -25,10 +25,11 @@ import { motion } from "framer-motion";
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-display text-primary">404</h1>
+      <div className="aaa-surface max-w-md rounded-[28px] p-8 text-center">
+        <div className="aaa-meta text-amber-200/70">CHMELOVÍ SPORTOVCI · 404</div>
+        <h1 className="mt-2 text-7xl font-display text-primary">404</h1>
         <p className="mt-2 text-sm text-muted-foreground">Tahle stránka není na výsledkové tabuli.</p>
-        <Link to="/" className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Zpět do lobby</Link>
+        <Link to="/" className="aaa-cta mt-6 inline-flex items-center justify-center px-4 py-2 text-sm font-semibold">Zpět do lobby</Link>
       </div>
     </div>
   );
@@ -39,10 +40,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-display text-foreground">Hra byla přerušena</h1>
+      <div className="aaa-surface max-w-md rounded-[28px] p-8 text-center">
+        <div className="aaa-meta text-rose-200/70">SYSTÉM · PŘERUŠENO</div>
+        <h1 className="mt-2 text-xl font-display text-foreground">Hra byla přerušena</h1>
         <p className="mt-2 text-sm text-muted-foreground">Něco se pokazilo. Zkus stránku načíst znovu.</p>
-        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Zkusit znovu</button>
+        <button onClick={() => { router.invalidate(); reset(); }} className="aaa-cta mt-6 inline-flex items-center justify-center px-4 py-2 text-sm font-semibold">Zkusit znovu</button>
       </div>
     </div>
   );
@@ -130,18 +132,19 @@ function SiteHeader() {
   const { user, nickname, avatarPath, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const current = pathname.startsWith("/match")
-    ? { label: "Live zápas", icon: Radio }
+    ? { label: "Živý zápas", icon: Radio }
     : pathname.startsWith("/auth")
       ? { label: "Přihlášení", icon: UserRound }
       : null;
 
   return (
-    <header className="chm-site-header sticky top-0 z-40 border-b border-primary/20 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
-      <div className="absolute inset-0 grid-bg opacity-[0.07] pointer-events-none" />
-      <div className="relative mx-auto max-w-7xl px-2.5 py-2 sm:px-4 sm:py-2.5">
-        <div className="flex min-h-9 items-center gap-2 sm:min-h-10">
-          <Link to="/" aria-label="Chmeloví Sportovci — Lobby" className="group flex min-w-0 flex-1 items-center gap-2 md:flex-none">
-            <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-primary/35 bg-primary/10 shadow-[0_0_20px_-8px_var(--color-primary)] sm:h-8 sm:w-8">
+    <header className="chm-site-header sticky top-0 z-40 border-b border-primary/20 bg-background/80 shadow-[0_10px_50px_-36px_rgba(250,204,21,.65)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/58">
+      <div className="absolute inset-0 grid-bg opacity-[0.06] pointer-events-none" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
+      <div className="relative mx-auto max-w-[1500px] px-2.5 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex min-h-10 items-center gap-2 sm:min-h-11">
+          <Link to="/" aria-label="Chmeloví Sportovci — Lobby" className="group flex min-w-0 flex-1 items-center gap-2.5 md:flex-none">
+            <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/35 bg-primary/10 shadow-[0_0_28px_-10px_var(--color-primary)] transition duration-300 group-hover:border-primary/60 group-hover:shadow-[0_0_32px_-8px_var(--color-primary)] sm:h-9 sm:w-9">
               <span aria-hidden className="sport-cycle text-sm leading-none sm:text-base"><span>⚽</span><span>🎾</span><span>🏐</span><span>🏓</span></span>
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary shadow-[0_0_8px] shadow-primary" />
             </span>
@@ -151,12 +154,16 @@ function SiteHeader() {
 
           <div className="hidden min-w-0 flex-1 justify-center px-2 md:flex"><DesktopNav /></div>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+            <div className="hidden items-center gap-1.5 rounded-xl border border-emerald-300/15 bg-emerald-300/[.035] px-2.5 py-1.5 md:flex" aria-label="Systém je online">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(52,211,153,.7)]" />
+              <span className="font-mono text-[8px] font-black uppercase tracking-[.2em] text-emerald-200/75">ONLINE</span>
+            </div>
             <CommandPalette />
             {current && (
-              <div className="hidden shrink-0 items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 md:flex">
+              <div className="hidden shrink-0 items-center gap-2 rounded-xl border border-primary/25 bg-primary/5 px-2.5 py-1.5 md:flex">
                 <current.icon className="h-3.5 w-3.5 text-primary" />
-                <span className="font-mono text-[9px] uppercase tracking-[0.28em] text-primary/90">{current.label}</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-primary/90">{current.label}</span>
               </div>
             )}
             <DmBell />
@@ -173,17 +180,17 @@ function AuthNav({ user, nickname, avatarPath, loading }: { user: ReturnType<typ
   const { signOut } = useAuth();
   const { userDollars } = useWallet();
   if (loading) return null;
-  if (!user) return <Link to="/auth" className="rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-semibold text-primary-foreground shadow-[0_0_18px_-6px_var(--color-primary)]">Přihlásit</Link>;
+  if (!user) return <Link to="/auth" className="rounded-xl border border-primary/50 bg-primary px-3 py-1.5 text-[11px] font-black text-primary-foreground shadow-[0_0_24px_-10px_var(--color-primary)] transition hover:-translate-y-0.5 hover:bg-primary/90">Přihlásit</Link>;
   return (
     <div className="flex min-w-0 items-center gap-1">
-      <Link to="/profile" aria-label="Profil" className="shrink-0 rounded-full ring-1 ring-primary/25 transition hover:ring-primary/60">
-        <Avatar path={avatarPath} nickname={nickname} size={30} zoomable={false} />
+      <Link to="/profile" aria-label="Profil" className="shrink-0 rounded-full ring-1 ring-primary/25 shadow-[0_0_20px_-12px_var(--color-primary)] transition hover:ring-primary/60">
+        <Avatar path={avatarPath} nickname={nickname} size={32} zoomable={false} />
       </Link>
-      <Link to="/profile" aria-label="Wallet" className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-accent/35 bg-accent/10 px-1.5 py-1 font-mono text-[10px] leading-none text-accent transition hover:border-accent/70 sm:px-2">
+      <Link to="/profile" aria-label="Peněženka" className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-accent/35 bg-accent/10 px-1.5 py-1.5 font-mono text-[10px] font-black leading-none text-accent transition hover:-translate-y-0.5 hover:border-accent/70 sm:px-2">
         <WalletCards className="h-3 w-3" />${userDollars.toFixed(0)}
       </Link>
       {nickname && <span className="hidden max-w-28 truncate font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground lg:inline">{nickname}</span>}
-      <button onClick={() => signOut()} aria-label="Odhlásit" title="Odhlásit" className="rounded-lg border border-primary/20 px-1.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/55 hover:text-foreground">
+      <button onClick={() => signOut()} aria-label="Odhlásit" title="Odhlásit" className="rounded-xl border border-primary/20 px-1.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/55 hover:bg-primary/5 hover:text-foreground">
         <span aria-hidden>⎋</span>
       </button>
     </div>
