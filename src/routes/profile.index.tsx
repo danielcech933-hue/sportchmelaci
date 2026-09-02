@@ -3,15 +3,17 @@ import { ProfileView } from "@/components/ProfileView";
 import { ProfileAchievements } from "@/components/ProfileAchievements";
 import { AccountSecurity } from "@/components/AccountSecurity";
 import { ProfileIdentity2 } from "@/components/ProfileIdentity2";
+import { ProfileMediaGallery } from "@/components/ProfileMediaGallery";
+import { SocialHub } from "@/components/SocialHub";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({
     meta: [
       { title: "Můj profil — Chmeloví Sportovci" },
-      { name: "description", content: "Tvoje zápasy, sázky, statistiky a odznaky." },
+      { name: "description", content: "Tvoje zápasy, sázky, statistiky, odznaky, fotky a sociální feed." },
       { property: "og:title", content: "Můj profil — Chmeloví Sportovci" },
-      { property: "og:description", content: "Tvoje zápasy, sázky, statistiky a odznaky." },
+      { property: "og:description", content: "Tvoje zápasy, sázky, statistiky, odznaky, fotky a sociální feed." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -29,6 +31,8 @@ function ProfilePage() {
       <div className="mx-auto max-w-6xl px-3 sm:px-4">
         {userId ? <ProfileIdentity2 userId={userId} /> : null}
         {userId ? <ProfileAchievements userId={userId} /> : null}
+        {userId ? <ProfileMediaGallery userId={userId} /> : null}
+        {userId ? <div className="mt-5"><SocialHub profileUserId={userId} /></div> : null}
         <AccountSecurity />
       </div>
     </>
