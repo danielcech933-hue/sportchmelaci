@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, CalendarDays, Clock, Crown, Filter, Pencil, Plus, Radio, Shield, Trash2, Trophy, Users, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { SPORTS, SPORT_LIST, type Match, type SportId } from "@/lib/matches";
+import { SportFilterBar } from "@/components/SportFilterBar";
 import { fetchAllMatches, removeMatch, updateMatchFixture } from "@/lib/matches-db";
 import { fetchTournaments, type Tournament } from "@/lib/tournaments-db";
 import { useMatchHistory } from "@/lib/odds";
@@ -151,8 +152,7 @@ function SchedulePage() {
             <div>
               <div className="mb-2 font-mono text-[8px] uppercase tracking-[.25em] text-white/25">SPORT UNIVERSE</div>
               <div className="flex gap-1.5 overflow-x-auto pb-1">
-                <button onClick={() => { setSport("all"); setSelectedDay("all"); }} className={`shrink-0 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-[.16em] ${sport === "all" ? "border-amber-300/40 bg-amber-300/10 text-amber-100" : "border-white/8 text-white/30 hover:text-white"}`}>ALL SPORTS</button>
-                {SPORT_LIST.map((s) => <button key={s.id} onClick={() => setSport(s.id)} className={`shrink-0 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-[.16em] ${sport === s.id ? "border-cyan-300/40 bg-cyan-300/10 text-cyan-100" : "border-white/8 text-white/30 hover:text-white"}`}>{s.emoji} {s.name}</button>)}
+                <SportFilterBar value={sport} onChange={(v) => { setSport(v); if (v === "all") setSelectedDay("all"); }} />
               </div>
             </div>
             <div>

@@ -3,6 +3,7 @@ import { BarChart3, Crown, Flame, Medal, Radio, Shield, Sparkles, Trophy, Users,
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
+import { SportFilterBar } from "@/components/SportFilterBar";
 import { buildLeaderboard, splitPlayers, type LeaderRow } from "@/lib/stats";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/lib/avatars";
@@ -123,8 +124,7 @@ function RankingsPage() {
           {(["solo", "team"] as Mode[]).map((m) => <button key={m} onClick={() => setMode(m)} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.18em] transition ${mode === m ? "bg-amber-300 text-black shadow-[0_0_25px_-12px_rgba(250,204,21,.9)]" : "text-white/35 hover:bg-white/[.03] hover:text-white"}`}>{m === "solo" ? "SOLO RANKING" : "2V2 TEAM"}</button>)}
         </div>
         <div className="flex max-w-full gap-1.5 overflow-x-auto pb-1">
-          <button onClick={() => setSport("all")} className={`shrink-0 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-[.16em] ${sport === "all" ? "border-cyan-300/35 bg-cyan-300/10 text-cyan-200" : "border-white/8 text-white/30 hover:text-white/60"}`}>VŠE</button>
-          {SPORT_LIST.map((s) => <button key={s.id} onClick={() => setSport(s.id)} className={`shrink-0 rounded-xl border px-3 py-2 text-[9px] font-black uppercase tracking-[.16em] ${sport === s.id ? "border-cyan-300/35 bg-cyan-300/10 text-cyan-200" : "border-white/8 text-white/30 hover:text-white/60"}`}>{s.emoji} {s.name}</button>)}
+          <SportFilterBar value={sport} onChange={setSport} allLabel="Vše" />
         </div>
       </section>
 

@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { SPORTS, SPORT_LIST, type SportId } from "@/lib/matches";
+import { SPORTS, type SportId } from "@/lib/matches";
+import { SportOptions } from "@/components/SportFilterBar";
 import { NICKNAMES_DATALIST_ID, NicknamesDatalist, useNicknames } from "@/lib/nicknames";
 import {
   createTournament,
@@ -132,7 +133,7 @@ function TournamentsPage() {
                 Sport
                 <select value={sport} onChange={(e) => setSport(e.target.value as SportId)}
                   className="mt-1 w-full rounded-md border border-primary/25 bg-background/60 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60">
-                  {SPORT_LIST.map((s) => <option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}
+                  <SportOptions />
                 </select>
               </label>
               <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
