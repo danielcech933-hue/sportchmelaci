@@ -1,0 +1,35 @@
+name: one-shot-social-ux
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-shot-social-ux.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply social polish
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/components/SocialHub.tsx')
+          s = p.read_text()
+          old = '<div className="aaa-meta text-amber-200/70">SOCIAL FEED</div><h2 className="mt-1 font-display text-2xl tracking-[.12em] text-white">CO SE DĚJE NA CHMELOVCÍCH</h2>'
+          new = '<div className="flex items-center gap-2"><span className="grid h-6 w-6 place-items-center rounded-lg border border-cyan-300/20 bg-cyan-300/[.06] text-cyan-200"><Sparkles className="h-3.5 w-3.5" /></span><div><div className="aaa-meta text-amber-200/70">SOCIAL FEED · LIVE COMMUNITY</div><h2 className="mt-1 font-display text-2xl tracking-[.12em] text-white">CO SE DĚJE NA CHMELOVCÍCH</h2></div></div>'
+          if old not in s:
+              raise SystemExit('Expected SocialHub header not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit and remove one-shot workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/SocialHub.tsx
+          git rm .github/workflows/one-shot-social-ux.yml
+          git commit -m 'Polish live social feed header'
+          git push
