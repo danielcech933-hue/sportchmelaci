@@ -1,0 +1,104 @@
+name: Apply final product UX
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'Apply final product UX'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v4
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+
+      - name: Apply safe product cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def exact(path, old, new, optional=False):
+              p=Path(path); s=p.read_text()
+              if old not in s:
+                  if optional:
+                      print('OPTIONAL MISS', path, old[:80])
+                      return
+                  raise SystemExit(f'MISSING {path}: {old[:120]!r}')
+              p.write_text(s.replace(old,new,1))
+              print('PATCH', path)
+
+          # Homepage: remove legacy casino/slot presentation and surface the real social hub.
+          exact('src/routes/index.tsx', ', Gamepad2', '', optional=True)
+          exact('src/routes/index.tsx', 'const { userDollars, slotCZK } = useWallet();', 'const { userDollars } = useWallet();', optional=True)
+          exact('src/routes/index.tsx', 'import { SportActionModal } from "@/components/SportActionModal";\n', 'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n', optional=True)
+          exact('src/routes/index.tsx', '            <RouteCard to="/slots" title="Casino" desc="Slots · roulette · play money" icon={<Gamepad2 className="h-4 w-4" />} />\n', '', optional=True)
+          exact('src/routes/index.tsx', '<div className="mt-5 grid grid-cols-2 gap-2">\n            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />\n            <WalletBox label="SLOT CZK" value={slotCZK.toLocaleString("cs-CZ")} icon={<CircleDollarSign className="h-3.5 w-3.5" />} />\n          </div>', '<div className="mt-5">\n            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />\n          </div>', optional=True)
+          p=Path('src/routes/index.tsx'); s=p.read_text()
+          if 'SocialHub compact' not in s:
+              marker='<section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">'
+              idx=s.find(marker)
+              if idx>=0:
+                  end=s.find('</section>',idx)+len('</section>')
+                  s=s[:end]+'\n\n      <section className="mt-5"><SocialHub compact /></section>'+s[end:]
+                  p.write_text(s)
+
+          # Profile page: one identity view, then clear section anchors for results/photos/social/security.
+          exact('src/routes/profile.index.tsx','        <ProfileView />\n','',optional=True)
+          exact('src/routes/profile.index.tsx','        {userId ? <ProfileView userId={userId} /> : null}','        <section id="overview" className="scroll-mt-24"><ProfileView userId={userId} /></section>',optional=True)
+          # The current file already contains the profile section rail; do not duplicate it.
+
+          # ProfileView: remove only the obsolete arcade switch/wallet block with exact snippets.
+          exact('src/components/ProfileView.tsx','import { ArcadeProfile } from "@/components/ArcadeProfile";\n','',optional=True)
+          exact('src/components/ProfileView.tsx',', Gamepad2','',optional=True)
+          exact('src/components/ProfileView.tsx','  const { openChat } = useDm(); const { userDollars, slotCZK } = useWallet();','  const { openChat } = useDm(); const { userDollars } = useWallet();',optional=True)
+          exact('src/components/ProfileView.tsx','  const [mode, setMode] = useState<"real" | "arcade">("real");\n','',optional=True)
+          exact('src/components/ProfileView.tsx','    {isSelf && <section className="mt-4 grid grid-cols-2 gap-3 sm:max-w-xl"><div className="group rounded-2xl border border-accent/35 bg-gradient-to-br from-accent/10 to-background/55 p-4"><p className="font-mono text-[9px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Sportovní dolary</p><p className="mt-1 font-display text-2xl tracking-[0.08em] text-accent">${userDollars.toFixed(0)}</p></div><div className="group rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/10 to-background/55 p-4"><p className="font-mono text-[9px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Slot CZK</p><p className="mt-1 font-display text-2xl tracking-[0.08em] text-primary">{slotCZK.toLocaleString("cs-CZ")}</p></div></section>}\n','',optional=True)
+          exact('src/components/ProfileView.tsx','    <section className="mt-5 flex justify-center"><div className="relative inline-flex rounded-full border border-primary/25 bg-background/65 p-1"><span aria-hidden className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/10 ${mode === "arcade" ? "translate-x-full" : "translate-x-0"}`} />{(["real", "arcade"] as const).map((m) => <button key={m} onClick={() => setMode(m)} className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${mode === m ? "text-primary" : "text-muted-foreground"}`}>{m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}{m === "real" ? "Sport" : "Arcade"}</button>)}</div></section>\n','',optional=True)
+          exact('src/components/ProfileView.tsx','    {mode === "arcade" && targetId ? <ArcadeProfile userId={targetId} isSelf={isSelf} /> : <>','    <>',optional=True)
+          exact('src/components/ProfileView.tsx','    </>}\n  </main>;','    </>\n  </main>;',optional=True)
+
+          # SocialHub: stories are visible on profile too, while profile mode remains read-only.
+          exact('src/components/SocialHub.tsx','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\n','import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\nimport { Link } from "@tanstack/react-router";\n',optional=True)
+          exact('src/components/SocialHub.tsx','      const storyQuery = await db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false })\n        .limit(36);','      let storyQuery = db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false });\n      if (profileUserId) storyQuery = storyQuery.eq("user_id", profileUserId);\n      const storyResult = await storyQuery.limit(36);',optional=True)
+          exact('src/components/SocialHub.tsx','      if (storyQuery.error) throw storyQuery.error;','      if (storyResult.error) throw storyResult.error;',optional=True)
+          exact('src/components/SocialHub.tsx','      setStories((storyQuery.data ?? []) as SocialStory[]);','      setStories((storyResult.data ?? []) as SocialStory[]);',optional=True)
+          exact('src/components/SocialHub.tsx','    {!profileUserId && <StoriesStrip groups={storyGroups} meGroup={meStoryGroup} user={Boolean(user)} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />}\n','    <StoriesStrip groups={storyGroups} meGroup={profileUserId ? undefined : meStoryGroup} user={Boolean(user) && !profileUserId} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />\n',optional=True)
+          exact('src/components/SocialHub.tsx','<div className="truncate text-sm font-bold text-white">{post.author_nickname}</div>','<Link to="/profile/$id" params={{ id: post.user_id }} className="truncate text-sm font-bold text-white hover:text-amber-200">{post.author_nickname}</Link>',optional=True)
+
+          # Direct game surfaces redirect to the clean sport lobby; backend/game code remains untouched.
+          redirects={
+            'src/routes/games.$game.tsx':'/games/$game',
+            'src/routes/games.case-opening.tsx':'/games/case-opening',
+            'src/routes/arcade.tsx':'/arcade',
+            'src/routes/slots.tsx':'/slots',
+            'src/routes/slots.index.tsx':'/slots/',
+            'src/routes/slots.chmelovci-cup.tsx':'/slots/chmelovci-cup',
+            'src/routes/ultimate-team.tsx':'/ultimate-team',
+          }
+          for path,route in redirects.items():
+              Path(path).write_text(f'import {{ createFileRoute, Navigate }} from "@tanstack/react-router";\n\nexport const Route = createFileRoute("{route}")({{\n  component: () => <Navigate to="/" replace />,\n}});\n')
+
+          # Remove stale one-shot workflows to keep the repository clean.
+          for wf in ['.github/workflows/apply-final-product-ux.yml','.github/workflows/final-social-profile-ux.yml']:
+              Path(wf).unlink(missing_ok=True)
+          PY
+          git diff --check
+
+      - name: Verify
+        run: |
+          bun run build
+          bun run typecheck
+          bun run lint
+          bun run test
+
+      - name: Commit final UX and cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src .github/workflows
+          git commit -m 'Apply final product UX'
+          git push
