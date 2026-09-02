@@ -1,0 +1,186 @@
+name: Final social profile UX
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  consolidate:
+    if: github.event.head_commit.message != 'Apply final social profile UX'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+      - run: bun install --no-frozen-lockfile
+
+      - name: Refine product UX
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new, required=True):
+              p = Path(path)
+              s = p.read_text()
+              if old not in s:
+                  if required:
+                      raise SystemExit(f'Missing expected text in {path}: {old[:120]!r}')
+                  print(f'SKIP {path}')
+                  return
+              p.write_text(s.replace(old, new, 1))
+              print(f'PATCH {path}')
+
+          # --- Homepage: social-first, sport-first ---
+          replace_exact(
+              'src/routes/index.tsx',
+              'import { Activity, ArrowRight, Bookmark, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Gamepad2, Heart, MessageCircle, Plus, Share2, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";',
+              'import { Activity, ArrowRight, Bookmark, CalendarClock, ChevronRight, CircleDollarSign, Crown, Flame, Heart, MessageCircle, Plus, Share2, ShieldCheck, Sparkles, Trophy, Users, WalletCards, Zap } from "lucide-react";'
+          )
+          replace_exact(
+              'src/routes/index.tsx',
+              'import { SportActionModal } from "@/components/SportActionModal";\n',
+              'import { SportActionModal } from "@/components/SportActionModal";\nimport { SocialHub } from "@/components/SocialHub";\n'
+          )
+          replace_exact(
+              'src/routes/index.tsx',
+              'const { userDollars, slotCZK } = useWallet();',
+              'const { userDollars } = useWallet();'
+          )
+          replace_exact(
+              'src/routes/index.tsx',
+              '<div className="mt-5 grid grid-cols-2 gap-2">\n            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />\n            <WalletBox label="SLOT CZK" value={slotCZK.toLocaleString("cs-CZ")} icon={<CircleDollarSign className="h-3.5 w-3.5" />} />\n          </div>',
+              '<div className="mt-5">\n            <WalletBox label="SPORT DOLLARS" value={`$${userDollars.toFixed(0)}`} icon={<WalletCards className="h-3.5 w-3.5" />} />\n          </div>'
+          )
+          replace_exact(
+              'src/routes/index.tsx',
+              '            <RouteCard to="/slots" title="Casino" desc="Slots · roulette · play money" icon={<Gamepad2 className="h-4 w-4" />} />\n',
+              '',
+              required=False
+          )
+          replace_exact(
+              'src/routes/index.tsx',
+              '      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">',
+              '      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">',
+              required=False
+          )
+          # Insert the unified social rail/feed directly after the KPI strip.
+          kpi_block = '''      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">\n        <Kpi title="LIVE NOW" value={String(live.length)} icon={<Activity className="h-4 w-4" />} tone="live" />\n        <Kpi title="NEXT MATCHES" value={String(upcoming.length)} icon={<CalendarClock className="h-4 w-4" />} />\n        <Kpi title="SPORT HUB" value={String(sportsActive)} icon={<Zap className="h-4 w-4" />} />\n        <Kpi title="COMMUNITY" value="ONLINE" icon={<Users className="h-4 w-4" />} tone="green" />\n      </section>'''
+          if '<SocialHub compact />' not in Path('src/routes/index.tsx').read_text():
+              replace_exact('src/routes/index.tsx', kpi_block, kpi_block + '\n\n      <section className="mt-5"><SocialHub compact /></section>')
+
+          # --- Profile: one coherent sports identity, photos + social activity ---
+          replace_exact(
+              'src/routes/profile.index.tsx',
+              'import { ProfileIdentity2 } from "@/components/ProfileIdentity2";\n',
+              ''
+          )
+          replace_exact(
+              'src/routes/profile.index.tsx',
+              '        {userId ? <ProfileIdentity2 userId={userId} /> : null}\n',
+              '',
+              required=False
+          )
+          replace_exact(
+              'src/routes/profile.index.tsx',
+              '        {userId ? <ProfileAchievements userId={userId} /> : null}',
+              '        {userId ? <section id="achievements" className="scroll-mt-24"><ProfileAchievements userId={userId} /></section> : null}'
+          )
+          replace_exact(
+              'src/routes/profile.index.tsx',
+              '        {userId ? <ProfileMediaGallery userId={userId} /> : null}',
+              '        {userId ? <section id="photos" className="scroll-mt-24"><ProfileMediaGallery userId={userId} /></section> : null}'
+          )
+          replace_exact(
+              'src/routes/profile.index.tsx',
+              '        {userId ? <div className="mt-5"><SocialHub profileUserId={userId} /></div> : null}',
+              '        {userId ? <section id="social" className="mt-5 scroll-mt-24"><SocialHub profileUserId={userId} /></section> : null}'
+          )
+          replace_exact(
+              'src/routes/profile.index.tsx',
+              '        <AccountSecurity />',
+              '        <section id="security" className="mt-5 scroll-mt-24"><AccountSecurity /></section>'
+          )
+          p = Path('src/routes/profile.index.tsx')
+          s = p.read_text()
+          if 'aria-label="Profilové sekce"' not in s:
+              nav = '''        <nav aria-label="Profilové sekce" className="sticky top-[4rem] z-20 mb-4 flex max-w-full gap-1.5 overflow-x-auto rounded-2xl border border-white/8 bg-background/85 p-1.5 backdrop-blur-xl [scrollbar-width:none]">{[["#overview","Přehled"],["#achievements","Výsledky"],["#photos","Fotky"],["#social","Aktivita"],["#security","Bezpečnost"]].map(([href,label]) => <a key={href} href={href} className="shrink-0 rounded-xl px-3 py-2 font-mono text-[9px] font-black uppercase tracking-[.16em] text-muted-foreground transition hover:bg-primary/10 hover:text-primary">{label}</a>)}</nav>\n'''
+              marker = '      <div className="mx-auto max-w-6xl px-3 sm:px-4">\n'
+              if marker not in s:
+                  raise SystemExit('Profile container marker missing')
+              p.write_text(s.replace(marker, marker + nav, 1))
+
+          # ProfileView: remove arcade/casino branch and Slot CZK from visible profile UI.
+          replace_exact('src/components/ProfileView.tsx', 'import { ArcadeProfile } from "@/components/ArcadeProfile";\n', '')
+          replace_exact('src/components/ProfileView.tsx', ', Gamepad2', '')
+          replace_exact('src/components/ProfileView.tsx', '  const { openChat } = useDm(); const { userDollars, slotCZK } = useWallet();', '  const { openChat } = useDm(); const { userDollars } = useWallet();')
+          replace_exact('src/components/ProfileView.tsx', '  const [mode, setMode] = useState<"real" | "arcade">("real");\n', '')
+          replace_exact(
+              'src/components/ProfileView.tsx',
+              '    {isSelf && <section className="mt-4 grid grid-cols-2 gap-3 sm:max-w-xl"><div className="group rounded-2xl border border-accent/35 bg-gradient-to-br from-accent/10 to-background/55 p-4"><p className="font-mono text-[9px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Sportovní dolary</p><p className="mt-1 font-display text-2xl tracking-[0.08em] text-accent">${userDollars.toFixed(0)}</p></div><div className="group rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/10 to-background/55 p-4"><p className="font-mono text-[9px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">Slot CZK</p><p className="mt-1 font-display text-2xl tracking-[0.08em] text-primary">{slotCZK.toLocaleString("cs-CZ")}</p></div></section>}\n',
+              ''
+          )
+          replace_exact(
+              'src/components/ProfileView.tsx',
+              '    <section className="mt-5 flex justify-center"><div className="relative inline-flex rounded-full border border-primary/25 bg-background/65 p-1"><span aria-hidden className={`absolute inset-y-1 w-1/2 rounded-full bg-primary/10 ${mode === "arcade" ? "translate-x-full" : "translate-x-0"}`} />{(["real", "arcade"] as const).map((m) => <button key={m} onClick={() => setMode(m)} className={`relative z-10 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${mode === m ? "text-primary" : "text-muted-foreground"}`}>{m === "real" ? <Trophy className="h-3.5 w-3.5" /> : <Gamepad2 className="h-3.5 w-3.5" />}{m === "real" ? "Sport" : "Arcade"}</button>)}</div></section>\n',
+              ''
+          )
+          replace_exact('src/components/ProfileView.tsx', '{mode === "arcade" && targetId ? <ArcadeProfile userId={targetId} isSelf={isSelf} /> : <>', '<>')
+          replace_exact('src/components/ProfileView.tsx', '    </>}\n  </main>;', '    </>\n  </main>;')
+
+          # --- SocialHub: same component powers community + profile, with profile-specific stories ---
+          replace_exact(
+              'src/components/SocialHub.tsx',
+              'import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\n',
+              'import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";\nimport { Link } from "@tanstack/react-router";\n'
+          )
+          replace_exact(
+              'src/components/SocialHub.tsx',
+              '      const storyQuery = await db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false })\n        .limit(36);',
+              '      let storyQuery = db\n        .from("social_stories")\n        .select("id,user_id,author_nickname,media_url,storage_path,caption,expires_at,created_at")\n        .gt("expires_at", now)\n        .order("created_at", { ascending: false });\n\n      if (profileUserId) storyQuery = storyQuery.eq("user_id", profileUserId);\n      const storyResult = await storyQuery.limit(36);'
+          )
+          replace_exact('src/components/SocialHub.tsx', '      if (storyQuery.error) throw storyQuery.error;', '      if (storyResult.error) throw storyResult.error;')
+          replace_exact('src/components/SocialHub.tsx', '      setStories((storyQuery.data ?? []) as SocialStory[]);', '      setStories((storyResult.data ?? []) as SocialStory[]);')
+          replace_exact(
+              'src/components/SocialHub.tsx',
+              '    {!profileUserId && <StoriesStrip groups={storyGroups} meGroup={meStoryGroup} user={Boolean(user)} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />}\n',
+              '    <StoriesStrip groups={storyGroups} meGroup={profileUserId ? undefined : meStoryGroup} user={Boolean(user) && !profileUserId} disabled={uploading} onPick={(group) => setStoryViewer({ stories: group.stories, index: 0 })} onAdd={publishStory} />\n'
+          )
+          replace_exact(
+              'src/components/SocialHub.tsx',
+              '<div className="truncate text-sm font-bold text-white">{post.author_nickname}</div>',
+              '<Link to="/profile/$id" params={{ id: post.user_id }} className="truncate text-sm font-bold text-white hover:text-amber-200">{post.author_nickname}</Link>'
+          )
+
+          # --- Hard-hide residual game routes without touching their backend logic ---
+          game_routes = {
+              'src/routes/games.$game.tsx': '/games/$game',
+              'src/routes/games.case-opening.tsx': '/games/case-opening',
+              'src/routes/arcade.tsx': '/arcade',
+              'src/routes/slots.tsx': '/slots',
+              'src/routes/slots.index.tsx': '/slots/',
+              'src/routes/slots.chmelovci-cup.tsx': '/slots/chmelovci-cup',
+              'src/routes/ultimate-team.tsx': '/ultimate-team',
+          }
+          for path, route in game_routes.items():
+              write = f'''import {{ createFileRoute, Navigate }} from "@tanstack/react-router";\n\nexport const Route = createFileRoute("{route}")({{\n  component: () => <Navigate to="/" replace />,\n}});\n'''
+              Path(path).write_text(write)
+              print(f'HIDE {path}')
+          PY
+          git diff --check
+
+      - name: Verify
+        run: |
+          bun run build
+          bun run typecheck
+          bun run lint
+          bun run test
+
+      - name: Commit and remove workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src .github/workflows/final-social-profile-ux.yml
+          git commit -m 'Apply final social profile UX'
+          git push
