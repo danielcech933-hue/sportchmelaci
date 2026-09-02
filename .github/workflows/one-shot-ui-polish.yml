@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
       - name: Apply remaining UI polish
         shell: bash
         run: |
@@ -63,14 +66,12 @@ jobs:
               ('<EmptyState />', '<StateBlock state="empty" title="Zatím žádná data" hint="Po odehrání zápasů se pořadí objeví tady." />'),
           ])
 
-          # Root navigation sanity: the desktop nav must remain mounted in the header.
           root = Path('src/routes/__root.tsx')
           root_text = root.read_text()
           if 'import { FloatingNav, DesktopNav } from "@/components/FloatingNav";' not in root_text:
               raise SystemExit('DesktopNav import missing from __root.tsx')
           if '<DesktopNav />' not in root_text:
               raise SystemExit('DesktopNav mount missing from __root.tsx')
-
           print('UI polish patches applied.')
           PY
 
