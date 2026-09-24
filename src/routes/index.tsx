@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Activity, ArrowRight, CalendarDays, ChevronRight, CircleDollarSign, Crown, Flame, Medal, , Trophy, Users, WalletCards } from "lucide-react";
+import { Activity, ArrowRight, CalendarDays, ChevronRight, CircleDollarSign, Crown, Flame, Medal, Trophy, Users, WalletCards } from "lucide-react";
 import { CLASSIC_SPORTS, ESPORT_SPORTS, SPORTS, type Match, type SportConfig, type SportId } from "@/lib/matches";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { useAuth } from "@/lib/auth";
