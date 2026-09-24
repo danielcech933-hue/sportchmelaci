@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchAllMatches } from "@/lib/matches-db";
 import { SPORT_LIST, SPORTS, type Match, type SportId } from "@/lib/matches";
 import { SportFilterBar } from "@/components/SportFilterBar";
-import { buildLeaderboard, splitPlayers, type LeaderRow } from "@/lib/stats";
+import { buildHistoryElo, buildLeaderboard, sideOf, winnerSideOf, type LeaderRow } from "@/lib/stats";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/lib/avatars";
 import { NickLink } from "@/lib/profile-links";
@@ -34,7 +34,7 @@ const PODIUM = [
 
 function RankingsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
-  const [profiles, setProfiles] = useState<{ nickname: string; avatar_path: string | null; elo: number | null }[]>([]);
+  const [profiles, setProfiles] = useState<{ nickname: string; avatar_path: string | null }[]>([]);
   const [mode, setMode] = useState<Mode>("solo");
   const [sport, setSport] = useState<SportId | "all">("all");
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ function RankingsPage() {
       try {
         const [m, p] = await Promise.all([
           fetchAllMatches(),
-          supabase.from("profile_public").select("nickname, avatar_path, elo").then((r) => (r.data ?? []) as { nickname: string; avatar_path: string | null; elo: number | null }[]),
+          supabase.from("profile_public").select("nickname, avatar_path").then((r) => (r.data ?? []) as { nickname: string; avatar_path: string | null }[]),
         ]);
         if (!active) return;
         setMatches(m);
@@ -62,7 +62,7 @@ function RankingsPage() {
     return () => { active = false; window.clearInterval(timer); };
   }, []);
 
-  const eloByNick = useMemo(() => new Map(profiles.filter((p) => p.nickname).map((p) => [p.nickname.trim().toLowerCase(), Number(p.elo ?? 1000)])), [profiles]);
+  const eloByNick = useMemo(() => buildHistoryElo(matches), [matches]);
   const avatarByNick = useMemo(() => new Map(profiles.filter((p) => p.nickname).map((p) => [p.nickname.trim().toLowerCase(), p.avatar_path])), [profiles]);
   const filtered = useMemo(() => matches.filter((m) => sport === "all" || m.sport === sport), [matches, sport]);
   const seedNames = useMemo(() => profiles.map((p) => p.nickname).filter(Boolean), [profiles]);
@@ -161,15 +161,15 @@ function RankingsPage() {
 
 function winRate(r: LeaderRow) { return r.played ? r.wins / r.played : 0; }
 function currentStreak(row: LeaderRow, matches: Match[]) {
-  const name = row.key.toLowerCase();
-  const relevant = matches.filter((m) => m.endedAt && (splitPlayers(m.teamA).some((n) => n.toLowerCase() === name) || splitPlayers(m.teamB).some((n) => n.toLowerCase() === name))).sort((a, b) => Number(b.endedAt ?? 0) - Number(a.endedAt ?? 0));
+  const relevant = matches
+    .filter((m) => !!m.endedAt && !!sideOf(row.key, m))
+    .sort((a, b) => Number(b.endedAt ?? 0) - Number(a.endedAt ?? 0));
   let streak = 0;
   for (const m of relevant) {
-    const a = splitPlayers(m.teamA).some((n) => n.toLowerCase() === name);
-    const b = splitPlayers(m.teamB).some((n) => n.toLowerCase() === name);
-    if (m.scoreA === m.scoreB) break;
-    const won = (a && m.scoreA > m.scoreB) || (b && m.scoreB > m.scoreA);
-    if (!won) break;
+    const side = sideOf(row.key, m);
+    const winner = winnerSideOf(m);
+    if (!side || !winner) break;
+    if (side !== winner) break;
     streak++;
   }
   return streak;
