@@ -30,6 +30,70 @@ export function winnerSideOf(m: Match): "a" | "b" | null {
   return m.scoreA > m.scoreB ? "a" : "b";
 }
 
+
+/**
+ * Replays the authoritative match history using the same ELO formula as the
+ * server RPC. This keeps the public scoreboard tied to recorded results
+ * instead of trusting a potentially stale profile snapshot.
+ *
+ * Only ended + confirmed matches contribute to official ELO, matching
+ * sync_match_elo on the server.
+ */
+export function buildHistoryElo(matches: Match[]): Map<string, number> {
+  const elo = new Map<string, number>();
+
+  const rating = (name: string) => {
+    const key = normalizeName(name);
+    if (!key) return 1000;
+    if (!elo.has(key)) elo.set(key, 1000);
+    return elo.get(key) ?? 1000;
+  };
+
+  const playersFor = (m: Match, side: "a" | "b"): string[] => {
+    const explicit = side === "a" ? m.teamAPlayers : m.teamBPlayers;
+    if (explicit?.length) return explicit.map((p) => p.trim()).filter(Boolean);
+    return splitPlayers(side === "a" ? m.teamA : m.teamB);
+  };
+
+  const ordered = matches
+    .filter((m) => !!m.endedAt && !!m.confirmedAt)
+    .slice()
+    .sort((a, b) => Number(a.endedAt) - Number(b.endedAt) || a.id.localeCompare(b.id));
+
+  const applied = new Set<string>();
+
+  for (const m of ordered) {
+    if (applied.has(m.id)) continue;
+    applied.add(m.id);
+
+    const winner = winnerSideOf(m);
+    if (!winner) continue;
+
+    const aPlayers = playersFor(m, "a");
+    const bPlayers = playersFor(m, "b");
+    if (!aPlayers.length || !bPlayers.length) continue;
+
+    const avgA = aPlayers.reduce((sum, p) => sum + rating(p), 0) / aPlayers.length;
+    const avgB = bPlayers.reduce((sum, p) => sum + rating(p), 0) / bPlayers.length;
+    const expectedA = 1 / (1 + Math.pow(10, (avgB - avgA) / 400));
+    const delta = Math.max(5, Math.round(32 * (winner === "a" ? (1 - expectedA) : expectedA)));
+
+    const winners = winner === "a" ? aPlayers : bPlayers;
+    const losers = winner === "a" ? bPlayers : aPlayers;
+
+    for (const player of winners) {
+      const key = normalizeName(player);
+      elo.set(key, rating(player) + delta);
+    }
+    for (const player of losers) {
+      const key = normalizeName(player);
+      elo.set(key, Math.max(100, rating(player) - delta));
+    }
+  }
+
+  return elo;
+}
+
 export type Tally = { wins: number; losses: number; total: number };
 export type SplitStats = { solo: Tally; team: Tally; overall: Tally };
 const empty = (): Tally => ({ wins: 0, losses: 0, total: 0 });
