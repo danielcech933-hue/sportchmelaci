@@ -88,7 +88,7 @@ function Lobby() {
       </section>
 
       {/* MATCHES — the main content, directly under the hero */}
-      <section className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="mt-6 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="rounded-3xl border border-white/10 bg-[rgba(12,17,23,.85)]">
           <div className="flex flex-col gap-3 border-b border-white/8 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <SectionHead eyebrow="Přehled" title="Zápasy" />
