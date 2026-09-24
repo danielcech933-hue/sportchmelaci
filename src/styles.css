@@ -677,3 +677,26 @@ button:hover:not(:disabled) { filter: drop-shadow(0 0 10px color-mix(in oklab, v
   to { transform: rotateY(0deg) scale(1); opacity: 1; }
 }
 .holo-card { animation: holo-card 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+
+/* ===== Global clarity & accessibility pass ===== */
+@layer base {
+  :where(a, button, [role="button"], [role="tab"], input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+  :where(a, button, [role="tab"]) {
+    transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease, opacity .15s ease;
+  }
+  :where(button, [role="button"]):disabled { cursor: not-allowed; opacity: .55; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  img, video, canvas { max-width: 100%; }
+  ::selection { background: color-mix(in oklab, var(--color-primary) 35%, transparent); }
+  @media (pointer: coarse) {
+    :where(button, [role="button"], [role="tab"], select) { min-height: 40px; }
+    :where(input, select, textarea) { font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+}
